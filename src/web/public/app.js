@@ -298,6 +298,7 @@ function processUploadedFile(file) {
 
   const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp)$/i.test(file.name);
   const isExcel = /\.(xlsx|xls)$/i.test(file.name) || file.type.includes("spreadsheet") || file.type.includes("excel");
+  const isPdf = file.name.endsWith(".pdf") || file.type === "application/pdf";
 
   if (isImage) {
     const reader = new FileReader();
@@ -328,6 +329,25 @@ function processUploadedFile(file) {
       activeUploadPayload = {
         fileName: file.name,
         mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        base64Content,
+        buyerId: "sme_artisan_trial"
+      };
+    };
+    reader.readAsDataURL(file);
+  } else if (isPdf) {
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      const commaIdx = dataUrl.indexOf(",");
+      const base64Content = dataUrl.slice(commaIdx + 1);
+      if (textContainer) {
+        textContainer.textContent = `[PDF Document: ${file.name}]\nFormat: Adobe Portable Document Format (.pdf)\nSize: ${file.size} bytes\nReady for PyMuPDF vector text extraction and optical OCR fallback.`;
+        textContainer.style.display = "block";
+      }
+      if (imgContainer) imgContainer.style.display = "none";
+      activeUploadPayload = {
+        fileName: file.name,
+        mimeType: "application/pdf",
         base64Content,
         buyerId: "sme_artisan_trial"
       };
@@ -416,6 +436,36 @@ async function loadSampleDocument(type) {
       reader.readAsDataURL(blob);
     } catch (err) {
       alert("Failed to load sample XLSX: " + err.message);
+    }
+  } else if (type === "pdf") {
+    try {
+      const res = await fetch("/vector_digital_invoice.pdf");
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const dataUrl = evt.target.result;
+        const commaIdx = dataUrl.indexOf(",");
+        const base64Content = dataUrl.slice(commaIdx + 1);
+        if (fileNameLabel) fileNameLabel.textContent = "vector_digital_invoice.pdf";
+        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
+        if (textContainer) {
+          textContainer.textContent = `[PDF Document: vector_digital_invoice.pdf]\nEngine: PyMuPDF + Tesseract\nStatus: Digital invoice loaded with vendor header, line items, and totals.`;
+          textContainer.style.display = "block";
+        }
+        if (imgContainer) imgContainer.style.display = "none";
+        if (previewCard) previewCard.style.display = "block";
+
+        activeUploadPayload = {
+          fileName: "vector_digital_invoice.pdf",
+          mimeType: "application/pdf",
+          base64Content,
+          buyerId: "sme_artisan_trial"
+        };
+        await submitActiveIngestion();
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      alert("Failed to load sample PDF: " + err.message);
     }
   } else if (type === "csv") {
     try {
