@@ -286,8 +286,19 @@ export function createWebServer() {
       try {
         const body = await readJsonBody(req);
         const buyerId = body.buyerId || "sme_direct_upload";
+        let fileBuffer;
+        if (body.base64Content) {
+          fileBuffer = Buffer.from(body.base64Content, "base64");
+        } else if (typeof body.content === "string" && body.content.startsWith("data:")) {
+          const commaIdx = body.content.indexOf(",");
+          fileBuffer = Buffer.from(body.content.slice(commaIdx + 1), "base64");
+        } else if (typeof body.content === "string") {
+          fileBuffer = Buffer.from(body.content, "utf-8");
+        } else {
+          fileBuffer = Buffer.from(JSON.stringify(body), "utf-8");
+        }
         const result = ingestDocument({
-          fileBuffer: Buffer.from(body.content || JSON.stringify(body), "utf-8"),
+          fileBuffer,
           fileName: body.fileName || "uploaded_invoice.json",
           mimeType: body.mimeType || "application/json",
           buyerId,

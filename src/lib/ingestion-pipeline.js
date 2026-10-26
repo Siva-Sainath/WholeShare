@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { gzipSync } from "node:zlib";
+import { spawnSync } from "node:child_process";
 import { instinctFs } from "./instinct-fs.js";
 
 const DEFAULT_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_local_dev_secret_key_32_bytes";
@@ -44,12 +45,131 @@ export function mapToCanonicalSku(rawDescription) {
   return "organic-flour-50lb";
 }
 
+export function isImageBuffer(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 4) return false;
+  // PNG: 89 50 4E 47
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return true;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return true;
+  // GIF: GIF8
+  if (buf.slice(0, 4).toString("ascii") === "GIF8") return true;
+  // WebP: RIFF....WEBP
+  if (buf.length > 12 && buf.slice(0, 4).toString("ascii") === "RIFF" && buf.slice(8, 12).toString("ascii") === "WEBP") return true;
+  // TIFF
+  if ((buf[0] === 0x49 && buf[1] === 0x49) || (buf[0] === 0x4D && buf[1] === 0x4D)) return true;
+  return false;
+}
+
+export function extractOcrTextFromBuffer(imageBuffer) {
+  const binaryCandidates = ["tesseract", "/opt/homebrew/bin/tesseract", "/usr/local/bin/tesseract", "/usr/bin/tesseract"];
+  for (const bin of binaryCandidates) {
+    try {
+      const res = spawnSync(bin, ["stdin", "stdout"], {
+        input: imageBuffer,
+        encoding: "utf-8",
+        timeout: 15000
+      });
+      if (res.status === 0 && res.stdout) {
+        return res.stdout.trim();
+      }
+    } catch {
+      // Continue to next candidate
+    }
+  }
+  return "";
+}
+
+export function parseOcrTextToDocument(ocrText) {
+  const lines = ocrText.split("\n").map(l => l.trim()).filter(Boolean);
+  let vendorName = "Sysco Artisan Baking Supply";
+  let invoiceNumber = `INV_OCR_${Date.now()}`;
+  let invoiceDate = new Date().toISOString().slice(0, 10);
+  let paymentTerms = "NET_30";
+  const items = [];
+
+  for (const line of lines) {
+    const vMatch = line.match(/(?:vendor|from|supplier)[:\s]+(.+)/i);
+    if (vMatch && vMatch[1].length > 2) {
+      vendorName = vMatch[1].trim();
+    }
+
+    const invMatch = line.match(/(?:invoice\s*(?:number|no|#)?|inv)\s*[:#\s]*([a-z0-9-_]+)/i);
+    if (invMatch && invMatch[1].length > 2 && !["number", "no"].includes(invMatch[1].toLowerCase())) {
+      invoiceNumber = invMatch[1].trim();
+    }
+
+    const dateMatch = line.match(/\b(\d{4}[-/]\d{2}[-/]\d{2})\b/);
+    if (dateMatch) {
+      invoiceDate = dateMatch[1];
+    }
+
+    const termsMatch = line.match(/\b(NET[_\s]*\d+|DUE[_\s]*ON[_\s]*RECEIPT)\b/i);
+    if (termsMatch) {
+      paymentTerms = termsMatch[1].replace(/\s+/g, "_").toUpperCase();
+    }
+
+    const lower = line.toLowerCase();
+    for (const [sku, catalogItem] of Object.entries(CANONICAL_SKU_CATALOG)) {
+      if (catalogItem.aliases.some(alias => lower.includes(alias))) {
+        let qty = 100;
+        const qtyMatch = line.match(/qty[:.\s]+(\d+)/i) || line.match(/(\d+)\s*(?:bags?|units?|lbs?|#)/i) || line.match(/\b(\d{2,4})\b/);
+        if (qtyMatch) {
+          qty = parseInt(qtyMatch[1], 10) || 100;
+        }
+
+        let unitPriceCents = catalogItem.basePriceCents;
+        const priceMatch = line.match(/(?:price|unit)[:.\s]*\$?\s*(\d+(?:\.\d{2})?)/i) || line.match(/\$\s*(\d+\.\d{2})/);
+        if (priceMatch) {
+          const parsed = Math.round(parseFloat(priceMatch[1]) * 100);
+          if (parsed >= 100) {
+            unitPriceCents = parsed;
+          }
+        }
+
+        items.push({
+          description: catalogItem.name,
+          quantity: qty,
+          unitPriceCents
+        });
+        break;
+      }
+    }
+  }
+
+  return {
+    vendorName,
+    invoiceNumber,
+    invoiceDate,
+    paymentTerms,
+    lineItems: items,
+    rawOcrText: ocrText,
+    isOcrExtracted: true
+  };
+}
+
 export function parseDocumentContent(rawContent, mimeType = "application/json") {
   let docData;
-  if (typeof rawContent === "string") {
+  let extractionMethod = "STRUCTURED_JSON";
+  let isImage = false;
+  let ocrText = "";
+
+  if (typeof rawContent === "string" && rawContent.startsWith("data:image/")) {
+    isImage = true;
+    extractionMethod = "OPTICAL_IMAGE_OCR";
+    const commaIdx = rawContent.indexOf(",");
+    const buf = Buffer.from(rawContent.slice(commaIdx + 1), "base64");
+    ocrText = extractOcrTextFromBuffer(buf);
+    docData = parseOcrTextToDocument(ocrText);
+  } else if (Buffer.isBuffer(rawContent) && (isImageBuffer(rawContent) || (mimeType && mimeType.startsWith("image/")))) {
+    isImage = true;
+    extractionMethod = "OPTICAL_IMAGE_OCR";
+    ocrText = extractOcrTextFromBuffer(rawContent);
+    docData = parseOcrTextToDocument(ocrText);
+  } else if (typeof rawContent === "string") {
     try {
       docData = JSON.parse(rawContent);
     } catch {
+      extractionMethod = "DELIMITED_CSV";
       docData = parsePlainTextOrCsv(rawContent);
     }
   } else if (Buffer.isBuffer(rawContent)) {
@@ -57,6 +177,7 @@ export function parseDocumentContent(rawContent, mimeType = "application/json") 
     try {
       docData = JSON.parse(text);
     } catch {
+      extractionMethod = "DELIMITED_CSV";
       docData = parsePlainTextOrCsv(text);
     }
   } else if (typeof rawContent === "object" && rawContent !== null) {
@@ -79,7 +200,7 @@ export function parseDocumentContent(rawContent, mimeType = "application/json") 
     if (unitPriceCents === undefined && item.unitPrice !== undefined) {
       unitPriceCents = Math.round(Number(item.unitPrice) * 100);
     }
-    if (unitPriceCents === undefined || isNaN(unitPriceCents)) {
+    if (unitPriceCents === undefined || isNaN(unitPriceCents) || unitPriceCents <= 0) {
       unitPriceCents = CANONICAL_SKU_CATALOG[canonicalSku]?.basePriceCents || 2800;
     }
     const totalCents = Math.round(quantity * unitPriceCents);
@@ -123,7 +244,10 @@ export function parseDocumentContent(rawContent, mimeType = "application/json") 
     subtotalCents,
     taxCents,
     freightCents,
-    totalAmountCents
+    totalAmountCents,
+    isImage,
+    extractionMethod,
+    rawOcrText: ocrText || undefined
   };
 }
 

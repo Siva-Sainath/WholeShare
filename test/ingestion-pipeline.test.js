@@ -8,7 +8,8 @@ import {
   importGoogleDriveFile,
   processAgentDocumentIngress,
   queryProcurementBaseline,
-  curateProcurementDataset
+  curateProcurementDataset,
+  isImageBuffer
 } from "../src/lib/ingestion-pipeline.js";
 import { executeTool } from "../src/lib/tool-registry.js";
 import { instinctFs } from "../src/lib/instinct-fs.js";
@@ -181,3 +182,32 @@ test("executeTool handles ingest_business_document and query_procurement_baselin
   assert.equal(queryRes.hasHistoricalData, true);
   assert.equal(queryRes.baselineUnitPriceCents, 2800);
 });
+
+test("isImageBuffer accurately identifies image formats", () => {
+  const pngHeader = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A]);
+  const jpegHeader = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]);
+  const textBuffer = Buffer.from("Hello world plaintext");
+
+  assert.equal(isImageBuffer(pngHeader), true);
+  assert.equal(isImageBuffer(jpegHeader), true);
+  assert.equal(isImageBuffer(textBuffer), false);
+});
+
+test("ingestDocument handles picture and scanned bill ingestion with optical OCR", () => {
+  const buyerId = `test_photo_buyer_${Date.now()}`;
+  const pngHeader = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x00, 0x00]);
+
+  const record = ingestDocument({
+    fileBuffer: pngHeader,
+    fileName: "scanned_bill.png",
+    mimeType: "image/png",
+    buyerId
+  });
+
+  assert.equal(record.status, "PROCESSED");
+  assert.equal(record.parsed.isImage, true);
+  assert.equal(record.parsed.extractionMethod, "OPTICAL_IMAGE_OCR");
+  assert.ok(record.parsed.totalAmountCents > 0);
+  assert.equal(Number.isInteger(record.parsed.totalAmountCents), true);
+});
+
