@@ -117,6 +117,7 @@
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button type="button" class="btn-step" onclick="loadSampleDocument('realistic-image')" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">Real Commercial Invoice (PNG)</button>
           <button type="button" class="btn-step" onclick="loadSampleDocument('xlsx')" style="border-color: #34d399; color: #34d399;">Distributor Order (XLSX)</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('pdf')" style="border-color: #818cf8; color: #818cf8;">Digital Invoice (PDF)</button>
           <button type="button" class="btn-step" onclick="loadSampleDocument('csv')">Procurement PO (CSV)</button>
           <button type="button" class="btn-step" onclick="loadSampleDocument('json')">Standard JSON</button>
         </div>
@@ -135,7 +136,7 @@
               Drag &amp; drop financial document or invoice here
             </div>
             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-              Accepts Excel (.xlsx, .xls), CSV, TSV, JSON, PNG, JPEG, WebP
+              Accepts PDF, Excel (.xlsx, .xls), CSV, TSV, JSON, PNG, JPEG, WebP
             </div>
             <button type="button" class="btn-step" style="margin-top: 12px; align-self: center;" onclick="event.stopPropagation(); document.getElementById('ingestFileInput').click()">
               Browse Local Files
