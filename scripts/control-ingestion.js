@@ -12,7 +12,7 @@ import {
 } from "../src/lib/ingestion-pipeline.js";
 import { instinctFs } from "../src/lib/instinct-fs.js";
 
-import { readdirSync, existsSync } from "node:fs";
+import { readdirSync, existsSync, readFileSync } from "node:fs";
 
 const DEFAULT_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_local_dev_secret_key_32_bytes";
 
@@ -152,6 +152,25 @@ async function runCurateDataset() {
   console.log(JSON.stringify(curated, null, 2));
 }
 
+async function runIngestImage() {
+  const filePath = process.argv[3] || "fixtures/sample_invoice_receipt.png";
+  console.log(`Ingesting scanned receipt/picture from ${filePath}...`);
+  if (!existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    process.exit(1);
+  }
+  const fileBuffer = readFileSync(filePath);
+  const record = ingestDocument({
+    fileBuffer,
+    fileName: filePath.split("/").pop(),
+    mimeType: "image/png",
+    buyerId: "sme_photo_receipt_buyer",
+    metadata: { channel: "CLI_PICTURE_INGEST" }
+  });
+  console.log("Picture OCR parsed and indexed to Instinct Memory successfully:");
+  console.log(JSON.stringify(record, null, 2));
+}
+
 async function main() {
   const [,, cmd] = process.argv;
 
@@ -161,6 +180,9 @@ async function main() {
     break;
   case "ingest:file":
     await runIngestFile();
+    break;
+  case "ingest:image":
+    await runIngestImage();
     break;
   case "ingest:gdrive":
     await runIngestGdrive();
@@ -175,7 +197,7 @@ async function main() {
     await runCurateDataset();
     break;
   default:
-    console.log("Usage: node scripts/control-ingestion.js [doctor|ingest:file|ingest:gdrive|ingest:agent|baseline:query|dataset:curate]");
+    console.log("Usage: node scripts/control-ingestion.js [doctor|ingest:file|ingest:image|ingest:gdrive|ingest:agent|baseline:query|dataset:curate]");
     process.exit(1);
   }
 }

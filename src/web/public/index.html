@@ -104,6 +104,131 @@
     </section>
   </main>
 
+  <!-- B2B Business Document & Picture Ingestion Trial Workbench -->
+  <section class="ingestion-workbench-container" style="padding: 0 24px 24px;">
+    <div class="panel" style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <span class="panel-title" style="font-size: 15px; font-weight: 700;">Document &amp; Picture Ingestion Trial Workbench</span>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+            Trial document and picture uploads: parses JSON/CSV/TXT and extracts scanned receipts and photo bills via optical OCR into exact integer cents.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-step" onclick="loadSampleDocument('json')">Sample JSON Invoice</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('csv')">Sample CSV PO</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('image')">Sample Picture Receipt (PNG)</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px;">
+        <!-- Left Column: Dropzone & File Input -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div id="dropZoneArea" class="dropzone-box"
+               ondragover="handleDragOver(event)"
+               ondragleave="handleDragLeave(event)"
+               ondrop="handleFileDrop(event)"
+               onclick="document.getElementById('ingestFileInput').click()">
+            <div style="font-size: 28px; color: var(--accent-cyan); margin-bottom: 8px;">📄 / 🖼️</div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">
+              Drag &amp; drop document or picture here
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+              Accepts JSON, CSV, TXT, PNG, JPEG, WebP (Scanned bills &amp; photo receipts)
+            </div>
+            <button type="button" class="btn-step" style="margin-top: 12px; align-self: center;" onclick="event.stopPropagation(); document.getElementById('ingestFileInput').click()">
+              Browse Local Files
+            </button>
+            <input type="file" id="ingestFileInput" accept=".json,.csv,.txt,.png,.jpg,.jpeg,.webp" onchange="handleFileSelected(event)" style="display: none;">
+          </div>
+
+          <!-- Document or Image Preview Box -->
+          <div id="previewCard" style="display: none; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span id="previewFileName" style="font-size: 12px; font-weight: 600; color: var(--accent-cyan);">filename.ext</span>
+              <span id="previewFileSize" style="font-size: 11px; color: var(--text-secondary);">0 KB</span>
+            </div>
+            <div id="imagePreviewContainer" style="display: none; text-align: center; margin-bottom: 8px;">
+              <img id="previewImageElement" src="" alt="Uploaded picture preview" style="max-height: 180px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border-accent);">
+            </div>
+            <pre id="textPreviewContainer" style="display: none; max-height: 140px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #cbd5e1; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;"></pre>
+            <button id="btnProcessIngest" class="btn-copilot-submit" style="width: 100%; margin-top: 8px; justify-content: center;" onclick="submitActiveIngestion()">
+              Process Document &amp; Sync to Instinct Memory
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Real-Time Extraction Results & Telemetry -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Extraction Results &amp; Instinct Memory Sync</span>
+            <span id="extractionMethodBadge" class="brand-badge" style="display: none;">METHOD</span>
+          </div>
+
+          <div id="extractionResultsCard" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; min-height: 240px; font-size: 12px;">
+            <div id="extractionEmptyState" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
+              No document or picture uploaded yet. Drop a file or click a sample button above to test extraction.
+            </div>
+
+            <div id="extractionDataContainer" style="display: none;">
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;">
+                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
+                  <span style="font-size: 10px; color: var(--text-secondary);">Vendor</span>
+                  <span id="resVendor" style="font-weight: 700; color: #fff;">-</span>
+                </div>
+                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
+                  <span style="font-size: 10px; color: var(--text-secondary);">Invoice #</span>
+                  <span id="resInvoiceNum" style="font-weight: 700; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">-</span>
+                </div>
+                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
+                  <span style="font-size: 10px; color: var(--text-secondary);">Terms</span>
+                  <span id="resTerms" style="font-weight: 700; color: var(--accent-emerald);">-</span>
+                </div>
+                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
+                  <span style="font-size: 10px; color: var(--text-secondary);">Total (Exact Cents)</span>
+                  <span id="resTotal" style="font-weight: 700; color: #34d399; font-family: 'JetBrains Mono', monospace;">-</span>
+                </div>
+              </div>
+
+              <!-- Line Items Table -->
+              <table class="custom-ledger-table" style="margin-bottom: 12px; font-size: 11px;">
+                <thead>
+                  <tr>
+                    <th>Item Description</th>
+                    <th>Canonical SKU</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Line Total</th>
+                  </tr>
+                </thead>
+                <tbody id="resLineItemsBody"></tbody>
+              </table>
+
+              <!-- Instinct Memory Status -->
+              <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 11px; font-weight: 700; color: #34d399;">Instinct Memory Entity Synced</div>
+                  <div id="resMemoryEntityId" style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">buyer_..._procurement</div>
+                </div>
+                <button type="button" class="btn-step" style="padding: 4px 8px; font-size: 10px;" onclick="inspectBaselineMemory()">
+                  Inspect Baseline
+                </button>
+              </div>
+
+              <!-- Raw OCR View if picture -->
+              <div id="rawOcrBlock" style="display: none; margin-top: 10px;">
+                <details style="font-size: 11px; color: var(--text-secondary);">
+                  <summary style="cursor: pointer; color: var(--accent-cyan); font-weight: 600;">View Raw OCR Extracted Text</summary>
+                  <pre id="rawOcrContent" style="margin-top: 6px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; white-space: pre-wrap;"></pre>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- AG Grid Live Multiparty Escrow Ledger -->
   <section class="ledger-container" style="padding: 0 24px 24px;">
     <div class="panel">

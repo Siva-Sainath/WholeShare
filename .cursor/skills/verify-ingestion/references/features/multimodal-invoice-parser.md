@@ -6,6 +6,7 @@ Wholeshare extracts structured B2B commerce entities from unstructured invoices,
 - `table-line-item-extraction`: Parsing of vendor tables into line items, quantities, and rates.
 - `canonical-sku-mapping`: Fuzzy alias mapping translating arbitrary vendor descriptions into canonical catalog SKUs.
 - `commodity-spec-extraction`: Capture of technical attributes such as protein percentage and organic certification.
+- `optical-picture-ocr`: Optical character recognition extracting vendor, items, and amounts from PNG, JPEG, and scanned pictures.
 
 ## How to get to it (user POV)
 - Automatic extraction executes upon document submission via drag-and-drop or API.
@@ -18,13 +19,17 @@ Preconditions:
 Step-by-step driving commands:
 ```bash
 node scripts/control-ingestion.js ingest:file
+node scripts/control-ingestion.js ingest:image fixtures/sample_invoice_receipt.png
 ```
 
 Proof standards:
 - Output contains `canonicalSku` resolved to catalog identifiers.
 - Line items verify `specProperties` including `proteinPct` and `organicCertified`.
 - Financial arithmetic verifies total equals quantity multiplied by unit price in integer cents.
+- Optical picture parsing outputs `extractionMethod: "OPTICAL_IMAGE_OCR"` and extracts vendor names.
 
 ## Gotchas
 - Unrecognized product lines default to standard commodity categories for human review.
 - Missing vendor dates default to current UTC timestamps.
+- Low-contrast or heavily rotated paper photos may require deskewing.
+
