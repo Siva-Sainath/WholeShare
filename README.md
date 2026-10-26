@@ -1,107 +1,150 @@
-# Wholeshare: Autonomous B2B Group Purchasing & Multiparty Escrow Platform
+# Wholeshare: Autonomous B2B Group Purchasing and Multiparty Escrow Platform
 
-> **Built on PayPal for Business for the PayPal AI Hackathon 2026**  
-> *Sponsor Tracks: AG Grid Financial Command Center | APIMatic Typed SDKs | Kernel Cloud Browsers | Render IaC | pstack Autonomous Verification*
+Wholeshare is an autonomous agentic commerce platform built on PayPal for Business. It empowers independent small and medium enterprises (SMEs) to pool commercial demand, negotiate wholesale volume tier discounts, and lock multiparty escrow commitments with zero counterparty default risk.
 
 ---
 
-## 1. Quick Tutorial: 1-Click Verification Walkthrough (Learning by Doing)
+## 1. The Core Problem: Small Business Procurement Inequality
 
-Follow these steps to launch the system, inspect dependencies, seed deterministic demo data, and simulate the complete 4-stage lifecycle:
+Independent bakeries, coffee roasters, craft breweries, and boutique retailers face structural volume disadvantages. 
 
-```bash
-# Clone and enter directory
-cd /Users/siva/.gemini/antigravity-ide/Paypal_project
+An artisan bakery purchasing 20 bags of organic flour pays $34.00 per bag. An industrial bread factory purchasing a full truckload of 500 bags pays $24.80 per bag for the exact same commodity. Over a single year, this pricing spread costs a small bakery more than $16,500 in working capital.
 
-# Step 1: Health check across runtime, credentials, and security guards
-node .cursor/skills/verify-syndicate/control-syndicate.mjs doctor
+Traditional group purchasing organizations (GPOs) fail small businesses because:
+1. **Counterparty Default Risk**: If one member defaults on payment after an order is placed, the remaining members or the organizer must cover the loss.
+2. **Locked Working Capital**: Small businesses cannot afford to wire cash into escrow weeks before delivery.
+3. **Manual Coordination Friction**: Tracking purchase orders, specification requirements, and delivery milestones across independent businesses requires prohibitive administrative effort.
 
-# Step 2: Seed deterministic test state (3 SME Personas + 2 Clans + Scraped Wholesale Tiers)
-node .cursor/skills/verify-syndicate/control-syndicate.mjs seed-demo --reset
+---
 
-# Step 3: Spawn a new SME Personal Agent with strict budget constraints
-node .cursor/skills/verify-syndicate/control-syndicate.mjs spawn-sme \
-  --name "Austin Artisan Bakery" \
-  --sku "organic-flour-50lb" \
-  --qty 15 \
-  --max-usd 450
+## 2. The Solution: Autonomous Syndicates on Native PayPal Primitives
 
-# Step 4: Drive A2A matchmaking until Clan reaches 100% MOQ unlock
-node .cursor/skills/verify-syndicate/control-syndicate.mjs match-clan \
-  --sku "organic-flour-50lb" \
-  --simulate-agents 3
+Wholeshare solves collective procurement through autonomous agents and native PayPal financial primitives chained together.
 
-# Step 5: Execute PayPal Sandbox Order Authorization & Atomic Batch Capture
-node .cursor/skills/verify-syndicate/control-syndicate.mjs lock-escrow \
-  --clan-id "clan_flour_01" \
-  --dry-run false
-
-# Step 6: Simulate damaged delivery and APIMatic A2A pro-rata dispute refund
-node .cursor/skills/verify-syndicate/control-syndicate.mjs trigger-dispute \
-  --clan-id "clan_flour_01" \
-  --sme-index 2 \
-  --damage-pct 25
+```
++-------------------------------------------------------------------------------------------------+
+|                                     Wholeshare Platform Flow                                    |
+|                                                                                                 |
+|   [ Ingestion Pipeline ] ---> [ Autonomous Negotiation ] ---> [ Zero-Default PayPal Escrow ]    |
+|   - Invoices & POs             - Demand Aggregation           - Orders v2 Soft Holds            |
+|   - Spec Sheets (Protein %)    - Volume Discount Tiers        - Atomic Batch Capture            |
+|   - Google Drive Import        - ACP Shared Tokens            - Invoicing v2 QR Step-Up         |
+|   - Instinct Memory Graph      - Policy Sandwich Interceptor  - Shipment Tracking Verification  |
++-------------------------------------------------------------------------------------------------+
 ```
 
+### Chained PayPal Financial Rails
+
+1. **PayPal Orders v2 Soft Escrow Holds (`intent: "AUTHORIZE"`)**:
+   Members authorize their individual allocation through PayPal Orders v2 with authorization intent. Funds remain in the buyer account for up to 29 days without cash deduction until the coalition reaches 100 percent of its target volume.
+
+2. **Atomic Batch Capture**:
+   When the target volume is reached and supplier terms are locked, Wholeshare triggers atomic batch captures across all authorizations. If any single authorization fails, no funds are captured.
+
+3. **Invoicing v2 and QR Code Step-Up KYC**:
+   When an autonomous agent allocates spend exceeding a buyer pre-set threshold, Wholeshare automatically generates a PayPal Invoicing v2 draft with a base64 QR code. The business owner must scan and authorize the transaction on their mobile device before spend locks.
+
+4. **Shipment Tracking and Escrow Settlement**:
+   Wholeshare registers carrier tracking numbers with the PayPal Trackers API. Escrow releases to the wholesale supplier only after the carrier confirms package transit and delivery.
+
+5. **Customer Dispute Mediation**:
+   If an SME receives damaged goods, Wholeshare calculates pro-rata refund claims and coordinates resolution through the PayPal Customer Disputes API.
+
 ---
 
-## 2. How-To Guides (Solving Real Operational Tasks)
+## 3. Product Architecture and Core Subsystems
 
-### How to Connect an External Grok Bot or Telegram Agent
-External agents interact with Wholeshare through signed HMAC-SHA256 webhooks:
-1. Generate an HMAC secret in `.env`: `SYNDICATE_HMAC_SECRET="<hex-secret>"`.
-2. Send a `POST` request to `/api/sme/spawn` with the header:
-   `X-Syndicate-HMAC-SHA256: hmac_sha256(payload, secret)` and `X-Syndicate-Timestamp: <unix_epoch>`.
-3. If payload timestamp is within 300 seconds, the agent is enrolled and allocated a personal policy manifest in PostgreSQL.
+### A. Business Data and Document Ingestion Pipeline
+Wholeshare establishes each buyer procurement baseline from real operational records:
+- **Multi-Format Ingress**: Drag-and-drop web dropzone and API routes accepting PDF invoices, scanned receipts, CSV price sheets, and JSON order histories.
+- **Cloud Connectors**: Direct integration with Google Drive using OAuth2 tokens and file identifiers.
+- **Multimodal Extraction**: Layout-aware table extraction using Docling and Unstructured, normalizing raw vendor line items into canonical commodity SKUs and exact integer cents.
+- **Instinct Memory Graph**: Indexes procurement baselines into Git-tracked Markdown entity files under `data/memory/entities/`. Agents query historical moving average prices, delivery cadences, and protein specifications.
 
-### How to Import the Master Architecture Diagram into Excalidraw or tldraw
-1. Open [`docs/SYNDICATE_SPEC.md`](docs/SYNDICATE_SPEC.md).
-2. Copy the Mermaid code block in Section 2.
-3. Open [Excalidraw](https://excalidraw.com/), click `More Tools` &rarr; `Mermaid to Excalidraw`, or paste directly into [tldraw](https://tldraw.com/).
+### B. Agentic Commerce Protocol (ACP) and Security Interceptor
+All agent operations execute inside mathematical security boundaries:
+- **Shared Payment Tokens**: Delegated buyer mandates issued as HMAC-SHA256 signed tokens binding immutable buyer IDs, target SKUs, and spend caps.
+- **Policy Sandwich Interceptor**: Pure TypeScript policy engine enforcing 10 non-negotiable financial invariants prior to any PayPal API call. It rejects floating-point cents, negative volumes, and direct capture intents.
+- **Token Bucket Rate Limiting Gateway**: Protects agent reasoning endpoints against denial-of-service and compute exhaustion.
 
-### How to Inspect and Regenerate the Master Blueprint PDF
-Run the headless Chrome build script to regenerate the print-ready specification:
+### C. Financial Command Center and Interactive Workbench
+The browser interface provides real-time visibility into all commercial actions:
+- **AG Grid Financial Ledger**: Displays active syndicates, member pledges, escrow states, and PayPal transaction IDs with cell flash animations.
+- **One-Shot Agent Workbench**: Interactive console for driving the local Qwen 3.5 9B model across full commerce cycles, spend cap tests, and carrier tracking.
+- **Server-Sent Events (SSE)**: Live telemetry stream broadcasting FSM state transitions and transaction confirmations.
+
+---
+
+## 4. Quickstart: Running Wholeshare Locally
+
+### Prerequisites
+- Node.js version 20 or higher.
+- PayPal Developer account with Sandbox credentials.
+- Local Ollama running `qwen3.5:9b` (optional for local inference).
+
+### Setup and Verification
+
+1. Clone the repository and install dependencies:
 ```bash
-node scripts/generate-pdf.mjs
+git clone https://github.com/Siva-Sainath/WholeShare.git
+cd WholeShare
+npm install
 ```
-The output file is written to [`docs/SYNDICATE_SPEC.pdf`](docs/SYNDICATE_SPEC.pdf).
+
+2. Configure environment variables:
+```bash
+cp .env.example .env
+```
+Edit `.env` and provide your PayPal Sandbox Client ID and Secret:
+```ini
+PAYPAL_MODE=sandbox
+PAYPAL_CLIENT_ID="your_sandbox_client_id"
+PAYPAL_CLIENT_SECRET="your_sandbox_client_secret"
+```
+
+3. Run the environment doctor check:
+```bash
+npm run doctor
+```
+
+4. Run the automated test suite (81 tests executing against live PayPal Sandbox):
+```bash
+npm test
+```
+
+5. Start the web command center:
+```bash
+npm run dev
+```
+Open `http://localhost:3000` in your browser.
 
 ---
 
-## 3. Reference: Machinery, APIs & Data Structures
+## 5. API Reference and Route Directory
 
-### PayPal Business Primitives Chained
-* **Invoicing v2 (`create_invoice`, `generate_invoice_qr_code`):** Emits human-auditable invoices and scannable QR codes for step-up authentication.
-* **Orders v2 (`intent: "AUTHORIZE"`):** Places soft holds on member funds without deducting capital upfront.
-* **Orders v2 Capture (`pay_order`):** Executes simultaneous, atomic fund transfers only when 100% of Clan members authorize.
-* **Shipment Tracking v1 (`create_shipment_tracking`):** Verifies carrier delivery timestamps to bound the dispute filing window.
-* **Customer Disputes v1 (`provide_evidence`, `make_offer`, `create_refund`):** Mediates partial damaged-goods claims autonomously.
+### Business Data Ingestion
+- `POST /api/v1/ingest/upload`: Upload PDF, CSV, or JSON invoice records.
+- `POST /api/v1/ingest/google-drive`: Import procurement contracts directly from Google Drive.
+- `POST /api/v1/ingest/agent-dispatch`: Cryptographically signed HMAC ingress for external AI agents.
+- `GET /api/v1/ingest/documents`: Retrieve ingested records and historical pricing baselines.
 
-### Verification CLI Commands (`control-syndicate.mjs`)
-* `doctor`: Asserts runtime, database connection, PayPal Sandbox credentials, and port availability.
-* `seed-demo`: Loads reproducible fixtures with `--reset` support.
-* `lock-escrow`: Executes PayPal authorizations and batch capture with `--dry-run` validation.
-* `trigger-dispute`: Verifies delivery timestamp, submits damage photo hash, and returns refund transaction ID.
-* `snapshot`: Emits ARIA accessibility tree of the target component (e.g. `ag-grid-ledger`).
+### Coalition Negotiation and Escrow Execution
+- `POST /api/v1/sme/spawn`: Onboard an SME with an ACP mandate and spend cap.
+- `POST /api/v1/coalition/negotiate`: Run price discovery and volume discount calculations.
+- `POST /api/v1/coalition/lock`: Authorize member escrow soft holds via PayPal Orders v2.
+- `POST /api/v1/autopilot`: Execute a complete autonomous procurement cycle with local Qwen 3.5 9B.
+
+### Telemetry and Webhooks
+- `GET /api/v1/events`: Server-Sent Events stream for real-time frontend telemetry.
+- `GET /api/v1/ledger`: Query active syndicate coalitions and member escrow statuses.
+- `POST /api/v1/paypal/webhook`: Ingest dispute and payment capture events from PayPal.
+- `GET /.well-known/agentic-commerce.json`: Agentic Commerce Protocol discovery manifest.
 
 ---
 
-## 4. Explanation: Design Rationale, Anti-Fraud & pstack Philosophy
+## 6. Verification and Quality Standards
 
-### Why "Clash of Clans" Style Group Purchasing?
-Individual SMEs lack volume for wholesale pricing. By treating purchasing syndicates like cooperative "Clans", demand is pooled organically. Personal Agents negotiate pledges, verify live wholesale tiers via Kernel cloud browsers, and execute conditional commitments without counterparty default risk.
-
-### The 6-Layer FinTech Security & Anti-Fraud Architecture
-1. **Prompt-Injection Firewall:** Natural language LLM prompts never reach PayPal APIs directly; a deterministic TypeScript policy sandwich enforces mathematical limits.
-2. **Sybil & Collusion Defense:** Every participant must hold a verified PayPal KYB account with signed authorization before pledges count toward thresholds.
-3. **Cryptographic Webhook Verification:** Full validation of PayPal transmission signatures and HMAC headers.
-4. **Deterministic Idempotency:** Header `PayPal-Request-Id: hash(clan_id + sme_id + stage)` prevents duplicate financial mutations.
-5. **Multimodal Tamper Detection:** Perceptual photo hashing and carrier delivery verification prevent fabricated damage claims.
-6. **Human-in-the-Loop Step-Up:** Pledges above auto-spend caps require scanning a generated PayPal Invoice QR code.
-
-### The pstack Engineering Philosophy
-This project was designed, scaffolded, and tested using Lauren (`@poteto`)'s `pstack` methodology. Every component adheres to:
-* **"Verification is All You Need":** Automated verification scripts eliminate human bottlenecks.
-* **"Build the Lever":** The `control-syndicate.mjs` CLI provides deep, composable module control.
-* **Materialized Memory:** The [Feature Map](.cursor/skills/verify-syndicate/references/features/README.md) catalog saves LLM tokens and guides navigation.
-* **Prototyping over Abstract Planning:** Real code, switchers, and timing measurements answer questions faster than theoretical debates.
+Wholeshare enforces strict automated quality gates:
+- **Zero Simulation Standard**: All PayPal Developer API operations execute against live sandbox endpoints with zero mocked tokens.
+- **Feature Map Synchronization**: 20 feature maps cataloged under `.cursor/skills/` and `.agents/skills/`. Verified via `npm run lint:features`.
+- **Code Linter**: Codebase verified against deslop standards via `npm run lint`.
