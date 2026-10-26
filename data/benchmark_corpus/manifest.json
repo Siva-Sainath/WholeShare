@@ -1,0 +1,126 @@
+[
+  {
+    "id": "DOC-01",
+    "file": "01_sysco_commercial_invoice.png",
+    "format": "PNG",
+    "category": "REAL_COMMERCIAL_INVOICE_IMAGE",
+    "expectedVendor": "Sysco Artisan Baking",
+    "expectedItemsCount": 3,
+    "expectedTotalCents": 973592,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-02",
+    "file": "02_supermarket_receipt_real.png",
+    "format": "PNG",
+    "category": "REAL_RETAIL_RECEIPT_IMAGE",
+    "expectedVendor": null,
+    "expectedItemsCount": 1,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-03",
+    "file": "03_donut_b2b_invoice_real.png",
+    "format": "PNG",
+    "category": "HUGGINGFACE_B2B_INVOICE_IMAGE",
+    "expectedVendor": "Bradley-Andrade",
+    "expectedInvoiceNo": "97159829",
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-04",
+    "file": "04_distributor_multi_sheet.xlsx",
+    "format": "XLSX",
+    "category": "MULTI_SHEET_SPREADSHEET",
+    "expectedVendor": "Sysco Central Texas Wholesale",
+    "expectedItemsCount": 3,
+    "expectedTotalCents": 1129040,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-05",
+    "file": "05_pharma_procurement.csv",
+    "format": "CSV",
+    "category": "PUBLIC_PROCUREMENT_CSV",
+    "expectedItemsCount": 25,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-06",
+    "file": "06_b2b_procurement_po.csv",
+    "format": "CSV",
+    "category": "QUOTED_RFC_PO_CSV",
+    "expectedVendor": "King Arthur Commercial",
+    "expectedItemsCount": 3,
+    "expectedTotalCents": 1140515,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-07",
+    "file": "07_vector_digital_invoice.pdf",
+    "format": "PDF",
+    "category": "VECTOR_DIGITAL_INVOICE_PDF",
+    "expectedVendor": "Bay State Milling Wholesale",
+    "expectedItemsCount": 3,
+    "expectedTotalCents": 826610,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-08",
+    "file": "08_scanned_archive_bill.pdf",
+    "format": "PDF",
+    "category": "SCANNED_ARCHIVE_PDF",
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-09",
+    "file": "09_standard_b2b_contract.json",
+    "format": "JSON",
+    "category": "CANONICAL_B2B_JSON",
+    "expectedVendor": "Sysco Artisan Baking Supply",
+    "expectedItemsCount": 2,
+    "expectedTotalCents": 568650,
+    "mustPassSafety": true,
+    "expectedStatus": "SUCCESS"
+  },
+  {
+    "id": "DOC-10",
+    "file": "10_adversarial_floating_cents.json",
+    "format": "JSON",
+    "category": "ADVERSARIAL_FLOATING_CENTS",
+    "mustPassSafety": true,
+    "expectedStatus": "NORMALIZED_INTEGER_CENTS"
+  },
+  {
+    "id": "DOC-11",
+    "file": "11_adversarial_tampered_hmac.json",
+    "format": "JSON",
+    "category": "ADVERSARIAL_TAMPERED_HMAC",
+    "mustPassSafety": true,
+    "expectedStatus": "REJECTED_SIGNATURE"
+  },
+  {
+    "id": "DOC-12",
+    "file": "12_adversarial_stale_replay.json",
+    "format": "JSON",
+    "category": "ADVERSARIAL_STALE_REPLAY",
+    "mustPassSafety": true,
+    "expectedStatus": "REJECTED_REPLAY"
+  },
+  {
+    "id": "DOC-13",
+    "file": "13_adversarial_spend_cap_exceeded.json",
+    "format": "JSON",
+    "category": "ADVERSARIAL_SPEND_CAP_EXCEEDED",
+    "mustPassSafety": true,
+    "expectedStatus": "REJECTED_SPEND_CAP"
+  }
+]

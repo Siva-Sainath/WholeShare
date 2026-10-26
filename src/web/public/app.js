@@ -297,6 +297,7 @@ function processUploadedFile(file) {
   fileSizeLabel.textContent = `${Math.round(file.size / 1024)} KB`;
 
   const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp)$/i.test(file.name);
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name) || file.type.includes("spreadsheet") || file.type.includes("excel");
 
   if (isImage) {
     const reader = new FileReader();
@@ -313,6 +314,25 @@ function processUploadedFile(file) {
       };
     };
     reader.readAsDataURL(file);
+  } else if (isExcel) {
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target.result;
+      const commaIdx = dataUrl.indexOf(",");
+      const base64Content = dataUrl.slice(commaIdx + 1);
+      if (textContainer) {
+        textContainer.textContent = `[Excel Spreadsheet Workbook: ${file.name}]\nFormat: Office Open XML (.xlsx)\nSize: ${file.size} bytes\nReady for multi-sheet dynamic table extraction.`;
+        textContainer.style.display = "block";
+      }
+      if (imgContainer) imgContainer.style.display = "none";
+      activeUploadPayload = {
+        fileName: file.name,
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        base64Content,
+        buyerId: "sme_artisan_trial"
+      };
+    };
+    reader.readAsDataURL(file);
   } else {
     const reader = new FileReader();
     reader.onload = (evt) => {
@@ -324,7 +344,7 @@ function processUploadedFile(file) {
       if (imgContainer) imgContainer.style.display = "none";
       activeUploadPayload = {
         fileName: file.name,
-        mimeType: file.type || "application/json",
+        mimeType: file.name.endsWith(".csv") ? "text/csv" : "application/json",
         content: text,
         buyerId: "sme_artisan_trial"
       };
@@ -341,7 +361,86 @@ async function loadSampleDocument(type) {
   const imgEl = document.getElementById("previewImageElement");
   const textContainer = document.getElementById("textPreviewContainer");
 
-  if (type === "json") {
+  if (type === "realistic-image") {
+    try {
+      const res = await fetch("/realistic_sysco_commercial_invoice.png");
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const dataUrl = evt.target.result;
+        if (fileNameLabel) fileNameLabel.textContent = "realistic_sysco_commercial_invoice.png";
+        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
+        if (imgEl) imgEl.src = dataUrl;
+        if (imgContainer) imgContainer.style.display = "block";
+        if (textContainer) textContainer.style.display = "none";
+        if (previewCard) previewCard.style.display = "block";
+
+        activeUploadPayload = {
+          fileName: "realistic_sysco_commercial_invoice.png",
+          mimeType: "image/png",
+          content: dataUrl,
+          buyerId: "sme_artisan_trial"
+        };
+        await submitActiveIngestion();
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      alert("Failed to load sample image: " + err.message);
+    }
+  } else if (type === "xlsx") {
+    try {
+      const res = await fetch("/sysco_distributor_order.xlsx");
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const dataUrl = evt.target.result;
+        const commaIdx = dataUrl.indexOf(",");
+        const base64Content = dataUrl.slice(commaIdx + 1);
+        if (fileNameLabel) fileNameLabel.textContent = "sysco_distributor_order.xlsx";
+        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
+        if (textContainer) {
+          textContainer.textContent = `[Excel Workbook: sysco_distributor_order.xlsx]\nSheets: 'Invoice & PO', 'Quality Specs'\nStatus: Multi-column tabular manifest loaded with quantities and prices.`;
+          textContainer.style.display = "block";
+        }
+        if (imgContainer) imgContainer.style.display = "none";
+        if (previewCard) previewCard.style.display = "block";
+
+        activeUploadPayload = {
+          fileName: "sysco_distributor_order.xlsx",
+          mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          base64Content,
+          buyerId: "sme_artisan_trial"
+        };
+        await submitActiveIngestion();
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      alert("Failed to load sample XLSX: " + err.message);
+    }
+  } else if (type === "csv") {
+    try {
+      const res = await fetch("/b2b_procurement_order.csv");
+      const text = await res.text();
+      if (fileNameLabel) fileNameLabel.textContent = "b2b_procurement_order.csv";
+      if (fileSizeLabel) fileSizeLabel.textContent = `${(text.length / 1024).toFixed(1)} KB`;
+      if (textContainer) {
+        textContainer.textContent = text;
+        textContainer.style.display = "block";
+      }
+      if (imgContainer) imgContainer.style.display = "none";
+      if (previewCard) previewCard.style.display = "block";
+
+      activeUploadPayload = {
+        fileName: "b2b_procurement_order.csv",
+        mimeType: "text/csv",
+        content: text,
+        buyerId: "sme_artisan_trial"
+      };
+      await submitActiveIngestion();
+    } catch (err) {
+      alert("Failed to load sample CSV: " + err.message);
+    }
+  } else if (type === "json") {
     const sample = {
       vendorName: "Sysco Food Services",
       invoiceNumber: `INV_SYS_${Date.now()}`,
@@ -381,50 +480,6 @@ async function loadSampleDocument(type) {
       buyerId: "sme_artisan_trial"
     };
     await submitActiveIngestion();
-  } else if (type === "csv") {
-    const csvContent = "Description,Quantity,UnitPriceUSD\nOrganic Artisan Bread Flour 50lb,180,28.00\nOrganic Evaporated Cane Sugar 50lb,60,34.00";
-    if (fileNameLabel) fileNameLabel.textContent = "purchase_order_oct.csv";
-    if (fileSizeLabel) fileSizeLabel.textContent = "0.4 KB";
-    if (textContainer) {
-      textContainer.textContent = csvContent;
-      textContainer.style.display = "block";
-    }
-    if (imgContainer) imgContainer.style.display = "none";
-    if (previewCard) previewCard.style.display = "block";
-
-    activeUploadPayload = {
-      fileName: "purchase_order_oct.csv",
-      mimeType: "text/csv",
-      content: csvContent,
-      buyerId: "sme_artisan_trial"
-    };
-    await submitActiveIngestion();
-  } else if (type === "image") {
-    try {
-      const res = await fetch("/sample_receipt.png");
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const dataUrl = evt.target.result;
-        if (fileNameLabel) fileNameLabel.textContent = "scanned_invoice_bill.png";
-        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
-        if (imgEl) imgEl.src = dataUrl;
-        if (imgContainer) imgContainer.style.display = "block";
-        if (textContainer) textContainer.style.display = "none";
-        if (previewCard) previewCard.style.display = "block";
-
-        activeUploadPayload = {
-          fileName: "scanned_invoice_bill.png",
-          mimeType: "image/png",
-          content: dataUrl,
-          buyerId: "sme_artisan_trial"
-        };
-        await submitActiveIngestion();
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      alert("Failed to load sample image: " + err.message);
-    }
   }
 }
 

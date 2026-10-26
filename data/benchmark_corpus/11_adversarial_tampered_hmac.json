@@ -1,0 +1,14 @@
+{
+  "buyerId": "sme_tampered_attacker",
+  "vendorName": "Counterfeit Mills",
+  "invoiceNumber": "INV_FORGED_999",
+  "paymentTerms": "NET_15",
+  "lineItems": [
+    {
+      "description": "Organic Artisan Bread Flour 50lb",
+      "quantity": 500,
+      "unitPriceCents": 2500
+    }
+  ],
+  "forgedSignature": "deadbeef00112233445566778899aabbccddeeff00112233445566778899aabb"
+}

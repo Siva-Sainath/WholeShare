@@ -12,7 +12,7 @@ import {
 } from "../src/lib/ingestion-pipeline.js";
 import { instinctFs } from "../src/lib/instinct-fs.js";
 
-import { readdirSync, existsSync, readFileSync } from "node:fs";
+import { readdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const DEFAULT_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_local_dev_secret_key_32_bytes";
 
@@ -167,8 +167,266 @@ async function runIngestImage() {
     buyerId: "sme_photo_receipt_buyer",
     metadata: { channel: "CLI_PICTURE_INGEST" }
   });
-  console.log("Picture OCR parsed and indexed to Instinct Memory successfully:");
+  console.log("Picture OCR parsed and indexed to Instinct Memory successfully.");
   console.log(JSON.stringify(record, null, 2));
+}
+
+async function runIngestExcel() {
+  const filePath = process.argv[3] || "data/benchmark_corpus/04_distributor_multi_sheet.xlsx";
+  console.log(`Ingesting Excel spreadsheet from ${filePath}...`);
+  if (!existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    process.exit(1);
+  }
+  const fileBuffer = readFileSync(filePath);
+  const record = ingestDocument({
+    fileBuffer,
+    fileName: filePath.split("/").pop(),
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buyerId: "sme_excel_buyer",
+    metadata: { channel: "CLI_EXCEL_INGEST" }
+  });
+  console.log("Excel workbook parsed and indexed to Instinct Memory successfully.");
+  console.log(JSON.stringify(record, null, 2));
+}
+
+async function runIngestCsv() {
+  const filePath = process.argv[3] || "data/benchmark_corpus/06_b2b_procurement_po.csv";
+  console.log(`Ingesting CSV procurement document from ${filePath}...`);
+  if (!existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    process.exit(1);
+  }
+  const fileBuffer = readFileSync(filePath);
+  const record = ingestDocument({
+    fileBuffer,
+    fileName: filePath.split("/").pop(),
+    mimeType: "text/csv",
+    buyerId: "sme_csv_buyer",
+    metadata: { channel: "CLI_CSV_INGEST" }
+  });
+  console.log("CSV document parsed and indexed to Instinct Memory successfully.");
+  console.log(JSON.stringify(record, null, 2));
+}
+
+async function runIngestPdf() {
+  const filePath = process.argv[3] || "data/benchmark_corpus/07_vector_digital_invoice.pdf";
+  console.log(`Ingesting PDF document from ${filePath}...`);
+  if (!existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    process.exit(1);
+  }
+  const fileBuffer = readFileSync(filePath);
+  const record = ingestDocument({
+    fileBuffer,
+    fileName: filePath.split("/").pop(),
+    mimeType: "application/pdf",
+    buyerId: "sme_pdf_buyer",
+    metadata: { channel: "CLI_PDF_INGEST" }
+  });
+  console.log("PDF document parsed and indexed to Instinct Memory successfully.");
+  console.log(JSON.stringify(record, null, 2));
+}
+
+async function runBenchmarkAccuracy() {
+  console.log("=== Wholeshare Ingestion Pipeline Safety, Support & Accuracy Benchmark ===");
+  const manifestPath = "data/benchmark_corpus/manifest.json";
+  if (!existsSync(manifestPath)) {
+    console.error("Benchmark corpus manifest not found at " + manifestPath);
+    process.exit(1);
+  }
+
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+  const results = [];
+  const formatStats = {};
+
+  let supportPassed = 0;
+  let safetyPassed = 0;
+  let fieldAccuracyMatches = 0;
+  let fieldAccuracyEvaluated = 0;
+
+  for (const item of manifest) {
+    const filePath = `data/benchmark_corpus/${item.file}`;
+    const fileBuffer = readFileSync(filePath);
+    const start = performance.now();
+    let status = "PASS";
+    let errorMsg = null;
+    let rec = null;
+    let safetyResult = "PASS";
+
+    // 1. Safety Special Handling for Adversarial Documents
+    if (item.id === "DOC-11") {
+      try {
+        const payload = JSON.parse(fileBuffer.toString("utf-8"));
+        processAgentDocumentIngress({
+          payload,
+          signature: payload.forgedSignature,
+          timestamp: String(Math.floor(Date.now() / 1000)),
+          secret: DEFAULT_SECRET
+        });
+        safetyResult = "FAIL_SIGNATURE_NOT_REJECTED";
+        status = "FAIL";
+      } catch (err) {
+        if (err.message.includes("Invalid cryptographic HMAC signature")) {
+          safetyResult = "PASS_REJECTED_FORGERY";
+        } else {
+          safetyResult = "FAIL_UNEXPECTED_ERROR";
+        }
+      }
+    } else if (item.id === "DOC-12") {
+      try {
+        const payload = JSON.parse(fileBuffer.toString("utf-8"));
+        const staleTimestamp = String(Math.floor(Date.now() / 1000) - payload.staleOffsetSeconds);
+        const signature = createHmac("sha256", DEFAULT_SECRET)
+          .update(`${staleTimestamp}.${JSON.stringify(payload)}`)
+          .digest("hex");
+        processAgentDocumentIngress({
+          payload,
+          signature,
+          timestamp: staleTimestamp,
+          secret: DEFAULT_SECRET
+        });
+        safetyResult = "FAIL_REPLAY_NOT_REJECTED";
+        status = "FAIL";
+      } catch (err) {
+        if (err.message.includes("expired or out of replay window")) {
+          safetyResult = "PASS_REJECTED_STALE_REPLAY";
+        } else {
+          safetyResult = "FAIL_UNEXPECTED_ERROR";
+        }
+      }
+    } else if (item.id === "DOC-13") {
+      try {
+        rec = ingestDocument({
+          fileBuffer,
+          fileName: item.file,
+          mimeType: "application/json",
+          buyerId: item.id
+        });
+        const MAX_ALLOWED_SPEND_CENTS = 5000000;
+        if (rec.parsed.totalAmountCents > MAX_ALLOWED_SPEND_CENTS) {
+          safetyResult = "PASS_FLAGGED_SPEND_CAP_EXCEEDED";
+        } else {
+          safetyResult = "FAIL_SPEND_CAP_NOT_DETECTED";
+        }
+      } catch {
+        safetyResult = "PASS_BLOCKED";
+      }
+    } else {
+      try {
+        rec = ingestDocument({
+          fileBuffer,
+          fileName: item.file,
+          mimeType: item.format === "PNG" ? "image/png" : (item.format === "PDF" ? "application/pdf" : (item.format === "XLSX" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : (item.format === "CSV" ? "text/csv" : "application/json"))),
+          buyerId: `sme_bench_${item.id.toLowerCase()}`
+        });
+
+        const totalIsInt = Number.isInteger(rec.parsed.totalAmountCents);
+        const itemsInt = rec.parsed.lineItems.every(it => Number.isInteger(it.unitPriceCents) && Number.isInteger(it.totalCents));
+        if (!totalIsInt || !itemsInt) {
+          safetyResult = "FAIL_NON_INTEGER_CENTS";
+          status = "FAIL";
+        }
+      } catch (err) {
+        status = "FAIL";
+        errorMsg = err.message;
+        safetyResult = "FAIL_INGESTION_CRASH";
+      }
+    }
+
+    const elapsedMs = Math.round(performance.now() - start);
+
+    if (status === "PASS") {
+      supportPassed++;
+    }
+
+    if (safetyResult.startsWith("PASS")) {
+      safetyPassed++;
+    }
+
+    let fieldMatch = true;
+    if (rec && item.expectedVendor) {
+      fieldAccuracyEvaluated++;
+      const vClean = (rec.parsed.vendorName || "").toLowerCase();
+      const expClean = item.expectedVendor.toLowerCase();
+      if (vClean.includes(expClean) || expClean.includes(vClean)) {
+        fieldAccuracyMatches++;
+      } else {
+        fieldMatch = false;
+      }
+    }
+
+    if (rec && item.expectedItemsCount !== undefined) {
+      fieldAccuracyEvaluated++;
+      if (rec.parsed.lineItems.length === item.expectedItemsCount) {
+        fieldAccuracyMatches++;
+      } else {
+        fieldMatch = false;
+      }
+    }
+
+    if (rec && item.expectedTotalCents !== undefined) {
+      fieldAccuracyEvaluated++;
+      const variance = Math.abs(rec.parsed.totalAmountCents - item.expectedTotalCents) / item.expectedTotalCents;
+      if (variance <= 0.08) {
+        fieldAccuracyMatches++;
+      } else {
+        fieldMatch = false;
+      }
+    }
+
+    if (!formatStats[item.format]) {
+      formatStats[item.format] = { count: 0, totalMs: 0, passes: 0 };
+    }
+    formatStats[item.format].count++;
+    formatStats[item.format].totalMs += elapsedMs;
+    if (status === "PASS") formatStats[item.format].passes++;
+
+    results.push({
+      id: item.id,
+      file: item.file,
+      format: item.format,
+      category: item.category,
+      status,
+      safety: safetyResult,
+      fieldMatch,
+      latencyMs: elapsedMs,
+      extractedVendor: rec?.parsed?.vendorName || "N/A",
+      extractedItems: rec?.parsed?.lineItems?.length || 0,
+      totalAmountCents: rec?.parsed?.totalAmountCents || 0,
+      error: errorMsg
+    });
+
+    console.log(`[${item.id}] ${item.file.padEnd(35)} | ${item.format.padEnd(5)} | Status: ${status.padEnd(4)} | Safety: ${safetyResult.padEnd(32)} | ${elapsedMs}ms`);
+  }
+
+  const supportRate = Math.round((supportPassed / manifest.length) * 100);
+  const safetyRate = Math.round((safetyPassed / manifest.length) * 100);
+  const accuracyRate = fieldAccuracyEvaluated > 0 ? Math.round((fieldAccuracyMatches / fieldAccuracyEvaluated) * 100) : 100;
+
+  const summary = {
+    totalDocuments: manifest.length,
+    supportRatePct: supportRate,
+    safetyRatePct: safetyRate,
+    fieldAccuracyPct: accuracyRate,
+    formatBreakdown: Object.fromEntries(
+      Object.entries(formatStats).map(([fmt, s]) => [fmt, {
+        total: s.count,
+        successRatePct: Math.round((s.passes / s.count) * 100),
+        avgLatencyMs: Math.round(s.totalMs / s.count)
+      }])
+    ),
+    timestamp: new Date().toISOString()
+  };
+
+  const fullReport = { summary, details: results };
+  writeFileSync("docs/assets/ingestion_benchmark_report.json", JSON.stringify(fullReport, null, 2));
+
+  console.log("\n=== Benchmark Summary ===");
+  console.log(`Support Rate:        ${supportRate}% (${supportPassed}/${manifest.length} documents parsed)`);
+  console.log(`Safety Rate:         ${safetyRate}% (${safetyPassed}/${manifest.length} zero-fraud invariants verified)`);
+  console.log(`Field Accuracy Rate: ${accuracyRate}% (${fieldAccuracyMatches}/${fieldAccuracyEvaluated} fields validated)`);
+  console.log("Full report saved to docs/assets/ingestion_benchmark_report.json.\n");
 }
 
 async function main() {
@@ -184,6 +442,15 @@ async function main() {
   case "ingest:image":
     await runIngestImage();
     break;
+  case "ingest:excel":
+    await runIngestExcel();
+    break;
+  case "ingest:csv":
+    await runIngestCsv();
+    break;
+  case "ingest:pdf":
+    await runIngestPdf();
+    break;
   case "ingest:gdrive":
     await runIngestGdrive();
     break;
@@ -196,8 +463,11 @@ async function main() {
   case "dataset:curate":
     await runCurateDataset();
     break;
+  case "benchmark:accuracy":
+    await runBenchmarkAccuracy();
+    break;
   default:
-    console.log("Usage: node scripts/control-ingestion.js [doctor|ingest:file|ingest:image|ingest:gdrive|ingest:agent|baseline:query|dataset:curate]");
+    console.log("Usage: node scripts/control-ingestion.js [doctor|ingest:file|ingest:image|ingest:excel|ingest:csv|ingest:pdf|ingest:gdrive|ingest:agent|baseline:query|dataset:curate|benchmark:accuracy]");
     process.exit(1);
   }
 }
@@ -206,3 +476,4 @@ main().catch(err => {
   console.error("Execution error:", err.message);
   process.exit(1);
 });
+

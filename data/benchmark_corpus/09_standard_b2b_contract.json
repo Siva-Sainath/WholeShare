@@ -1,0 +1,22 @@
+{
+  "vendorName": "Sysco Artisan Baking Supply",
+  "invoiceNumber": "INV_SYSCO_98421",
+  "invoiceDate": "2026-10-24",
+  "paymentTerms": "NET_30",
+  "lineItems": [
+    {
+      "description": "Organic Artisan Bread Flour 50lb Bag",
+      "quantity": 150,
+      "unitPriceCents": 2850,
+      "proteinPct": 12.7,
+      "organic": true
+    },
+    {
+      "description": "Stone Ground Whole Wheat Flour 50lb",
+      "quantity": 50,
+      "unitPriceCents": 2600,
+      "proteinPct": 13.2,
+      "organic": true
+    }
+  ]
+}

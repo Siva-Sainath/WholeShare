@@ -1,0 +1,14 @@
+{
+  "buyerId": "sme_replay_attacker",
+  "vendorName": "Replay Corporation",
+  "invoiceNumber": "INV_STALE_123",
+  "paymentTerms": "NET_15",
+  "lineItems": [
+    {
+      "description": "Organic Artisan Bread Flour 50lb",
+      "quantity": 100,
+      "unitPriceCents": 2800
+    }
+  ],
+  "staleOffsetSeconds": 7200
+}

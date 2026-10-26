@@ -9,10 +9,13 @@ import {
   processAgentDocumentIngress,
   queryProcurementBaseline,
   curateProcurementDataset,
-  isImageBuffer
+  isImageBuffer,
+  isPdfBuffer,
+  isExcelBuffer
 } from "../src/lib/ingestion-pipeline.js";
 import { executeTool } from "../src/lib/tool-registry.js";
 import { instinctFs } from "../src/lib/instinct-fs.js";
+import { readFileSync, existsSync } from "node:fs";
 
 const TEST_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_local_dev_secret_key_32_bytes";
 
@@ -210,4 +213,65 @@ test("ingestDocument handles picture and scanned bill ingestion with optical OCR
   assert.ok(record.parsed.totalAmountCents > 0);
   assert.equal(Number.isInteger(record.parsed.totalAmountCents), true);
 });
+
+test("isPdfBuffer and isExcelBuffer accurately identify binary headers", () => {
+  const pdfHeader = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2D]);
+  const xlsxHeader = Buffer.from([0x50, 0x4B, 0x03, 0x04]);
+  const plainText = Buffer.from("Vendor,Item,Qty,Price");
+
+  assert.equal(isPdfBuffer(pdfHeader), true);
+  assert.equal(isPdfBuffer(plainText), false);
+  assert.equal(isExcelBuffer(xlsxHeader), true);
+  assert.equal(isExcelBuffer(plainText), false);
+});
+
+test("ingestDocument handles vector PDF invoices and scanned archive PDF bills", () => {
+  const vectorPdfPath = "data/benchmark_corpus/07_vector_digital_invoice.pdf";
+  if (!existsSync(vectorPdfPath)) return;
+
+  const pdfBuffer = readFileSync(vectorPdfPath);
+  const record = ingestDocument({
+    fileBuffer: pdfBuffer,
+    fileName: "vector_invoice.pdf",
+    mimeType: "application/pdf",
+    buyerId: "sme_pdf_buyer"
+  });
+
+  assert.equal(record.status, "PROCESSED");
+  assert.equal(record.parsed.extractionMethod, "PDF_DOCUMENT_PARSER");
+  assert.equal(record.parsed.vendorName, "Bay State Milling Wholesale");
+  assert.equal(record.parsed.lineItems.length, 3);
+  assert.equal(Number.isInteger(record.parsed.totalAmountCents), true);
+});
+
+test("ingestDocument handles multi-sheet Excel workbooks and RFC CSV documents", () => {
+  const xlsxPath = "data/benchmark_corpus/04_distributor_multi_sheet.xlsx";
+  const csvPath = "data/benchmark_corpus/06_b2b_procurement_po.csv";
+  if (!existsSync(xlsxPath) || !existsSync(csvPath)) return;
+
+  const xlsxRecord = ingestDocument({
+    fileBuffer: readFileSync(xlsxPath),
+    fileName: "distributor_order.xlsx",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buyerId: "sme_excel_buyer"
+  });
+
+  assert.equal(xlsxRecord.status, "PROCESSED");
+  assert.equal(xlsxRecord.parsed.extractionMethod, "EXCEL_XLSX_PARSER");
+  assert.equal(xlsxRecord.parsed.vendorName, "Sysco Central Texas Wholesale");
+  assert.equal(xlsxRecord.parsed.lineItems.length, 3);
+  assert.equal(Number.isInteger(xlsxRecord.parsed.totalAmountCents), true);
+
+  const csvRecord = ingestDocument({
+    fileBuffer: readFileSync(csvPath),
+    fileName: "procurement_po.csv",
+    mimeType: "text/csv",
+    buyerId: "sme_csv_buyer"
+  });
+
+  assert.equal(csvRecord.status, "PROCESSED");
+  assert.equal(csvRecord.parsed.lineItems.length, 3);
+  assert.equal(Number.isInteger(csvRecord.parsed.totalAmountCents), true);
+});
+
 

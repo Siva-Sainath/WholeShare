@@ -1,0 +1,18 @@
+{
+  "vendorName": "Shady Brokerage LLC",
+  "invoiceNumber": "INV_FRACTIONAL_001",
+  "invoiceDate": "2026-10-25",
+  "paymentTerms": "NET_30",
+  "lineItems": [
+    {
+      "description": "Organic Artisan Bread Flour 50lb Bag",
+      "quantity": 100,
+      "unitPrice": 28.509999999999
+    },
+    {
+      "description": "Stone Ground Whole Wheat Flour 50lb",
+      "quantity": 100,
+      "unitPrice": 26.004999999999
+    }
+  ]
+}
