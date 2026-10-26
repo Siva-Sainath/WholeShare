@@ -1,0 +1,82 @@
+[
+  {
+    "id": "sme_austin_01",
+    "businessName": "Austin Artisan Bakery",
+    "industry": "Horeca / Bakery",
+    "region": "Austin, TX",
+    "annualSpendUsd": 180000,
+    "creditTier": "A",
+    "paypalVerifiedKyb": true,
+    "targetCategories": [
+      "organic-flour-50lb",
+      "kraft-pastry-boxes"
+    ],
+    "typicalCycle": "WEEKLY_SPOT",
+    "maxAutoAuthorizeUsd": 1500,
+    "activeReceivablesUsd": 420
+  },
+  {
+    "id": "sme_bean_02",
+    "businessName": "Bean & Leaf Coffee Roasters",
+    "industry": "Horeca / Specialty Beverage",
+    "region": "Portland, OR",
+    "annualSpendUsd": 340000,
+    "creditTier": "A",
+    "paypalVerifiedKyb": true,
+    "targetCategories": [
+      "specialty-coffee-green-60kg",
+      "compostable-cups-16oz"
+    ],
+    "typicalCycle": "MONTHLY_RECURRING",
+    "maxAutoAuthorizeUsd": 3000,
+    "activeReceivablesUsd": 1100
+  },
+  {
+    "id": "sme_pacific_03",
+    "businessName": "Pacific Coast Green Electronics",
+    "industry": "Manufacturing / Consumer Hardware",
+    "region": "San Jose, CA",
+    "annualSpendUsd": 1200000,
+    "creditTier": "AAA",
+    "paypalVerifiedKyb": true,
+    "targetCategories": [
+      "ocean-freight-40ft-shanghai-la",
+      "esd-packaging-trays"
+    ],
+    "typicalCycle": "QUARTERLY_CONTRACT",
+    "maxAutoAuthorizeUsd": 10000,
+    "activeReceivablesUsd": 8500
+  },
+  {
+    "id": "sme_green_04",
+    "businessName": "GreenLeaf Organics Cafe",
+    "industry": "Horeca / Fast Casual",
+    "region": "Denver, CO",
+    "annualSpendUsd": 95000,
+    "creditTier": "B",
+    "paypalVerifiedKyb": true,
+    "targetCategories": [
+      "organic-flour-50lb",
+      "compostable-cups-16oz"
+    ],
+    "typicalCycle": "BIWEEKLY_SPOT",
+    "maxAutoAuthorizeUsd": 800,
+    "activeReceivablesUsd": 150
+  },
+  {
+    "id": "sme_midwest_05",
+    "businessName": "Midwest Eco-Packaging Supply",
+    "industry": "Wholesale Distributor",
+    "region": "Chicago, IL",
+    "annualSpendUsd": 850000,
+    "creditTier": "AA",
+    "paypalVerifiedKyb": true,
+    "targetCategories": [
+      "kraft-pastry-boxes",
+      "compostable-cups-16oz"
+    ],
+    "typicalCycle": "MONTHLY_RECURRING",
+    "maxAutoAuthorizeUsd": 5000,
+    "activeReceivablesUsd": 3200
+  }
+]

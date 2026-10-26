@@ -1,0 +1,74 @@
+services:
+  # Next.js Frontend & API Orchestrator
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: syndicate-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/syndicate_pay?schema=public
+      - REDIS_URL=redis://redis:6379
+      - PAYPAL_MODE=sandbox
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Managed PostgreSQL 16
+  postgres:
+    image: postgres:16-alpine
+    container_name: syndicate-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=syndicate_pay
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d syndicate_pay"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # In-Memory Cache & Distributed Rate Limiter
+  redis:
+    image: redis:7-alpine
+    container_name: syndicate-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Python Microservice (Inference & Forensic APIMatic Validation)
+  python-agent:
+    image: python:3.12-alpine
+    container_name: syndicate-python-microservice
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./scripts:/app/scripts
+    working_dir: /app
+    command: python3 -m http.server 8000
+
+  # NGINX Reverse Proxy, SSE Unbuffering & Network Rate Limiting
+  nginx:
+    image: nginx:alpine
+    container_name: syndicate-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:

@@ -1,0 +1,110 @@
+[
+  {
+    "sku": "organic-flour-50lb",
+    "name": "Golden Fields Organic Hard Red Wheat Flour (50 lb Bag)",
+    "bracket": "SHORT_TERM_SPOT",
+    "baseUnit": "Bag",
+    "basePriceUsd": 10,
+    "tiers": [
+      {
+        "tier": 1,
+        "minUnits": 100,
+        "priceUsd": 10,
+        "discountPct": 0
+      },
+      {
+        "tier": 2,
+        "minUnits": 500,
+        "priceUsd": 7.2,
+        "discountPct": 28
+      },
+      {
+        "tier": 3,
+        "minUnits": 1000,
+        "priceUsd": 5.8,
+        "discountPct": 42
+      }
+    ]
+  },
+  {
+    "sku": "specialty-coffee-green-60kg",
+    "name": "Ethiopian Yirgacheffe Grade 1 Green Coffee (60 kg Jute Bag)",
+    "bracket": "SHORT_TERM_SPOT",
+    "baseUnit": "Bag",
+    "basePriceUsd": 420,
+    "tiers": [
+      {
+        "tier": 1,
+        "minUnits": 10,
+        "priceUsd": 420,
+        "discountPct": 0
+      },
+      {
+        "tier": 2,
+        "minUnits": 50,
+        "priceUsd": 336,
+        "discountPct": 20
+      },
+      {
+        "tier": 3,
+        "minUnits": 100,
+        "priceUsd": 285,
+        "discountPct": 32
+      }
+    ]
+  },
+  {
+    "sku": "compostable-cups-16oz",
+    "name": "Custom Printed PLA-Lined Compostable Hot Cups (Case of 1,000)",
+    "bracket": "RECURRING_MANUFACTURING",
+    "baseUnit": "Case",
+    "basePriceUsd": 95,
+    "tiers": [
+      {
+        "tier": 1,
+        "minUnits": 20,
+        "priceUsd": 95,
+        "discountPct": 0
+      },
+      {
+        "tier": 2,
+        "minUnits": 100,
+        "priceUsd": 71.25,
+        "discountPct": 25
+      },
+      {
+        "tier": 3,
+        "minUnits": 250,
+        "priceUsd": 57,
+        "discountPct": 40
+      }
+    ]
+  },
+  {
+    "sku": "ocean-freight-40ft-shanghai-la",
+    "name": "40ft High Cube Ocean Freight Slot (Shanghai Port -> Port of Los Angeles)",
+    "bracket": "HIGH_STAKES_LOGISTICS",
+    "baseUnit": "TEU Slot (20ft equivalent)",
+    "basePriceUsd": 3200,
+    "tiers": [
+      {
+        "tier": 1,
+        "minUnits": 2,
+        "priceUsd": 3200,
+        "discountPct": 0
+      },
+      {
+        "tier": 2,
+        "minUnits": 10,
+        "priceUsd": 2400,
+        "discountPct": 25
+      },
+      {
+        "tier": 3,
+        "minUnits": 20,
+        "priceUsd": 1950,
+        "discountPct": 39
+      }
+    ]
+  }
+]

@@ -1,0 +1,199 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Wholeshare B2B Group Purchasing & Multiparty Escrow API",
+    "description": "Autonomous multi-agent escrow and B2B group purchasing platform built on PayPal for Business and verified via APIMatic typed SDKs.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://wholeshare.onrender.com",
+      "description": "Production Cloud Deployment (Render)"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health & Doctor Check",
+        "operationId": "getHealthStatus",
+        "responses": {
+          "200": {
+            "description": "Environment and service health report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sme/spawn": {
+      "post": {
+        "summary": "Spawn SME Agent & Validate Policy",
+        "operationId": "spawnSmeAgent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpawnSmeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SME onboarded with active policy manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpawnSmeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/escrow/lock": {
+      "post": {
+        "summary": "Lock Multiparty Escrow via PayPal Orders v2",
+        "operationId": "lockMultipartyEscrow",
+        "parameters": [
+          {
+            "name": "PayPal-Request-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Deterministic idempotency key"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LockEscrowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PayPal Orders authorized and batch capture scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LockEscrowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/disputes/file": {
+      "post": {
+        "summary": "File Damaged Goods Dispute via APIMatic",
+        "operationId": "fileDisputeClaim",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeClaimRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pro-rata dispute settled with partial refund",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeClaimResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthReport": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "HEALTHY" },
+          "paypalSandboxActive": { "type": "boolean", "example": true },
+          "databaseConnected": { "type": "boolean", "example": true }
+        }
+      },
+      "SpawnSmeRequest": {
+        "type": "object",
+        "required": ["smeName", "sku", "requestedQuantity", "maxBudgetUsd"],
+        "properties": {
+          "smeName": { "type": "string", "example": "Austin Artisan Bakery" },
+          "sku": { "type": "string", "example": "organic-flour-50lb" },
+          "requestedQuantity": { "type": "integer", "example": 20 },
+          "maxBudgetUsd": { "type": "number", "example": 500.00 }
+        }
+      },
+      "SpawnSmeResponse": {
+        "type": "object",
+        "properties": {
+          "smeId": { "type": "string", "example": "sme_austin_01" },
+          "status": { "type": "string", "example": "ACTIVE_SEEKING_CLAN" },
+          "idempotencyKey": { "type": "string" }
+        }
+      },
+      "LockEscrowRequest": {
+        "type": "object",
+        "required": ["clanId", "intent"],
+        "properties": {
+          "clanId": { "type": "string", "example": "clan_flour_01" },
+          "intent": { "type": "string", "enum": ["AUTHORIZE"], "example": "AUTHORIZE" }
+        }
+      },
+      "LockEscrowResponse": {
+        "type": "object",
+        "properties": {
+          "clanId": { "type": "string" },
+          "batchCaptureStatus": { "type": "string", "example": "CAPTURED_BATCH_SETTLED" },
+          "totalEscrowUsd": { "type": "number", "example": 3600.00 },
+          "paypalCaptureBatchId": { "type": "string" }
+        }
+      },
+      "DisputeClaimRequest": {
+        "type": "object",
+        "required": ["clanId", "smeId", "damagePercentage", "evidencePhotoHash"],
+        "properties": {
+          "clanId": { "type": "string", "example": "clan_flour_01" },
+          "smeId": { "type": "string", "example": "sme_austin_01" },
+          "damagePercentage": { "type": "number", "example": 25 },
+          "evidencePhotoHash": { "type": "string", "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }
+        }
+      },
+      "DisputeClaimResponse": {
+        "type": "object",
+        "properties": {
+          "disputeId": { "type": "string" },
+          "paypalRefundTransactionId": { "type": "string" },
+          "refundAmountUsd": { "type": "number", "example": 300.00 },
+          "status": { "type": "string", "example": "PARTIAL_REFUND_SETTLED" }
+        }
+      }
+    }
+  }
+}
