@@ -109,15 +109,16 @@
     <div class="panel" style="display: flex; flex-direction: column; gap: 16px;">
       <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div>
-          <span class="panel-title" style="font-size: 15px; font-weight: 700;">Document &amp; Picture Ingestion Trial Workbench</span>
+          <span class="panel-title" style="font-size: 15px; font-weight: 700;">Multi-Format Financial &amp; Commercial Document Ingestion</span>
           <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-            Trial document and picture uploads: parses JSON/CSV/TXT and extracts scanned receipts and photo bills via optical OCR into exact integer cents.
+            Supports real-world B2B procurement data: Excel spreadsheets (.xlsx, .xls), complex CSVs, and multi-column commercial invoices with optical OCR into exact integer cents.
           </p>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn-step" onclick="loadSampleDocument('json')">Sample JSON Invoice</button>
-          <button type="button" class="btn-step" onclick="loadSampleDocument('csv')">Sample CSV PO</button>
-          <button type="button" class="btn-step" onclick="loadSampleDocument('image')">Sample Picture Receipt (PNG)</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('realistic-image')" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">Real Commercial Invoice (PNG)</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('xlsx')" style="border-color: #34d399; color: #34d399;">Distributor Order (XLSX)</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('csv')">Procurement PO (CSV)</button>
+          <button type="button" class="btn-step" onclick="loadSampleDocument('json')">Standard JSON</button>
         </div>
       </div>
 
@@ -129,17 +130,17 @@
                ondragleave="handleDragLeave(event)"
                ondrop="handleFileDrop(event)"
                onclick="document.getElementById('ingestFileInput').click()">
-            <div style="font-size: 28px; color: var(--accent-cyan); margin-bottom: 8px;">📄 / 🖼️</div>
+            <div style="font-size: 28px; color: var(--accent-cyan); margin-bottom: 8px;">📊 / 📄 / 🖼️</div>
             <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">
-              Drag &amp; drop document or picture here
+              Drag &amp; drop financial document or invoice here
             </div>
             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-              Accepts JSON, CSV, TXT, PNG, JPEG, WebP (Scanned bills &amp; photo receipts)
+              Accepts Excel (.xlsx, .xls), CSV, TSV, JSON, PNG, JPEG, WebP
             </div>
             <button type="button" class="btn-step" style="margin-top: 12px; align-self: center;" onclick="event.stopPropagation(); document.getElementById('ingestFileInput').click()">
               Browse Local Files
             </button>
-            <input type="file" id="ingestFileInput" accept=".json,.csv,.txt,.png,.jpg,.jpeg,.webp" onchange="handleFileSelected(event)" style="display: none;">
+            <input type="file" id="ingestFileInput" accept=".xlsx,.xls,.csv,.tsv,.json,.png,.jpg,.jpeg,.webp,.pdf" onchange="handleFileSelected(event)" style="display: none;">
           </div>
 
           <!-- Document or Image Preview Box -->
