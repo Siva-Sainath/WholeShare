@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wholeshare: Lightweight Harness &amp; PayPal Sandbox Workbench</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <!-- Header with Telemetry -->
+  <header class="top-bar">
+    <div class="brand-section">
+      <span class="brand-title">WHOLESHARE</span>
+      <span class="brand-badge">Harness &amp; PayPal Sandbox Workbench</span>
+    </div>
+
+    <div class="security-telemetry">
+      <div class="telemetry-pill">Model: Qwen 3.5 9B</div>
+      <div class="telemetry-pill">PayPal Toolkit: 47 Tools</div>
+      <div class="telemetry-pill">Sandbox: ACTIVE</div>
+      <div class="telemetry-pill">Interceptor: 10 Invariants</div>
+      <div class="telemetry-pill" id="copilotStatusPill" style="color: #34d399;">Harness Ready</div>
+    </div>
+  </header>
+
+  <!-- One-Shot Workbench Grid -->
+  <main class="middle-grid" style="padding: 20px 24px; gap: 20px;">
+    <!-- Left Column: One-Shot Controls & Live State (45% Width) -->
+    <section class="panel" style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="panel-header">
+        <span class="panel-title">One-Shot Harness Controller</span>
+        <span style="font-size: 11px; color: var(--text-secondary);">Direct Qwen 3.5 9B Tool Calling</span>
+      </div>
+
+      <!-- Quick Preset Chips -->
+      <div class="copilot-chips" style="padding: 0;">
+        <button class="copilot-chip" onclick="setPresetPrompt('Onboard new buyer Artisan Flour House (id: sme_artisan_01) with 200 units and $2,500 spend cap, join coalition_flour_01 to hit 500 unit MOQ, negotiate volume discount, and lock escrow in PayPal Orders v2 soft authorization holds.')">
+          1. Full Deal Cycle
+        </button>
+        <button class="copilot-chip" onclick="setPresetPrompt('Spawn buyer Austin Bakery with 300 units exceeding $1,500 budget cap to test interceptor.')">
+          2. Spend Cap Guardrail
+        </button>
+        <button class="copilot-chip" onclick="setPresetPrompt('Generate PayPal step-up KYC invoice with QR code for large volume allocation.')">
+          3. Step-Up QR Invoice
+        </button>
+        <button class="copilot-chip" onclick="setPresetPrompt('Register shipment tracking number 1Z9999999999 with carrier UPS for active escrow order.')">
+          4. Carrier Tracking
+        </button>
+      </div>
+
+      <!-- Prompt Input Form -->
+      <form class="copilot-form" onsubmit="handleOneShotSubmit(event)" style="padding: 0; display: flex; flex-direction: column; gap: 10px;">
+        <textarea id="oneShotPromptInput" class="copilot-input" rows="3" style="resize: vertical; font-size: 13px; line-height: 1.5;" placeholder="Enter instruction for Qwen 3.5 9B...">Onboard new buyer Artisan Flour House (id: sme_artisan_01) with 200 units and $2,500 spend cap, join coalition_flour_01 to hit 500 unit MOQ, negotiate volume discount, and lock escrow in PayPal Orders v2 soft authorization holds.</textarea>
+        <div style="display: flex; gap: 10px;">
+          <button id="btnRunOneShot" type="submit" class="btn-copilot-submit" style="flex: 1; justify-content: center; padding: 12px;">
+            Execute One-Shot Test
+          </button>
+          <button type="button" class="btn-step" onclick="resetPlatformState()">
+            Reset State
+          </button>
+        </div>
+      </form>
+
+      <!-- Active Coalition Status Card -->
+      <div class="coalition-card" style="margin-top: 10px;">
+        <div class="coalition-card-header">
+          <span class="card-sku-title">Organic Flour Coalition (coalition_flour_01)</span>
+          <span id="cardStatusBadge" class="card-status-badge FORMING">FORMING</span>
+        </div>
+        <div class="progress-container">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary);">
+            <span id="unitsPledgedLabel">300 / 500 units pledged</span>
+            <span id="pctPledgedLabel">60%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progressBarFill" class="progress-bar-fill" style="width: 60%;"></div>
+          </div>
+        </div>
+        <div class="tier-pills">
+          <div id="tier1Pill" class="tier-pill active">Tier 1: $10.00 (100 MOQ)</div>
+          <div id="tier2Pill" class="tier-pill">Tier 2: $7.20 (500 MOQ)</div>
+          <div id="tier3Pill" class="tier-pill">Tier 3: $5.80 (1,000 MOQ)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Live Model Trajectory & Telemetry (55% Width) -->
+    <section class="panel" style="display: flex; flex-direction: column; gap: 14px;">
+      <div class="panel-header">
+        <span class="panel-title">Model Trajectory &amp; PayPal Sandbox Telemetry</span>
+        <span id="executionTimerLabel" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">Idle</span>
+      </div>
+
+      <!-- Execution Timeline Log -->
+      <div id="trajectoryFeed" class="copilot-timeline" style="max-height: 440px; min-height: 380px; overflow-y: auto;">
+        <div class="timeline-step">
+          <span class="timeline-badge RESULT">READY</span>
+          <span>Lightweight harness online. 47 PayPal Agent Toolkit tools registered with sandbox credentials. Ready to execute one-shot instruction.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- AG Grid Live Multiparty Escrow Ledger -->
+  <section class="ledger-container" style="padding: 0 24px 24px;">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Live Multiparty Escrow Ledger (Orders v2 Soft Holds)</span>
+        <span id="ledgerLastUpdated" style="font-size: 11px; color: var(--text-secondary);">Real-Time Sync via SSE</span>
+      </div>
+
+      <div class="grid-wrapper">
+        <table class="custom-ledger-table">
+          <thead>
+            <tr>
+              <th>Coalition ID</th>
+              <th>Target SKU</th>
+              <th>Pledged Units</th>
+              <th>Unit Price</th>
+              <th>Total Escrow</th>
+              <th>Discount %</th>
+              <th>Status</th>
+              <th>Members &amp; PayPal Authorization IDs</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerTableBody">
+            <!-- Populated via SSE/API -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step-Up KYC Invoice QR Modal -->
+  <div id="stepUpModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">PayPal Step-Up KYC Invoice</span>
+        <button class="modal-close-btn" onclick="closeStepUpModal()">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-secondary);">
+        Allocation exceeds buyer mandate threshold. Scan QR code in PayPal sandbox app to complete KYC authentication.
+      </p>
+      <div class="qr-image-wrapper">
+        <img id="modalQrImage" src="" alt="PayPal Invoice QR Code">
+      </div>
+      <div style="font-size: 13px; font-weight: 700; color: #34d399;" id="modalInvoiceDetails">$1,440.00 USD</div>
+      <button class="btn-step" style="width: 100%; justify-content: center; background: #06b6d4; color: #fff;" onclick="approveSandboxStepUp()">
+        Verify &amp; Confirm Sandbox Authorization
+      </button>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

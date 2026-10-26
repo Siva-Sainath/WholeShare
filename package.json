@@ -1,0 +1,41 @@
+{
+  "name": "wholeshare",
+  "version": "1.0.0",
+  "description": "B2B Group Purchasing and Multiparty Escrow Platform on PayPal for Business",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/web/server.js",
+    "dev": "node src/web/server.js",
+    "test": "node --test test/*.test.js",
+    "doctor": "node .cursor/skills/verify-syndicate/control-syndicate.mjs doctor",
+    "seed": "node .cursor/skills/verify-syndicate/control-syndicate.mjs seed-demo --reset",
+    "verify": "node .cursor/skills/verify-syndicate/control-syndicate.mjs lock-escrow --dry-run",
+    "lint": "node scripts/lint-code.mjs",
+    "lint:features": "node scripts/lint-features.mjs",
+    "check": "npm test && npm run lint && npm run lint:features && npm run doctor",
+    "agent:cycle": "node scripts/control-wholeshare.js agent-cycle",
+    "tools:list": "node scripts/control-wholeshare.js tools:list",
+    "perf": "node scripts/benchmark-runner.mjs",
+    "rate-limit": "node scripts/rate-limit-arena.mjs",
+    "inference": "node scripts/inference-bench.mjs",
+    "cdp": "node scripts/cdp-harness.mjs inspect",
+    "debug:python": "python3 scripts/python-debug-harness.py doctor",
+    "eval:model": "node scripts/control-wholeshare.js evaluate-coalition",
+    "verify:tokens": "node scripts/control-wholeshare.js verify-tokens",
+    "verify:gateway": "node scripts/control-wholeshare.js verify-gateway",
+    "verify:fsm": "node scripts/control-wholeshare.js verify-fsm",
+    "verify:durable": "node scripts/control-wholeshare.js verify-durable-resume",
+    "verify:paypal": "node scripts/control-wholeshare.js verify-paypal-toolkit",
+    "gauntlet": "node scripts/control-wholeshare.js adversarial-gauntlet",
+    "toolkit:test": "node scripts/test-agent-toolkit.mjs",
+    "verify:one-shot": "node scripts/verify-one-shot.js"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^1.3.24",
+    "@paypal/agent-toolkit": "^1.11.0",
+    "ag-grid-community": "^31.0.0",
+    "ag-grid-react": "^31.0.0",
+    "pg": "^8.23.1"
+  }
+}
