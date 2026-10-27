@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loadAllFeatures, generateFeatureMapPromptContext } from "../src/lib/feature-map.js";
 
-test("loadAllFeatures loads and parses all 10 cataloged feature maps", () => {
+test("loadAllFeatures loads and parses all cataloged feature maps", () => {
   const features = loadAllFeatures();
-  assert.equal(features.length, 10);
+  assert.equal(features.length, 12);
 
   const clanLobby = features.find(f => f.id === "clan-lobby");
   assert.ok(clanLobby);

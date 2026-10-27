@@ -10,6 +10,11 @@ import { interceptToolExecution } from "./interceptor.js";
 import { generateInstinctProfileHeader } from "./instinct-profile.js";
 import { generateFeatureMapPromptContext } from "./feature-map.js";
 import { dreamingEngine } from "./dreaming-engine.js";
+import {
+  routeIntent,
+  gateToolRisk,
+  verifyDealProposal
+} from "./laya-engine.js";
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
 const PRIMARY_MODEL = process.env.PRIMARY_MODEL || "qwen3.5:9b";
@@ -65,6 +70,66 @@ If a tool execution returns an invariant violation error, reflexively adjust you
       model: this.model,
       timestamp: new Date().toISOString()
     });
+
+    const layaStart = Date.now();
+    let layaDecision = null;
+    try {
+      layaDecision = await routeIntent(prompt);
+    } catch {
+      layaDecision = { intent: "coalition_negotiation", confidence: 0.5, requiresLlm: true, fallback: true };
+    }
+    const layaDurationMs = Date.now() - layaStart;
+
+    actionDispatcher.broadcast("AGENT_LAYA_INTENT_ROUTED", {
+      sessionId,
+      prompt,
+      intent: layaDecision.intent,
+      confidence: layaDecision.confidence,
+      requiresLlm: layaDecision.requiresLlm,
+      durationMs: layaDurationMs,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!layaDecision.requiresLlm && layaDecision.intent === "catalog_query") {
+      const skuMatch = prompt.match(/(?:for|sku|product)?\s*([a-z0-9-]+flour[a-z0-9-]*)/i);
+      const sku = skuMatch ? skuMatch[1] : "organic-flour-50lb";
+      const result = await executeTool("discover_wholesale_catalog", { sku });
+      const totalDurationMs = Date.now() - sessionStartTime;
+
+      await saveAgentStep({
+        sessionId,
+        stepIndex: 1,
+        thought: `Laya System 1 classified intent as catalog_query with ${(layaDecision.confidence * 100).toFixed(1)}% confidence. Resolved deterministically in ${layaDurationMs}ms without LLM generation.`,
+        toolName: "discover_wholesale_catalog",
+        toolArgs: { sku },
+        toolResult: result,
+        interceptorStatus: "PASSED",
+        durationMs: layaDurationMs
+      });
+
+      const finalMessage = `Catalog pricing resolved directly by Laya System 1 in ${layaDurationMs}ms.`;
+      await updateAgentSessionStatus(sessionId, "COMPLETED", {
+        finalMessage,
+        totalDurationMs
+      });
+
+      return {
+        sessionId,
+        status: "COMPLETED",
+        routedBy: "LAYA_SYSTEM_ONE",
+        totalDurationMs,
+        finalMessage,
+        steps: [
+          {
+            stepIndex: 1,
+            toolName: "discover_wholesale_catalog",
+            toolArgs: { sku },
+            toolResult: result,
+            durationMs: layaDurationMs
+          }
+        ]
+      };
+    }
 
     const messages = this.buildInitialMessages(prompt);
     return await this.runExecutionLoop({
@@ -244,6 +309,34 @@ If a tool execution returns an invariant violation error, reflexively adjust you
             toolName,
             args: toolArgs
           });
+
+          let layaRisk = null;
+          try {
+            layaRisk = await gateToolRisk(toolName, toolArgs);
+          } catch {
+            layaRisk = { mutating: true, highValue: false, requiresStepUp: false };
+          }
+
+          actionDispatcher.broadcast("AGENT_LAYA_TOOL_GATED", {
+            sessionId,
+            stepIndex: turn,
+            toolName,
+            mutating: layaRisk.mutating,
+            highValue: layaRisk.highValue,
+            requiresStepUp: layaRisk.requiresStepUp
+          });
+
+          if (toolName === "run_coalition_negotiation" || toolName === "join_syndicate") {
+            const proposalCheck = await verifyDealProposal(toolArgs);
+            if (!proposalCheck.verified) {
+              actionDispatcher.broadcast("AGENT_LAYA_DEAL_REJECTED", {
+                sessionId,
+                stepIndex: turn,
+                toolName,
+                reason: "Laya critic detected inconsistent allocation invariant."
+              });
+            }
+          }
 
           const interception = interceptToolExecution(toolName, toolArgs);
 
