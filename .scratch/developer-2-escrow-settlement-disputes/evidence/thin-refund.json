@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-10-26T14:15:23.559Z",
+  "endpoint": "POST https://api-m.sandbox.paypal.com/v2/payments/captures/74H63527HK822241U/refund",
+  "operation": "PARTIAL_REFUND",
+  "captureId": "74H63527HK822241U",
+  "refundAmountUsd": 116,
+  "refundId": "3UL90630A5638033F",
+  "status": "COMPLETED",
+  "readBackVerified": true,
+  "readBackDetails": {
+    "status": "COMPLETED",
+    "id": "3UL90630A5638033F",
+    "amount": {
+      "currencyCode": "USD",
+      "value": "116.00"
+    },
+    "customId": "clan-austin-organic-flour-01:buyer-maria-bakery",
+    "noteToPayer": "SyndicatePay In-App Escrow Refund: 20 Damaged Flour Bags",
+    "sellerPayableBreakdown": {
+      "grossAmount": {
+        "currencyCode": "USD",
+        "value": "116.00"
+      },
+      "paypalFee": {
+        "currencyCode": "USD",
+        "value": "0.00"
+      },
+      "netAmount": {
+        "currencyCode": "USD",
+        "value": "116.00"
+      },
+      "totalRefundedAmount": {
+        "currencyCode": "USD",
+        "value": "116.00"
+      }
+    },
+    "payer": {
+      "emailAddress": "sb-dhkne53471369@business.example.com",
+      "merchantId": "UJTASDL27A4Y8"
+    },
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/refunds/3UL90630A5638033F",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/74H63527HK822241U",
+        "rel": "up",
+        "method": "GET"
+      }
+    ],
+    "createTime": "2026-10-26T07:15:21-07:00",
+    "updateTime": "2026-10-26T07:15:21-07:00"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "processedEvents": [
+    {
+      "eventId": "WH-REFUND-EARLY-001",
+      "eventType": "PAYMENT.CAPTURE.REFUNDED",
+      "resourceType": "refund",
+      "resourceId": "REF-EARLY-01",
+      "processedAt": "2026-10-27T07:40:56.729Z",
+      "status": "OUT_OF_ORDER_BUFFERED"
+    }
+  ],
+  "lastUpdated": "2026-10-27T07:40:56.729Z"
+}

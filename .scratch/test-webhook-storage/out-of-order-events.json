@@ -1,0 +1,30 @@
+{
+  "bufferedEvents": [
+    {
+      "eventId": "WH-REFUND-EARLY-001",
+      "eventType": "PAYMENT.CAPTURE.REFUNDED",
+      "resourceId": "REF-EARLY-01",
+      "clanId": "clan-refund-ooo",
+      "memberId": "buyer-refund-01",
+      "bufferedAt": "2026-10-27T07:40:56.729Z",
+      "reason": "Refund arrived before capture recorded in local state",
+      "event": {
+        "id": "WH-REFUND-EARLY-001",
+        "create_time": "2026-10-26T14:45:00.000Z",
+        "resource_type": "refund",
+        "event_type": "PAYMENT.CAPTURE.REFUNDED",
+        "resource": {
+          "id": "REF-EARLY-01",
+          "custom_id": "clan-refund-ooo:buyer-refund-01",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/CAP-UNRECORDED-01",
+              "rel": "up"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "lastUpdated": "2026-10-27T07:40:56.729Z"
+}

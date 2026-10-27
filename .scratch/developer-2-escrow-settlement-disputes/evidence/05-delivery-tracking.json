@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-10-26T15:30:54.796Z",
+  "endpoint": "POST /api/delivery/confirm & POST /v2/checkout/orders/{id}/track",
+  "operation": "TWO_PARTY_DELIVERY_CONFIRMATION",
+  "clanId": "clan-austin-organic-flour-01",
+  "memberId": "buyer-maria-bakery",
+  "orderId": "39J81892GY6122912",
+  "captureId": "74H63527HK822241U",
+  "deliveryRecord": {
+    "id": "del_clan-austin-organic-flour-01_buyer-maria-bakery",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-maria-bakery",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-10-26T11:30:52.827Z",
+    "buyerDeliveredAt": "2026-10-26T15:30:52.830Z",
+    "inspectionWindowEndsAt": "2026-10-28T15:30:52.830Z",
+    "source": "simulated",
+    "conditionNotes": "Delivery received; 20 bags punctured during freight transit.",
+    "createdAt": "2026-10-26T15:30:52.829Z"
+  },
+  "inspectionWindowHours": 48,
+  "inspectionWindowEndsAt": "2026-10-28T15:30:52.830Z",
+  "trackingRegistration": {
+    "trackingNumber": "1Z9999999999999999",
+    "carrier": "UPS",
+    "status": "SHIPPED"
+  },
+  "readBackVerified": true
+}

@@ -1,0 +1,89 @@
+{
+  "timestamp": "2026-10-26T14:15:14.609Z",
+  "endpoint": "POST https://api-m.sandbox.paypal.com/v2/checkout/orders",
+  "operation": "AUTHORIZE_HOLD",
+  "clanId": "clan-austin-organic-flour-01",
+  "commodity": "Organic Bread Flour (50 lb bags)",
+  "fixture": {
+    "buyer1": {
+      "memberId": "buyer-maria-bakery",
+      "quantity": 200,
+      "holdAmount": 1440,
+      "authorizationId": "19S92787G0883724A"
+    },
+    "buyer2": {
+      "memberId": "buyer-golden-crust",
+      "quantity": 150,
+      "holdAmount": 1080,
+      "orderId": "2R897509EC717374J"
+    },
+    "buyer3": {
+      "memberId": "buyer-sweet-treats",
+      "quantity": 150,
+      "holdAmount": 1080,
+      "orderId": "34220489RG8462012"
+    },
+    "buyer4": {
+      "memberId": "buyer-fourth-roaster",
+      "quantity": 500,
+      "holdAmount": 2900,
+      "tierUnlocked": "Tier 3 ($5.80/bag)"
+    }
+  },
+  "readBackVerified": true,
+  "readBackDetails": {
+    "status": "CREATED",
+    "id": "19S92787G0883724A",
+    "amount": {
+      "currencyCode": "USD",
+      "value": "1440.00"
+    },
+    "customId": "clan-austin-organic-flour-01:buyer-maria-bakery",
+    "sellerProtection": {
+      "status": "ELIGIBLE",
+      "disputeCategories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "expirationTime": "2026-11-24T14:00:55Z",
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/authorizations/19S92787G0883724A",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/authorizations/19S92787G0883724A/capture",
+        "rel": "capture",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/authorizations/19S92787G0883724A/void",
+        "rel": "void",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/authorizations/19S92787G0883724A/reauthorize",
+        "rel": "reauthorize",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/39J81892GY6122912",
+        "rel": "up",
+        "method": "GET"
+      }
+    ],
+    "createTime": "2026-10-26T14:00:55Z",
+    "updateTime": "2026-10-26T14:00:55Z",
+    "supplementaryData": {
+      "relatedIds": {
+        "orderId": "39J81892GY6122912"
+      }
+    },
+    "payee": {
+      "emailAddress": "sb-dhkne53471369@business.example.com",
+      "merchantId": "UJTASDL27A4Y8"
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "timestamp": "2026-10-26T10:26:51.101Z",
+  "endpoint": "POST https://api-m.sandbox.paypal.com/v2/checkout/orders",
+  "intent": "AUTHORIZE",
+  "clanId": "clan-austin-organic-flour-01",
+  "commodity": "Organic Bread Flour (50 lb bags)",
+  "totalQuantity": 500,
+  "totalCommittedHoldUsd": 3600,
+  "orders": [
+    {
+      "memberId": "buyer-maria-bakery",
+      "name": "Maria's Artisan Bakery",
+      "quantity": 200,
+      "unitPrice": 7.2,
+      "orderAmount": 1440,
+      "orderId": "39J81892GY6122912",
+      "status": "CREATED",
+      "idempotencyKey": "10a56687f773b6bda1073599b3bdcb153a581c86e6bd03618618a64ab5570578",
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=39J81892GY6122912",
+      "readBackVerified": true,
+      "readBackDetails": {
+        "id": "39J81892GY6122912",
+        "status": "CREATED",
+        "intent": "AUTHORIZE",
+        "purchaseUnits": [
+          {
+            "referenceId": "clan_clan-austin-organic-flour-01_member_buyer-maria-bakery",
+            "amount": {
+              "currencyCode": "USD",
+              "value": "1440.00",
+              "breakdown": {}
+            },
+            "payee": {
+              "emailAddress": "sb-dhkne53471369@business.example.com",
+              "merchantId": "UJTASDL27A4Y8"
+            },
+            "description": "SyndicatePay Escrow Hold - Organic Bread Flour (50 lb bags) for Maria's Artisan Bakery",
+            "customId": "clan-austin-organic-flour-01:buyer-maria-bakery"
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/39J81892GY6122912",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://www.sandbox.paypal.com/checkoutnow?token=39J81892GY6122912",
+            "rel": "approve",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/39J81892GY6122912",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/39J81892GY6122912/authorize",
+            "rel": "authorize",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    {
+      "memberId": "buyer-golden-crust",
+      "name": "Golden Crust Breads",
+      "quantity": 150,
+      "unitPrice": 7.2,
+      "orderAmount": 1080,
+      "orderId": "2R897509EC717374J",
+      "status": "CREATED",
+      "idempotencyKey": "4eb7ebc2d6100d3045fb9a49abf001a29db4ec9f2a7fac0cb1c84572d7ba259d",
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=2R897509EC717374J",
+      "readBackVerified": true,
+      "readBackDetails": {
+        "id": "2R897509EC717374J",
+        "status": "CREATED",
+        "intent": "AUTHORIZE",
+        "purchaseUnits": [
+          {
+            "referenceId": "clan_clan-austin-organic-flour-01_member_buyer-golden-crust",
+            "amount": {
+              "currencyCode": "USD",
+              "value": "1080.00",
+              "breakdown": {}
+            },
+            "payee": {
+              "emailAddress": "sb-dhkne53471369@business.example.com",
+              "merchantId": "UJTASDL27A4Y8"
+            },
+            "description": "SyndicatePay Escrow Hold - Organic Bread Flour (50 lb bags) for Golden Crust Breads",
+            "customId": "clan-austin-organic-flour-01:buyer-golden-crust"
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2R897509EC717374J",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://www.sandbox.paypal.com/checkoutnow?token=2R897509EC717374J",
+            "rel": "approve",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2R897509EC717374J",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2R897509EC717374J/authorize",
+            "rel": "authorize",
+            "method": "POST"
+          }
+        ]
+      }
+    },
+    {
+      "memberId": "buyer-sweet-treats",
+      "name": "Sweet Treats Pastries",
+      "quantity": 150,
+      "unitPrice": 7.2,
+      "orderAmount": 1080,
+      "orderId": "34220489RG8462012",
+      "status": "CREATED",
+      "idempotencyKey": "39c1bf90099470fcf6efbb3c2ba0ac7a2548b29d0e072c893e0a8b36277bc170",
+      "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=34220489RG8462012",
+      "readBackVerified": true,
+      "readBackDetails": {
+        "id": "34220489RG8462012",
+        "status": "CREATED",
+        "intent": "AUTHORIZE",
+        "purchaseUnits": [
+          {
+            "referenceId": "clan_clan-austin-organic-flour-01_member_buyer-sweet-treats",
+            "amount": {
+              "currencyCode": "USD",
+              "value": "1080.00",
+              "breakdown": {}
+            },
+            "payee": {
+              "emailAddress": "sb-dhkne53471369@business.example.com",
+              "merchantId": "UJTASDL27A4Y8"
+            },
+            "description": "SyndicatePay Escrow Hold - Organic Bread Flour (50 lb bags) for Sweet Treats Pastries",
+            "customId": "clan-austin-organic-flour-01:buyer-sweet-treats"
+          }
+        ],
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/34220489RG8462012",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://www.sandbox.paypal.com/checkoutnow?token=34220489RG8462012",
+            "rel": "approve",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/34220489RG8462012",
+            "rel": "update",
+            "method": "PATCH"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/checkout/orders/34220489RG8462012/authorize",
+            "rel": "authorize",
+            "method": "POST"
+          }
+        ]
+      }
+    }
+  ],
+  "paypalIds": {
+    "orderIds": [
+      "39J81892GY6122912",
+      "2R897509EC717374J",
+      "34220489RG8462012"
+    ]
+  },
+  "readBackVerified": true
+}

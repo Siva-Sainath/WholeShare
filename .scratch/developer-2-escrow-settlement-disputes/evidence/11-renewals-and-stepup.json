@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-10-26T16:59:09.876Z",
+  "operation": "MEMBER_OPT_IN_RENEWALS_AND_QR_STEPUP",
+  "clanId": "clan-austin-organic-flour-01",
+  "memberId": "buyer-maria-bakery",
+  "commodityCategory": "FAST",
+  "checkInIntervalDays": 5,
+  "highValueOrderAmount": 1440,
+  "qrStepUpGenerated": {
+    "invoiceId": "INV2-33946582",
+    "paymentUrl": "https://www.sandbox.paypal.com/invoice/p/#INV2-33946582",
+    "qrCodeBase64Length": 372
+  },
+  "reauthorizationTest": {
+    "authorizationId": "19S92787G0883724A",
+    "status": "SANDBOX_HONOR_PERIOD_ACTIVE",
+    "details": {
+      "error": "",
+      "note": "Authorization already captured or honor period active"
+    }
+  },
+  "voidSweeperTest": {
+    "optOutDeadlineAt": "2026-11-02T16:59:05.515Z",
+    "expiredHoldSwept": true,
+    "voidedRecordsCount": 1
+  },
+  "readBackVerified": true
+}

@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-10-26T16:59:34.051Z",
+  "overallStatus": "PASS",
+  "checks": {
+    "configuration": {
+      "status": "PASS",
+      "mode": "sandbox",
+      "baseUrl": "https://api-m.sandbox.paypal.com",
+      "port": 3000,
+      "keyRetentionHours": 72,
+      "maxPendingRecheckCount": 5,
+      "authorizationValidityDays": 29,
+      "webhookIdConfigured": true
+    },
+    "boundaryScan": {
+      "status": "PASS",
+      "scannedDirectory": "src",
+      "violationsCount": 0
+    },
+    "paypalSandboxAuth": {
+      "status": "PASS",
+      "endpoint": "https://api-m.sandbox.paypal.com/v1/oauth2/token",
+      "initialLatencyMs": 1318,
+      "expiresInSeconds": 28858,
+      "tokenReceived": true,
+      "cachingVerified": true
+    },
+    "database": {
+      "status": "unconfigured",
+      "message": "DATABASE_URL is not configured in .env. Connectivity check pending."
+    },
+    "publicHttpsWebAddress": {
+      "status": "not configured",
+      "message": "Reported as not configured until H2 webhook verification is completed."
+    },
+    "idempotencyTable": {
+      "status": "PASS",
+      "storage": "durable-json-ledger",
+      "ledgerPath": ".scratch\\developer-2-escrow-settlement-disputes\\idempotency-ledger.json",
+      "recordCount": 5,
+      "uniqueKeySchema": "hash(operation_type:clan_id:member_id:stage:reference)",
+      "statusEnum": [
+        "PENDING",
+        "SUCCEEDED",
+        "FAILED",
+        "NEEDS_REVIEW"
+      ]
+    }
+  }
+}

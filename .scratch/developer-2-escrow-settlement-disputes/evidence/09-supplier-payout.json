@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-10-26T16:46:26.705Z",
+  "endpoint": "POST /v1/payments/payouts",
+  "operation": "PER_MEMBER_SUPPLIER_PAYOUT",
+  "clanId": "clan-austin-organic-flour-01",
+  "supplierEmail": "sb-t43fur53471579@business.example.com",
+  "payoutBatchId": "RHKMP54QHULXC",
+  "amount": 464,
+  "currency": "USD",
+  "holdRuleEnforced": {
+    "heldMemberId": "buyer-maria-bakery",
+    "holdReason": "Inspection window still active",
+    "isHeld": true
+  },
+  "accountingWebhookPayload": {
+    "event": "clan.settlement.completed",
+    "eventType": "clan.settlement.completed",
+    "clanId": "clan-austin-organic-flour-01",
+    "supplierEmail": "sb-t43fur53471579@business.example.com",
+    "currency": "USD",
+    "totalPaid": 464,
+    "settledMembersCount": 1,
+    "settledMembers": [
+      {
+        "memberId": "buyer-golden-crust",
+        "netAmount": 464,
+        "captureId": "CAP-GOLDEN-CRUST-SETTLED"
+      }
+    ],
+    "timestamp": "2026-10-26T16:46:24.938Z"
+  },
+  "readBackVerified": true,
+  "readBackDetails": {
+    "batch_header": {
+      "payout_batch_id": "RHKMP54QHULXC",
+      "batch_status": "PENDING",
+      "time_created": "2026-10-26T16:46:24Z",
+      "sender_batch_header": {
+        "sender_batch_id": "payout_clan-austin-organic-flour-01_1793033183644",
+        "email_subject": "SyndicatePay Wholesale Supplier Settlement Payout",
+        "email_message": "You received a settlement payout for Clan order fulfillment."
+      },
+      "funding_source": "BALANCE",
+      "amount": {
+        "currency": "USD",
+        "value": "464.00"
+      }
+    },
+    "items": [
+      {
+        "payout_item_id": "G9BZY8GBCPS3W",
+        "transaction_status": "PENDING",
+        "payout_batch_id": "RHKMP54QHULXC",
+        "payout_item": {
+          "recipient_type": "EMAIL",
+          "amount": {
+            "currency": "USD",
+            "value": "464.00"
+          },
+          "note": "SyndicatePay Wholesale Escrow Settlement: Austin Organic Flour Clan",
+          "receiver": "sb-t43fur53471579@business.example.com",
+          "sender_item_id": "item_buyer-golden-crust_1793033183644",
+          "recipient_wallet": "PAYPAL",
+          "purpose": "GOODS"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts-item/G9BZY8GBCPS3W",
+            "rel": "item",
+            "method": "GET",
+            "encType": "application/json"
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/RHKMP54QHULXC?page_size=1000&page=1",
+        "rel": "self",
+        "method": "GET",
+        "encType": "application/json"
+      }
+    ]
+  }
+}

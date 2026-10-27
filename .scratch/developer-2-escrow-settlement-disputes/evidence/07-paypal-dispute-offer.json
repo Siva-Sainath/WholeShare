@@ -1,0 +1,177 @@
+{
+  "timestamp": "2026-10-26T16:08:26.516Z",
+  "endpoint": "POST /v1/customer/disputes/{id}/make-offer",
+  "operation": "SUPPLIER_APPROVED_DISPUTE_OFFER",
+  "disputeId": "PP-R-OOA-10194658",
+  "approvalId": "appr-1793030898159",
+  "clanId": "clan-austin-organic-flour-01",
+  "memberId": "buyer-maria-bakery",
+  "offerAmount": 100,
+  "offerType": "REFUND",
+  "previousStatus": "WAITING_FOR_SELLER_RESPONSE",
+  "updatedStatus": "UNDER_REVIEW",
+  "readBackVerified": true,
+  "readBackDetails": {
+    "dispute_id": "PP-R-OOA-10194658",
+    "create_time": "2026-10-26T15:50:25.548Z",
+    "update_time": "2026-10-26T16:08:21.858Z",
+    "disputed_transactions": [
+      {
+        "buyer_transaction_id": "06X26483L08540448",
+        "seller_transaction_id": "74H63527HK822241U",
+        "create_time": "2026-10-26T14:15:15.000Z",
+        "transaction_status": "PARTIALLY_REFUNDED",
+        "gross_amount": {
+          "currency_code": "USD",
+          "value": "1160.00"
+        },
+        "custom": "clan-austin-organic-flour-01:buyer-maria-bakery",
+        "buyer": {
+          "email": "sb-7fjmm53490877@personal.example.com",
+          "payer_id": "PDDSCKNFGNM2W",
+          "name": "John Doe"
+        },
+        "seller": {
+          "email": "sb-dhkne53471369@business.example.com",
+          "merchant_id": "UJTASDL27A4Y8",
+          "name": "Test Store"
+        },
+        "items": [
+          {
+            "item_name": "SyndicatePay Escrow Hold - Organic Bread Flour (50 lb bags) for Maria's Artisan Bakery",
+            "item_description": "SyndicatePay Escrow Hold - Organic Bread Flour (50 lb bags) for Maria's Artisan Bakery",
+            "item_quantity": "20",
+            "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+            "notes": "The item I received was not as described, 20 damaged flour bags. its not packaged correctly and was damaged , i would like to return this item.",
+            "item_type": "PRODUCT"
+          }
+        ],
+        "seller_protection_eligible": true,
+        "seller_protection_type": "EXPANDED_SELLER_PROTECTION"
+      }
+    ],
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "status": "UNDER_REVIEW",
+    "dispute_amount": {
+      "currency_code": "USD",
+      "value": "100.00"
+    },
+    "dispute_state": "UNDER_PAYPAL_REVIEW",
+    "money_movements": [
+      {
+        "affected_party": "BUYER",
+        "amount": {
+          "currency_code": "USD",
+          "value": "100.00"
+        },
+        "initiated_time": "2026-10-26T16:08:21.746Z",
+        "type": "CREDIT",
+        "reason": "DISPUTE_SETTLEMENT"
+      },
+      {
+        "affected_party": "SELLER",
+        "amount": {
+          "currency_code": "USD",
+          "value": "100.00"
+        },
+        "initiated_time": "2026-10-26T16:08:21.746Z",
+        "type": "DEBIT",
+        "reason": "DISPUTE_SETTLEMENT"
+      },
+      {
+        "affected_party": "SELLER",
+        "amount": {
+          "currency_code": "USD",
+          "value": "40.97"
+        },
+        "initiated_time": "2026-10-26T16:08:21.746Z",
+        "type": "DEBIT",
+        "reason": "DISPUTE_SETTLEMENT_FEE"
+      }
+    ],
+    "fund_movements": [
+      {
+        "party": "BUYER",
+        "amount": {
+          "currency_code": "USD",
+          "value": "100.00"
+        },
+        "initiated_time": "2026-10-26T16:08:21.746Z",
+        "type": "CREDIT",
+        "reason": "DISPUTE_SETTLEMENT"
+      },
+      {
+        "party": "SELLER",
+        "amount": {
+          "currency_code": "USD",
+          "value": "100.00"
+        },
+        "initiated_time": "2026-10-26T16:08:21.746Z",
+        "type": "DEBIT",
+        "reason": "DISPUTE_SETTLEMENT"
+      }
+    ],
+    "dispute_life_cycle_stage": "INQUIRY",
+    "dispute_channel": "INTERNAL",
+    "messages": [
+      {
+        "posted_by": "BUYER",
+        "time_posted": "2026-10-26T15:50:25.548Z",
+        "content": "this image shows that the package was damaged at delivery itself which is also seen by the delivery partner of the shipping company."
+      }
+    ],
+    "extensions": {
+      "merchant_contacted": false,
+      "buyer_contacted_time": "2026-10-26T15:50:24.635Z"
+    },
+    "evidences": [
+      {
+        "evidence_type": "CREATE",
+        "notes": "this image shows that the package was damaged at delivery itself which is also seen by the delivery partner of the shipping company.",
+        "source": "SUBMITTED_BY_BUYER",
+        "date": "2026-10-26T15:50:25.548Z",
+        "dispute_life_cycle_stage": "INQUIRY"
+      },
+      {
+        "evidence_type": "OTHER",
+        "notes": "Wholesale Supplier has approved a full dispute settlement offer.",
+        "source": "SUBMITTED_BY_SELLER",
+        "date": "2026-10-26T16:08:21.858Z",
+        "action_info": {
+          "action": "ACCEPT_CLAIM",
+          "response_option": "REFUND"
+        },
+        "dispute_life_cycle_stage": "INQUIRY"
+      }
+    ],
+    "offer": {
+      "buyer_requested_amount": {
+        "currency_code": "USD",
+        "value": "100.00"
+      }
+    },
+    "refund_details": {
+      "allowed_refund_amount": {
+        "currency_code": "USD",
+        "value": "100.00"
+      },
+      "transactions": [
+        {
+          "id": "9FG169951R5871010",
+          "gross_amount": {
+            "currency_code": "USD",
+            "value": "100.00"
+          },
+          "create_time": "2026-10-26T16:08:21.000Z"
+        }
+      ]
+    },
+    "links": [
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-OOA-10194658",
+        "rel": "self",
+        "method": "GET"
+      }
+    ]
+  }
+}

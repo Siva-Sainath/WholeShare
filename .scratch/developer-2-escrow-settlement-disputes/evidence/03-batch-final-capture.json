@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-10-26T14:47:39.510Z",
+  "endpoint": "POST https://api-m.sandbox.paypal.com/v2/payments/authorizations/{id}/capture",
+  "operation": "BATCH_FINAL_CAPTURE",
+  "clanId": "clan-austin-organic-flour-01",
+  "commodity": "Organic Bread Flour (50 lb bags)",
+  "clanState": "LOCKED",
+  "totalQuantity": 200,
+  "effectiveTier": {
+    "minQuantity": 200,
+    "unitPrice": 5.8
+  },
+  "totalCapturedUsd": 1160,
+  "totalReleasedHoldUsd": 280,
+  "captures": [
+    {
+      "memberId": "buyer-maria-bakery",
+      "name": "Maria's Artisan Bakery",
+      "authorizationId": "19S92787G0883724A",
+      "captureId": "74H63527HK822241U",
+      "status": "COMPLETED",
+      "quantity": 200,
+      "unitPrice": 5.8,
+      "initialHoldAmountUsd": 1440,
+      "finalCapturedAmountUsd": 1160,
+      "releasedHoldAmountUsd": 280,
+      "finalCapture": true,
+      "readBackVerified": true,
+      "readBackDetails": {
+        "status": "PARTIALLY_REFUNDED",
+        "id": "74H63527HK822241U",
+        "amount": {
+          "currencyCode": "USD",
+          "value": "1160.00"
+        },
+        "customId": "clan-austin-organic-flour-01:buyer-maria-bakery",
+        "sellerProtection": {
+          "status": "ELIGIBLE",
+          "disputeCategories": [
+            "ITEM_NOT_RECEIVED",
+            "UNAUTHORIZED_TRANSACTION"
+          ]
+        },
+        "finalCapture": true,
+        "sellerReceivableBreakdown": {
+          "grossAmount": {
+            "currencyCode": "USD",
+            "value": "1160.00"
+          },
+          "paypalFee": {
+            "currencyCode": "USD",
+            "value": "40.97"
+          },
+          "netAmount": {
+            "currencyCode": "USD",
+            "value": "1119.03"
+          }
+        },
+        "disbursementMode": "INSTANT",
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/74H63527HK822241U",
+            "rel": "self",
+            "method": "GET"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/captures/74H63527HK822241U/refund",
+            "rel": "refund",
+            "method": "POST"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v2/payments/authorizations/19S92787G0883724A",
+            "rel": "up",
+            "method": "GET"
+          }
+        ],
+        "createTime": "2026-10-26T14:15:15Z",
+        "updateTime": "2026-10-26T14:15:36Z",
+        "supplementaryData": {
+          "relatedIds": {
+            "orderId": "39J81892GY6122912",
+            "authorizationId": "19S92787G0883724A"
+          }
+        },
+        "payee": {
+          "emailAddress": "sb-dhkne53471369@business.example.com",
+          "merchantId": "UJTASDL27A4Y8"
+        }
+      }
+    }
+  ],
+  "readBackVerified": true
+}

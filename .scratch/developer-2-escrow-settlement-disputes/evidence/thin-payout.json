@@ -1,0 +1,87 @@
+{
+  "timestamp": "2026-10-26T15:27:51.429Z",
+  "endpoint": "POST https://api-m.sandbox.paypal.com/v1/payments/payouts",
+  "operation": "SUPPLIER_PAYOUT",
+  "senderBatchId": "payout_clan_austin_1793028467341",
+  "payoutBatchId": "4YARQWK7HTLRN",
+  "targetSupplierEmail": "sb-t43fur53471579@business.example.com",
+  "payoutAmountUsd": 464,
+  "currency": "USD",
+  "initialResponse": {
+    "batch_header": {
+      "payout_batch_id": "4YARQWK7HTLRN",
+      "batch_status": "PENDING",
+      "sender_batch_header": {
+        "sender_batch_id": "payout_clan_austin_1793028467341",
+        "email_subject": "SyndicatePay Wholesale Supplier Settlement Payout",
+        "email_message": "You received a payout for Clan Austin Organic Flour fulfillment."
+      }
+    },
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/4YARQWK7HTLRN",
+        "rel": "self",
+        "method": "GET",
+        "encType": "application/json"
+      }
+    ]
+  },
+  "readBackVerified": true,
+  "readBackDetails": {
+    "batch_header": {
+      "payout_batch_id": "4YARQWK7HTLRN",
+      "batch_status": "PENDING",
+      "time_created": "2026-10-26T15:27:48Z",
+      "sender_batch_header": {
+        "sender_batch_id": "payout_clan_austin_1793028467341",
+        "email_subject": "SyndicatePay Wholesale Supplier Settlement Payout",
+        "email_message": "You received a payout for Clan Austin Organic Flour fulfillment."
+      },
+      "funding_source": "BALANCE",
+      "amount": {
+        "currency": "USD",
+        "value": "464.00"
+      }
+    },
+    "items": [
+      {
+        "payout_item_id": "KKM5T2R28KG5C",
+        "transaction_status": "PENDING",
+        "payout_batch_id": "4YARQWK7HTLRN",
+        "payout_item": {
+          "recipient_type": "EMAIL",
+          "amount": {
+            "currency": "USD",
+            "value": "464.00"
+          },
+          "note": "SyndicatePay Wholesale Escrow Settlement: Austin Organic Flour Clan",
+          "receiver": "sb-t43fur53471579@business.example.com",
+          "sender_item_id": "item_supplier_1793028467341",
+          "recipient_wallet": "PAYPAL",
+          "purpose": "GOODS"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts-item/KKM5T2R28KG5C",
+            "rel": "item",
+            "method": "GET",
+            "encType": "application/json"
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/4YARQWK7HTLRN?page_size=1000&page=1",
+        "rel": "self",
+        "method": "GET",
+        "encType": "application/json"
+      }
+    ]
+  },
+  "findings": {
+    "payoutBatchStatus": "PENDING",
+    "payoutItemStatus": "PENDING",
+    "observation": "PayPal Payouts v1 in Sandbox immediately accepts batch submission and provides GET read-back."
+  }
+}

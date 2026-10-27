@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-10-26T16:55:17.066Z",
+  "operation": "STALE_PENDING_RECONCILIATION",
+  "summary": {
+    "totalScanned": 1,
+    "reconciledSucceeded": 1,
+    "reconciledFailed": 0,
+    "escalatedNeedsReview": 0,
+    "rechecksIncremented": 0,
+    "records": [
+      {
+        "operationKey": "simulated-crashed-capture-1793033659537",
+        "operationType": "CAPTURE",
+        "previousStatus": "PENDING",
+        "updatedStatus": "SUCCEEDED",
+        "reason": "Remote capture verified as PARTIALLY_REFUNDED on PayPal."
+      }
+    ]
+  },
+  "readBackVerified": true
+}

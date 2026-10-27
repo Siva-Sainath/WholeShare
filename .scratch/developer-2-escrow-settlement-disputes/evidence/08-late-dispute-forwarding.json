@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-10-26T16:46:14.876Z",
+  "endpoint": "POST /api/disputes/late/forward",
+  "operation": "LATE_DISPUTE_FORWARDING_AND_REPAYMENT",
+  "disputeId": "PP-R-OOA-10194658",
+  "clanId": "clan-austin-organic-flour-01",
+  "memberId": "buyer-maria-bakery",
+  "captureId": "74H63527HK822241U",
+  "timingEvaluation": {
+    "isLate": true,
+    "inspectionWindowEndsAt": "2026-10-28T15:30:52.830Z",
+    "reason": "Evaluation time is past 48-hour inspection window (2026-10-28T15:30:52.830Z). Dispute must be handled as a late dispute."
+  },
+  "forwardedPayload": {
+    "forwardingId": "fwd-1793033174874-nb5gi3",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-maria-bakery",
+    "captureId": "74H63527HK822241U",
+    "disputeId": "PP-R-OOA-10194658",
+    "isLate": true,
+    "inspectionWindowEndsAt": "2026-10-28T15:30:52.830Z",
+    "forwardedAt": "2026-10-26T16:46:14.874Z",
+    "personalAgentAssistanceNotes": "=== SyndicatePay Personal Buyer Agent Assistance Brief ===\nDispute ID: PP-R-OOA-10194658\nClan ID: clan-austin-organic-flour-01 | Member: buyer-maria-bakery\nPayment Capture Reference: 74H63527HK822241U\nDisputed Claim Amount: $100.00 USD\n\n[Inspection Window Status]\nThe standard 48-hour inspection clock expired at 2026-10-28T15:30:52.830Z. In-app damage claims are no longer eligible; this claim is formally forwarded to PayPal Mediation.\n\n[Claim Summary & Reason]\n20 bags punctured with moisture damage. In-app inspection window elapsed.\nEvidence Notes: Freight transit photos showing 20 torn and water damaged bags.\nPersonal Agent Remarks: Buyer Maria requested full dispute mediation under ADR-0012 supplier terms.\n\n[External Supplier Agreement (ADR-0012)]\nUnder the SyndicatePay External Supplier Agreement, wholesale suppliers agree that any post-settlement PayPal dispute ruling in buyer's favor constitutes an immediate, legally enforceable debt repayment obligation to SyndicatePay escrow.\n============================================================",
+    "status": "FORWARDED_TO_PAYPAL",
+    "recommendedAction": "Submit formal claim to PayPal Resolution Center with attached buyer agent brief."
+  },
+  "postPayoutResolution": {
+    "disputeId": "PP-R-OOA-10194658",
+    "resolution": "BUYER_FAVORED",
+    "payoutAlreadySettled": true,
+    "debtCreated": true,
+    "debtRecord": {
+      "id": "debt-1793033174876-4zalmi",
+      "clanId": "clan-austin-organic-flour-01",
+      "memberId": "buyer-maria-bakery",
+      "disputeId": "PP-R-OOA-10194658",
+      "captureId": "74H63527HK822241U",
+      "supplierEmail": "sb-t43fur53471579@business.example.com",
+      "disputeAmount": 100,
+      "debtAmount": 100,
+      "reason": "PayPal Resolution Center ruled for buyer. Debt repayment recorded under ADR-0012.",
+      "status": "OUTSTANDING",
+      "repaidAmount": 0,
+      "createdAt": "2026-10-26T16:46:14.876Z",
+      "updatedAt": "2026-10-26T16:46:14.876Z"
+    },
+    "message": "Recorded supplier repayment debt of $100.00 USD for supplier sb-t43fur53471579@business.example.com under external supplier agreement."
+  },
+  "singleRefundInvariantEnforced": true
+}

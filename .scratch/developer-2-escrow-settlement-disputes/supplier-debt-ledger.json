@@ -1,0 +1,17 @@
+[
+  {
+    "id": "debt-1793033174876-4zalmi",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-maria-bakery",
+    "disputeId": "PP-R-OOA-10194658",
+    "captureId": "74H63527HK822241U",
+    "supplierEmail": "sb-t43fur53471579@business.example.com",
+    "disputeAmount": 100,
+    "debtAmount": 100,
+    "reason": "PayPal Resolution Center ruled for buyer. Debt repayment recorded under ADR-0012.",
+    "status": "OUTSTANDING",
+    "repaidAmount": 0,
+    "createdAt": "2026-10-26T16:46:14.876Z",
+    "updatedAt": "2026-10-26T16:46:14.876Z"
+  }
+]

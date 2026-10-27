@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-10-26T14:00:55.933Z",
+  "endpoint": "POST https://api-m.sandbox.paypal.com/v2/checkout/orders/39J81892GY6122912/authorize",
+  "approved_by": "manual approval",
+  "orderId": "39J81892GY6122912",
+  "orderStatus": "COMPLETED",
+  "authorizationId": "19S92787G0883724A",
+  "authorizationStatus": "CREATED",
+  "amount": {
+    "currencyCode": "USD",
+    "value": "1440.00"
+  },
+  "readBackVerified": true,
+  "readBackDetails": {
+    "id": "19S92787G0883724A",
+    "status": "CREATED",
+    "amount": {
+      "currencyCode": "USD",
+      "value": "1440.00"
+    },
+    "createTime": "2026-10-26T14:00:55Z",
+    "expirationTime": "2026-11-24T14:00:55Z"
+  }
+}

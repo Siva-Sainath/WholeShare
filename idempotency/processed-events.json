@@ -1,0 +1,22 @@
+{
+  "processedEvents": [
+    {
+      "eventId": "WH-4XT08855P80157825-32153718G8976415L",
+      "eventType": "PAYMENT.CAPTURE.REFUNDED",
+      "resourceType": "refund",
+      "resourceId": "3UL90630A5638033F",
+      "processedAt": "2026-10-26T14:44:28.879Z",
+      "status": "OUT_OF_ORDER_BUFFERED",
+      "summary": "A $ 116.0 USD capture payment was refunded"
+    },
+    {
+      "eventId": "WH-EARLY-CAPTURE-LIVE-001",
+      "eventType": "PAYMENT.CAPTURE.COMPLETED",
+      "resourceType": "capture",
+      "resourceId": "CAP-EARLY-001",
+      "processedAt": "2026-10-26T14:44:28.884Z",
+      "status": "OUT_OF_ORDER_BUFFERED"
+    }
+  ],
+  "lastUpdated": "2026-10-26T14:44:28.885Z"
+}

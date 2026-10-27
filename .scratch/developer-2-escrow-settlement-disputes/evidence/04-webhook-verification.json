@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-10-26T14:44:28.885Z",
+  "webhookId": "3T268446FF552533R",
+  "endpoint": "https://api-m.sandbox.paypal.com/v1/notifications/verify-webhook-signature",
+  "verificationStrategy": {
+    "liveApi": "POST /v1/notifications/verify-webhook-signature",
+    "localCrypto": "RSA-SHA256 with CRC-32 & X.509 cert validation"
+  },
+  "paypalSandboxVerification": {
+    "testedEndpoint": "https://api-m.sandbox.paypal.com/v1/notifications/verify-webhook-signature",
+    "requestPayload": {
+      "auth_algo": "SHA256withRSA",
+      "cert_url": "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-c187f5d7",
+      "transmission_id": "trans-live-eval-001",
+      "webhook_id": "3T268446FF552533R",
+      "webhook_event_id": "WH-4XT08855P80157825-32153718G8976415L"
+    },
+    "response": {
+      "httpStatus": 200,
+      "verification_status": "FAILURE",
+      "verified": false,
+      "findings": "Live PayPal Sandbox API verified: forged signatures correctly rejected with verification_status FAILURE."
+    }
+  },
+  "cryptographicVerification": {
+    "algorithm": "SHA256withRSA",
+    "crc32Checksum": 1930783415,
+    "authenticPayloadVerified": true,
+    "tamperedPayloadRejection": {
+      "verified": false,
+      "status": "FAILURE",
+      "reason": "Cryptographic signature mismatch against certificate public key."
+    }
+  },
+  "idempotentDeduplication": {
+    "processedEventsStore": "idempotency\\processed-events.json",
+    "firstDelivery": {
+      "eventId": "WH-4XT08855P80157825-32153718G8976415L",
+      "status": "OUT_OF_ORDER_BUFFERED",
+      "message": "Refund event WH-4XT08855P80157825-32153718G8976415L buffered safely: target capture not yet recorded."
+    },
+    "duplicateDelivery": {
+      "eventId": "WH-4XT08855P80157825-32153718G8976415L",
+      "status": "DUPLICATE_IGNORED",
+      "message": "Duplicate webhook event WH-4XT08855P80157825-32153718G8976415L silently acknowledged without state mutation.",
+      "acknowledgedSilently": true,
+      "stateMutated": false
+    }
+  },
+  "outOfOrderResilience": {
+    "testEventId": "WH-EARLY-CAPTURE-LIVE-001",
+    "eventType": "PAYMENT.CAPTURE.COMPLETED",
+    "status": "OUT_OF_ORDER_BUFFERED",
+    "buffered": true,
+    "orderStatePreserved": "CREATED",
+    "bufferStore": "idempotency\\out-of-order-events.json"
+  },
+  "registeredWebhook": {
+    "id": "3T268446FF552533R",
+    "url": "https://72f19b750c2c89.lhr.life/api/webhooks/paypal",
+    "event_types": [
+      {
+        "name": "*",
+        "description": "ALL",
+        "status": "ENABLED"
+      }
+    ],
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks/3T268446FF552533R",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks/3T268446FF552533R",
+        "rel": "update",
+        "method": "PATCH"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks/3T268446FF552533R",
+        "rel": "delete",
+        "method": "DELETE"
+      }
+    ]
+  }
+}

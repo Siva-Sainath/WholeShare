@@ -1,0 +1,107 @@
+{
+  "bufferedEvents": [
+    {
+      "eventId": "WH-4XT08855P80157825-32153718G8976415L",
+      "eventType": "PAYMENT.CAPTURE.REFUNDED",
+      "resourceId": "3UL90630A5638033F",
+      "clanId": "clan-austin-organic-flour-01",
+      "memberId": "buyer-maria-bakery",
+      "bufferedAt": "2026-10-26T14:44:28.879Z",
+      "reason": "Refund arrived before capture recorded in local state",
+      "event": {
+        "id": "WH-4XT08855P80157825-32153718G8976415L",
+        "create_time": "2026-10-26T14:15:26.053Z",
+        "resource_type": "refund",
+        "event_type": "PAYMENT.CAPTURE.REFUNDED",
+        "summary": "A $ 116.0 USD capture payment was refunded",
+        "resource": {
+          "seller_payable_breakdown": {
+            "gross_amount": {
+              "currency_code": "USD",
+              "value": "116.00"
+            },
+            "paypal_fee": {
+              "currency_code": "USD",
+              "value": "0.00"
+            },
+            "net_amount": {
+              "currency_code": "USD",
+              "value": "116.00"
+            },
+            "total_refunded_amount": {
+              "currency_code": "USD",
+              "value": "116.00"
+            }
+          },
+          "amount": {
+            "currency_code": "USD",
+            "value": "116.00"
+          },
+          "update_time": "2026-10-26T07:15:21-07:00",
+          "create_time": "2026-10-26T07:15:21-07:00",
+          "custom_id": "clan-austin-organic-flour-01:buyer-maria-bakery",
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/refunds/3UL90630A5638033F",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v2/payments/captures/74H63527HK822241U",
+              "rel": "up",
+              "method": "GET"
+            }
+          ],
+          "id": "3UL90630A5638033F",
+          "note_to_payer": "SyndicatePay In-App Escrow Refund: 20 Damaged Flour Bags",
+          "payer": {
+            "email_address": "sb-dhkne53471369@business.example.com",
+            "merchant_id": "UJTASDL27A4Y8"
+          },
+          "status": "COMPLETED"
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4XT08855P80157825-32153718G8976415L",
+            "rel": "self",
+            "method": "GET",
+            "encType": "application/json"
+          },
+          {
+            "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4XT08855P80157825-32153718G8976415L/resend",
+            "rel": "resend",
+            "method": "POST",
+            "encType": "application/json"
+          }
+        ],
+        "event_version": "1.0",
+        "resource_version": "2.0"
+      }
+    },
+    {
+      "eventId": "WH-EARLY-CAPTURE-LIVE-001",
+      "eventType": "PAYMENT.CAPTURE.COMPLETED",
+      "resourceId": "CAP-EARLY-001",
+      "clanId": "clan-austin-organic-flour-01",
+      "memberId": "buyer-unrecorded-01",
+      "bufferedAt": "2026-10-26T14:44:28.884Z",
+      "reason": "Capture arrived before authorization completed in local state",
+      "event": {
+        "id": "WH-EARLY-CAPTURE-LIVE-001",
+        "create_time": "2026-10-26T14:44:28.881Z",
+        "resource_type": "capture",
+        "event_type": "PAYMENT.CAPTURE.COMPLETED",
+        "resource": {
+          "id": "CAP-EARLY-001",
+          "custom_id": "clan-austin-organic-flour-01:buyer-unrecorded-01",
+          "status": "COMPLETED",
+          "amount": {
+            "currency_code": "USD",
+            "value": "720.00"
+          }
+        }
+      }
+    }
+  ],
+  "lastUpdated": "2026-10-26T14:44:28.884Z"
+}
