@@ -2,7 +2,7 @@
 id: "coalition_flour_01"
 type: "coalition"
 aliases: ["coalition_flour_01", "coalition", "escrow", "locked"]
-updatedAt: "2026-10-27T06:57:01.704Z"
+updatedAt: "2026-10-27T07:35:22.795Z"
 ---
 
 # Group Escrow Coalition (coalition_flour_01) (coalition_flour_01)
