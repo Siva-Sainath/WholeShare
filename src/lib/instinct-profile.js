@@ -14,16 +14,24 @@ export function generateInstinctProfileHeader(buyerId = "sme_austin_01") {
   const ledger = actionDispatcher.getLedgerState();
   const activeCoalition = ledger.find(c => c.status === "FORMING") || ledger[0] || {};
 
+  const businessDesc = buyer.frontmatter?.businessProfile
+    || (buyer.frontmatter?.tradeCategory ? `Commercial operator specializing in ${buyer.frontmatter.tradeCategory}.` : "Commercial Operator & Verified Wholeshare Member.");
+
+  const autoCapUsd = buyer.frontmatter?.maxAutoAuthorizeUsd || 1500;
+  const stepUpUsd = buyer.frontmatter?.stepUpThresholdUsd || 1000;
+  const autoCapCents = Math.round(autoCapUsd * 100);
+  const stepUpCents = Math.round(stepUpUsd * 100);
+
   const lifeContext = [
     `Current Active Buyer: ${buyer.frontmatter.id || buyerId}`,
-    "Buyer Business Profile: Commercial Bakery & Food Service Operator.",
+    `Buyer Business Profile: ${businessDesc}`,
     "Verified KYB Status: Tier A with clean PayPal merchant reputation.",
     "Jurisdiction: United States (USD settlement exclusively)."
   ].join("\n");
 
   const autonomyCalibration = [
-    "Autonomous Soft-Hold Ceiling: $1,500.00 USD (150000 cents).",
-    "Step-Up KYC Escalation Boundary: Transactions exceeding $1,000.00 USD (100000 cents) require step-up QR invoice.",
+    `Autonomous Soft-Hold Ceiling: $${autoCapUsd.toFixed(2)} USD (${autoCapCents} cents).`,
+    `Step-Up KYC Escalation Boundary: Transactions exceeding $${stepUpUsd.toFixed(2)} USD (${stepUpCents} cents) require step-up QR invoice.`,
     "Financial Intent Invariant: Only Orders v2 intent: 'AUTHORIZE' is permitted. Direct CAPTURE is strictly prohibited.",
     "Arithmetic Invariant: All financial numbers must be exact integer cents."
   ].join("\n");

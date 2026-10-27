@@ -3,6 +3,7 @@ import { gzipSync } from "node:zlib";
 import { spawnSync } from "node:child_process";
 import * as XLSX from "xlsx";
 import { instinctFs } from "./instinct-fs.js";
+import { businessInduction } from "./business-induction.js";
 
 const DEFAULT_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_local_dev_secret_key_32_bytes";
 const REPLAY_WINDOW_SEC = 300;
@@ -637,6 +638,9 @@ export function ingestDocument({ fileBuffer, fileName, mimeType, buyerId, metada
   const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const parsed = parseDocumentContent(fileBuffer, mimeType);
   const memorySync = syncProcurementToMemory(buyerId, parsed);
+  const inducedProfile = businessInduction.induceProfile(buyerId, parsed.lineItems, {
+    legalName: metadata.legalName || parsed.vendorName
+  });
 
   const record = {
     docId,
@@ -647,6 +651,7 @@ export function ingestDocument({ fileBuffer, fileName, mimeType, buyerId, metada
     status: "PROCESSED",
     parsed,
     memorySync,
+    inducedProfile,
     metadata,
     ingestedAt: new Date().toISOString()
   };

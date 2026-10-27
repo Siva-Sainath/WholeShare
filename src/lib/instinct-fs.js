@@ -238,21 +238,23 @@ export class InstinctFileSystem {
     return null;
   }
 
-  writeEntity(id, type, aliases, title, facts) {
+  writeEntity(id, type, aliases, title, facts, extraFrontmatter = {}, customBody = null) {
     const isEntity = type === "organization" || type === "person";
     const targetDir = isEntity ? this.entitiesDir : this.knowledgeDir;
     ensureDirectory(targetDir);
 
     const filePath = resolve(targetDir, `${id}.md`);
-    const body = [`# ${title} (${id})`, ""].concat(
-      facts.map(f => `- ${f}`)
+    const factsList = Array.isArray(facts) ? facts : [];
+    const body = customBody || [`# ${title} (${id})`, ""].concat(
+      factsList.map(f => `- ${f}`)
     ).join("\n");
 
     const content = serializeMarkdownWithFrontmatter(
       {
         id,
         type,
-        aliases,
+        aliases: Array.isArray(aliases) ? aliases : [],
+        ...extraFrontmatter,
         updatedAt: new Date().toISOString()
       },
       body

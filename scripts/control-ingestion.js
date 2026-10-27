@@ -429,6 +429,21 @@ async function runBenchmarkAccuracy() {
   console.log("Full report saved to docs/assets/ingestion_benchmark_report.json.\n");
 }
 
+async function runInduceBusiness() {
+  const { businessInduction } = await import("../src/lib/business-induction.js");
+  const buyerId = process.argv[3] || "sme_apex_cnc";
+  console.log(`Inducing business profile and materials for ${buyerId}...`);
+
+  const sampleItems = [
+    { description: "6061-T6 Aluminum Billet 4x4x12", quantity: 20, unitPriceCents: 4500, totalCents: 90000, vendor: "Midwest Steel" },
+    { description: "Carbide 4-Flute End Mill 0.5in", quantity: 10, unitPriceCents: 3200, totalCents: 32000, vendor: "Kennametal Tooling" },
+    { description: "Water Soluble Synthetic Coolant 5-Gal Pail", quantity: 4, unitPriceCents: 8500, totalCents: 34000, vendor: "Blaser Swisslube" }
+  ];
+
+  const profile = businessInduction.induceProfile(buyerId, sampleItems, { legalName: "Apex Precision Machining LLC" });
+  console.log(JSON.stringify(profile, null, 2));
+}
+
 async function main() {
   const [,, cmd] = process.argv;
 
@@ -466,8 +481,11 @@ async function main() {
   case "benchmark:accuracy":
     await runBenchmarkAccuracy();
     break;
+  case "induce:business":
+    await runInduceBusiness();
+    break;
   default:
-    console.log("Usage: node scripts/control-ingestion.js [doctor|ingest:file|ingest:image|ingest:excel|ingest:csv|ingest:pdf|ingest:gdrive|ingest:agent|baseline:query|dataset:curate|benchmark:accuracy]");
+    console.log("Usage: node scripts/control-ingestion.js [doctor|ingest:file|ingest:image|ingest:excel|ingest:csv|ingest:pdf|ingest:gdrive|ingest:agent|baseline:query|dataset:curate|benchmark:accuracy|induce:business]");
     process.exit(1);
   }
 }
