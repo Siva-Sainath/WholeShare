@@ -19,7 +19,6 @@ import {
   importGoogleDriveFile
 } from "./ingestion-pipeline.js";
 import { existsSync, readFileSync } from "node:fs";
-import { supplierScraper } from "../kernel/supplier-scraper.js";
 
 
 
@@ -508,31 +507,6 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
         required: ["planId", "subscriberEmail"]
       }
     }
-  },
-  {
-    type: "function",
-    function: {
-      name: "scrape_supplier_catalog",
-      description: "Extract structured wholesale commodity catalog pricing from an approved supplier URL or HTML table.",
-      parameters: {
-        type: "object",
-        properties: {
-          supplierUrl: {
-            type: "string",
-            description: "Target supplier URL within approved domains (such as sysco.com, wholeshare.local)"
-          },
-          htmlContent: {
-            type: "string",
-            description: "Optional raw HTML table string to parse"
-          },
-          vendorName: {
-            type: "string",
-            description: "Supplier legal business name"
-          }
-        },
-        required: ["supplierUrl"]
-      }
-    }
   }
 ];
 
@@ -814,19 +788,6 @@ export async function executeTool(toolName, args = {}) {
         fileName: args.fileName,
         buyerId: args.buyerId
       });
-    }
-
-    case "scrape_supplier_catalog": {
-      supplierScraper.assertDomainAllowed(args.supplierUrl);
-      if (args.htmlContent) {
-        return supplierScraper.parseHtmlCatalogTable(args.htmlContent, args.vendorName || "Wholesale Supplier");
-      }
-      return {
-        supplierUrl: args.supplierUrl,
-        vendorName: args.vendorName || "Wholesale Supplier",
-        status: "DOMAIN_VERIFIED",
-        message: "Domain verified in kernel allowlist. Tabular extraction ready."
-      };
     }
 
 

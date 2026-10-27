@@ -4,8 +4,8 @@ import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../src/lib/tool-regis
 import { WholeshareAgentHarness } from "../src/lib/agent-harness.js";
 import { actionDispatcher } from "../src/lib/web-actions.js";
 
-test("WHOLESHARE_TOOL_DECLARATIONS registers 23 distinct tools with JSON schemas", () => {
-  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 23);
+test("WHOLESHARE_TOOL_DECLARATIONS registers 22 distinct tools with JSON schemas", () => {
+  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 22);
   const toolNames = WHOLESHARE_TOOL_DECLARATIONS.map(t => t.function.name);
 
   assert.ok(toolNames.includes("discover_wholesale_catalog"));
@@ -30,7 +30,6 @@ test("WHOLESHARE_TOOL_DECLARATIONS registers 23 distinct tools with JSON schemas
   assert.ok(toolNames.includes("capture_order_hold"));
   assert.ok(toolNames.includes("create_subscription_plan"));
   assert.ok(toolNames.includes("create_subscription"));
-  assert.ok(toolNames.includes("scrape_supplier_catalog"));
 
   for (const tool of WHOLESHARE_TOOL_DECLARATIONS) {
     assert.equal(tool.type, "function");

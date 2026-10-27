@@ -52,4 +52,3 @@ data/memory/entities/buyer_test_*
 data/memory/entities/buyer_sme_tool_test_*
 data/memory/entities/buyer_sme_agent_ingress_*
 data/memory/entities/test_*
-data/scraped_invoices/*.pdf
