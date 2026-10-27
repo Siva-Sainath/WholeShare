@@ -1,0 +1,18 @@
+[
+  {
+    "id": "appr-1793030898159",
+    "disputeId": "PP-R-OOA-10194658",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-maria-bakery",
+    "captureId": "74H63527HK822241U",
+    "supplierEmail": "sb-t43fur53471579@business.example.com",
+    "disputeAmount": 100,
+    "claimedAmount": 100,
+    "approvedOfferAmount": 100,
+    "offerType": "REFUND",
+    "status": "APPROVED",
+    "supplierNotes": "Supplier authorized full settlement offer for damaged organic bread flour bags.",
+    "reviewedAt": "2026-10-26T16:08:18.159Z",
+    "createdAt": "2026-10-26T16:08:18.160Z"
+  }
+]

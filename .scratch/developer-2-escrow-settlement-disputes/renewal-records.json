@@ -1,0 +1,22 @@
+[
+  {
+    "id": "renewal-1793033945515-x655f0",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-maria-bakery",
+    "orderId": "39J81892GY6122912",
+    "commodityCategory": "FAST",
+    "checkInIntervalDays": 5,
+    "lastCheckInAt": "2026-11-02T17:59:05.515Z",
+    "nextCheckInAt": "2026-10-31T16:59:05.515Z",
+    "optOutDeadlineAt": "2026-11-02T16:59:05.515Z",
+    "status": "VOIDED",
+    "currentAuthorizationId": "19S92787G0883724A",
+    "priorAuthorizationIds": [],
+    "orderAmount": 1440,
+    "requiresQrStepUp": true,
+    "createdAt": "2026-10-26T16:59:05.515Z",
+    "updatedAt": "2026-10-26T16:59:09.876Z",
+    "qrCodeBase64": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ3aGl0ZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzAwMzA4NyI+UGF5UGFsIFFSIFN0ZXAtVXA6ICQxNDQwLjAwPC90ZXh0Pjwvc3ZnPg==",
+    "invoiceId": "INV2-33946582"
+  }
+]

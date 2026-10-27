@@ -1,0 +1,26 @@
+{
+  "name": "syndicatepay-paypal-gateway",
+  "version": "1.0.0",
+  "description": "SyndicatePay - Agentic B2B Group Purchasing with PayPal Sandbox Primitives & Policy Sandwich",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "check:mocks": "node scripts/check-no-mocks.mjs",
+    "check": "npm run check:mocks && tsc --noEmit",
+    "test:unit": "node --experimental-strip-types --test test/money-math.test.ts test/gateway-spending-limits.test.ts test/gateway-complete-authorization.test.ts test/webhook-verification.test.ts test/idempotency-batch-capture.test.ts test/delivery-confirmation.test.ts test/claims-damage-flow.test.ts test/dispute-supplier-approval.test.ts test/late-dispute.test.ts test/supplier-payout.test.ts test/reconciliation-worker.test.ts test/renewal-lifecycle.test.ts",
+    "verify": "node --experimental-strip-types scripts/verify-paypal-live.mjs",
+    "test": "npm run check && npm run test:unit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@paypal/agent-toolkit": "^1.11.0",
+    "@paypal/paypal-server-sdk": "^2.5.0",
+    "dotenv": "^18.0.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "puppeteer": "^25.16.0",
+    "typescript": "^7.0.2"
+  }
+}

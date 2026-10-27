@@ -1,0 +1,74 @@
+[
+  {
+    "claimId": "claim-1793030879942-m6sm14",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-maria-bakery",
+    "orderId": "39J81892GY6122912",
+    "captureId": "74H63527HK822241U",
+    "damagedUnits": 20,
+    "unitPrice": 5.8,
+    "orderValue": 1160,
+    "claimedAmount": 116,
+    "evidence": {
+      "photoUrls": [
+        "https://storage.syndicatepay.internal/claims/maria-bag-puncture-1.jpg",
+        "https://storage.syndicatepay.internal/claims/maria-bag-puncture-2.jpg"
+      ],
+      "description": "20 bags punctured during freight transit with moisture damage."
+    },
+    "status": "SETTLED",
+    "buyerApprovedAt": "2026-10-26T16:07:59.941Z",
+    "supplierResponse": {
+      "action": "ACCEPT",
+      "notes": "Supplier accepted freight packaging damage claim. Disbursing escrow refund.",
+      "respondedAt": "2026-10-26T16:08:05.598Z"
+    },
+    "agreedRefundAmount": 116,
+    "refundId": "3UL90630A5638033F",
+    "refundTransaction": {
+      "status": "COMPLETED",
+      "id": "3UL90630A5638033F",
+      "amount": {
+        "currencyCode": "USD",
+        "value": "116.00"
+      },
+      "customId": "clan-austin-organic-flour-01:buyer-maria-bakery",
+      "noteToPayer": "SyndicatePay In-App Escrow Refund: 20 Damaged Flour Bags",
+      "sellerPayableBreakdown": {
+        "grossAmount": {
+          "currencyCode": "USD",
+          "value": "116.00"
+        },
+        "paypalFee": {
+          "currencyCode": "USD",
+          "value": "0.00"
+        },
+        "netAmount": {
+          "currencyCode": "USD",
+          "value": "116.00"
+        },
+        "totalRefundedAmount": {
+          "currencyCode": "USD",
+          "value": "116.00"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v2/payments/refunds/3UL90630A5638033F",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v2/payments/captures/74H63527HK822241U",
+          "rel": "up",
+          "method": "GET"
+        }
+      ],
+      "createTime": "2026-10-26T07:15:21-07:00",
+      "updateTime": "2026-10-26T07:15:21-07:00"
+    },
+    "reducedSupplierPayout": 1044,
+    "createdAt": "2026-10-26T16:07:59.941Z",
+    "updatedAt": "2026-10-26T16:08:08.797Z"
+  }
+]
