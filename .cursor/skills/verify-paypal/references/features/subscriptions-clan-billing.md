@@ -18,8 +18,8 @@ Preconditions:
 
 Step-by-step driving commands:
 ```bash
-# 1. Create a live recurring billing plan on PayPal Subscriptions
-node scripts/control-paypal.js subscription:plan --name "Weekly Flour Replenishment" --amount 7500
+# 1. Execute end-to-end full harness flow including live plan and subscription creation
+node scripts/verify-full-harness-flow.js
 
 # 2. Inspect subscription tools via the agent toolkit
 node scripts/control-paypal.js toolkit:execute --tool list_subscription_plans
@@ -30,9 +30,11 @@ node .cursor/skills/verify-syndicate/control-syndicate.mjs doctor
 
 Proof standards:
 - PayPal returns HTTP 201 Created with valid plan ID starting with P-.
-- Plan status evaluates to ACTIVE or CREATED with correct billing cycle interval.
+- Plan status evaluates to ACTIVE with correct billing cycle interval.
+- Subscriptions automatically link to catalog products provisioned via `ensureDefaultProductId`.
 - Toolkit inspection confirms registration of subscription management actions.
 
 ## Gotchas
-- Subscriptions require an active PayPal product ID prior to plan creation.
+- Subscriptions automatically provision an active PayPal product ID when none is explicitly provided.
 - Buyers can cancel active subscriptions directly through their PayPal consumer portal.
+
