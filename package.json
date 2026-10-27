@@ -29,7 +29,8 @@
     "verify:paypal": "node scripts/control-wholeshare.js verify-paypal-toolkit",
     "gauntlet": "node scripts/control-wholeshare.js adversarial-gauntlet",
     "toolkit:test": "node scripts/test-agent-toolkit.mjs",
-    "verify:one-shot": "node scripts/verify-one-shot.js"
+    "verify:one-shot": "node scripts/verify-one-shot.js",
+    "verify:full-harness": "node scripts/verify-full-harness-flow.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.24",

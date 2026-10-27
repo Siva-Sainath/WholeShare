@@ -473,19 +473,66 @@ export async function getShipmentTracking(trackingNumber, timeoutMs = DEFAULT_TI
   return res.json();
 }
 
+let cachedDefaultProductId = null;
+
+export async function createCatalogProduct({
+  name = "Wholeshare Procurement Service",
+  description = "B2B Group Purchasing Syndicate Subscription",
+  type = "SERVICE",
+  category = "SOFTWARE",
+  timeoutMs = DEFAULT_TIMEOUT_MS
+} = {}) {
+  const token = await getPayPalAccessToken(timeoutMs);
+  const requestId = `prod_${crypto.randomUUID()}`;
+
+  const res = await executePayPalRequest(
+    "/v1/catalogs/products",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "PayPal-Request-Id": requestId
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        type,
+        category
+      })
+    },
+    timeoutMs
+  );
+
+  return res.json();
+}
+
+export async function ensureDefaultProductId(timeoutMs = DEFAULT_TIMEOUT_MS) {
+  if (cachedDefaultProductId) {
+    return cachedDefaultProductId;
+  }
+  const prod = await createCatalogProduct({ timeoutMs });
+  cachedDefaultProductId = prod.id;
+  return cachedDefaultProductId;
+}
+
 export async function createSubscriptionPlan({
   productId,
   name,
   description = "Wholeshare Recurring Procurement Plan",
   unitPriceCents,
+  amountCents,
   currency = "USD",
   intervalUnit = "MONTH",
   intervalCount = 1,
   timeoutMs = DEFAULT_TIMEOUT_MS
 }) {
   const token = await getPayPalAccessToken(timeoutMs);
-  const amountStr = (unitPriceCents / 100).toFixed(2);
+  const finalCents = unitPriceCents ?? amountCents;
+  const amountStr = (finalCents / 100).toFixed(2);
   const requestId = `plan_${crypto.randomUUID()}`;
+
+  const resolvedProductId = productId || (await ensureDefaultProductId(timeoutMs));
 
   const res = await executePayPalRequest(
     "/v1/billing/plans",
@@ -497,7 +544,7 @@ export async function createSubscriptionPlan({
         "PayPal-Request-Id": requestId
       },
       body: JSON.stringify({
-        product_id: productId || "PROD-WHOLESHARE-RECURRING",
+        product_id: resolvedProductId,
         name,
         description,
         status: "ACTIVE",
@@ -533,7 +580,8 @@ export async function createSubscriptionPlan({
     planId: data.id,
     name: data.name,
     status: data.status,
-    unitPriceCents,
+    unitPriceCents: finalCents,
+    amountCents: finalCents,
     currency,
     intervalUnit,
     intervalCount,

@@ -181,6 +181,21 @@ export function interceptToolExecution(toolName, args = {}) {
     }
   }
 
+  if (toolName === "capture_order_hold") {
+    if (args.amountCents !== undefined && (!Number.isInteger(args.amountCents) || args.amountCents <= 0)) {
+      violations.push("Capture amount in cents must be a positive integer.");
+    }
+    if (!args.authorizationId || typeof args.authorizationId !== "string" || !args.authorizationId.trim()) {
+      violations.push("Authorization identifier is required for capture.");
+    }
+  }
+
+  if (toolName === "create_subscription_plan") {
+    if (args.amountCents !== undefined && (!Number.isInteger(args.amountCents) || args.amountCents <= 0)) {
+      violations.push("Subscription plan amount in cents must be a positive integer.");
+    }
+  }
+
   return {
     valid: violations.length === 0,
     violations,

@@ -7,7 +7,9 @@ import {
   registerShipmentTracking,
   getOrder,
   getInvoice,
-  getShipmentTracking
+  getShipmentTracking,
+  createSubscriptionPlan,
+  createSubscription
 } from "./paypal-bridge.js";
 import { interceptToolExecution } from "./interceptor.js";
 import { instinctFs } from "./instinct-fs.js";
@@ -16,6 +18,7 @@ import {
   queryProcurementBaseline,
   importGoogleDriveFile
 } from "./ingestion-pipeline.js";
+import { existsSync, readFileSync } from "node:fs";
 
 
 
@@ -425,6 +428,85 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
         required: ["buyerId", "fileId"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "capture_order_hold",
+      description: "PayPal Orders v2 settlement action. Captures previously authorized escrow funds once delivery is verified.",
+      parameters: {
+        type: "object",
+        properties: {
+          authorizationId: {
+            type: "string",
+            description: "PayPal authorization identifier to capture"
+          },
+          amountCents: {
+            type: "integer",
+            description: "Amount to capture in integer cents"
+          },
+          isFinalCapture: {
+            type: "boolean",
+            description: "Whether this is the final capture"
+          }
+        },
+        required: ["authorizationId", "amountCents"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_subscription_plan",
+      description: "PayPal Subscriptions action. Creates recurring group billing plan for wholesale buyer clans.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Plan name"
+          },
+          description: {
+            type: "string",
+            description: "Plan description"
+          },
+          amountCents: {
+            type: "integer",
+            description: "Recurring billing amount in integer cents"
+          },
+          intervalUnit: {
+            type: "string",
+            description: "MONTH or WEEK billing frequency"
+          }
+        },
+        required: ["name", "amountCents"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_subscription",
+      description: "PayPal Subscriptions action. Subscribes a buyer clan member to a wholesale recurring billing plan.",
+      parameters: {
+        type: "object",
+        properties: {
+          planId: {
+            type: "string",
+            description: "Target PayPal subscription plan identifier"
+          },
+          subscriberEmail: {
+            type: "string",
+            description: "Buyer subscriber email address"
+          },
+          customId: {
+            type: "string",
+            description: "Buyer member identifier"
+          }
+        },
+        required: ["planId", "subscriberEmail"]
+      }
+    }
   }
 ];
 
@@ -643,11 +725,56 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case "ingest_business_document": {
+      let fileBuffer;
+      let mimeType = args.mimeType || "application/json";
+      let fileName = args.fileName || "agent_upload.json";
+
+      if (args.base64Content) {
+        fileBuffer = Buffer.from(args.base64Content, "base64");
+      } else if (args.filePath && existsSync(args.filePath)) {
+        fileBuffer = readFileSync(args.filePath);
+        fileName = args.filePath.split("/").pop();
+        if (args.filePath.endsWith(".pdf")) mimeType = "application/pdf";
+        else if (args.filePath.endsWith(".xlsx")) mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        else if (args.filePath.endsWith(".csv")) mimeType = "text/csv";
+        else if (args.filePath.endsWith(".png")) mimeType = "image/png";
+      } else if (args.documentJson) {
+        fileBuffer = Buffer.from(args.documentJson, "utf-8");
+      } else {
+        throw new Error("Missing document content (base64Content, filePath, or documentJson required).");
+      }
+
       return ingestDocument({
-        fileBuffer: Buffer.from(args.documentJson, "utf-8"),
-        fileName: args.fileName || "agent_upload.json",
-        mimeType: "application/json",
+        fileBuffer,
+        fileName,
+        mimeType,
         buyerId: args.buyerId
+      });
+    }
+
+    case "capture_order_hold": {
+      return await captureOrderHold({
+        authorizationId: args.authorizationId,
+        amountCents: args.amountCents,
+        currency: args.currency || "USD",
+        isFinalCapture: args.isFinalCapture !== false
+      });
+    }
+
+    case "create_subscription_plan": {
+      return await createSubscriptionPlan({
+        name: args.name,
+        description: args.description || "Wholeshare Clan Subscription",
+        amountCents: args.amountCents,
+        intervalUnit: args.intervalUnit || "MONTH"
+      });
+    }
+
+    case "create_subscription": {
+      return await createSubscription({
+        planId: args.planId,
+        subscriberEmail: args.subscriberEmail,
+        customId: args.customId
       });
     }
 
