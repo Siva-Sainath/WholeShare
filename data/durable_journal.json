@@ -358,3 +358,23 @@
 {"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1792991909271","status":"RUNNING","metadata":{"approvalToken":"APPROVAL_TOKEN_9988"},"loggedAt":"2026-10-26T05:18:29.275Z"}
 {"action":"STEP_SAVED","sessionId":"test_step_up_1792991909271","stepIndex":2,"toolName":"query_escrow_ledger","interceptorStatus":"PASSED","loggedAt":"2026-10-26T05:19:14.278Z"}
 {"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1792991909271","status":"COMPLETED","metadata":{"finalMessage":"Queried live platform ledger and refreshed member states.","totalDurationMs":45001},"loggedAt":"2026-10-26T05:19:14.282Z"}
+{"action":"SESSION_CREATED","id":"audit_sess_1793084105911","status":"RUNNING","model":"qwen3.5:9b","loggedAt":"2026-10-27T06:55:05.912Z"}
+{"action":"STEP_SAVED","sessionId":"audit_sess_1793084105911","stepIndex":2,"toolName":"spawn_sme_mandate","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:55:59.225Z"}
+{"action":"STEP_SAVED","sessionId":"audit_sess_1793084105911","stepIndex":3,"toolName":"run_coalition_negotiation","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:55:59.229Z"}
+{"action":"STEP_SAVED","sessionId":"audit_sess_1793084105911","stepIndex":4,"toolName":"authorize_paypal_escrow","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:55:59.236Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"audit_sess_1793084105911","status":"COMPLETED","metadata":{"finalMessage":"Autonomous deal cycle executed: buyer spawned, volume discount negotiated, and PayPal Orders v2 soft authorization holds locked.","totalDurationMs":53327},"loggedAt":"2026-10-27T06:55:59.239Z"}
+{"action":"SESSION_CREATED","id":"test_sess_1793084168158","status":"RUNNING","model":"qwen3.5:9b","loggedAt":"2026-10-27T06:56:08.158Z"}
+{"action":"DISPUTE_RECORDED","disputeId":"DISPUTE_TEST_1793084168173","orderId":"ORD_HOLD_99","status":"UNDER_REVIEW","loggedAt":"2026-10-27T06:56:08.178Z"}
+{"action":"DISPUTE_RECORDED","disputeId":"DISPUTE_RESOLVE_1793084168204","orderId":"ORD_HOLD_100","status":"RESOLVED","loggedAt":"2026-10-27T06:56:08.205Z"}
+{"action":"STEP_SAVED","sessionId":"test_sess_1793084168158","stepIndex":2,"toolName":"spawn_sme_mandate","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:57:01.691Z"}
+{"action":"STEP_SAVED","sessionId":"test_sess_1793084168158","stepIndex":3,"toolName":"run_coalition_negotiation","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:57:01.695Z"}
+{"action":"STEP_SAVED","sessionId":"test_sess_1793084168158","stepIndex":4,"toolName":"authorize_paypal_escrow","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:57:01.698Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_sess_1793084168158","status":"COMPLETED","metadata":{"finalMessage":"Autonomous deal cycle executed: buyer spawned, volume discount negotiated, and PayPal Orders v2 soft authorization holds locked.","totalDurationMs":53542},"loggedAt":"2026-10-27T06:57:01.701Z"}
+{"action":"SESSION_CREATED","id":"test_resume_1793084221765","status":"SUSPENDED","model":"qwen3.5:9b","loggedAt":"2026-10-27T06:57:01.765Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_resume_1793084221765","status":"RUNNING","metadata":{},"loggedAt":"2026-10-27T06:57:01.766Z"}
+{"action":"STEP_SAVED","sessionId":"test_resume_1793084221765","stepIndex":2,"toolName":"query_escrow_ledger","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:57:46.774Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_resume_1793084221765","status":"COMPLETED","metadata":{"finalMessage":"Queried live platform ledger and refreshed member states.","totalDurationMs":45015},"loggedAt":"2026-10-27T06:57:46.782Z"}
+{"action":"SESSION_CREATED","id":"test_step_up_1793084266787","status":"AWAITING_STEP_UP","model":"qwen3.5:9b","loggedAt":"2026-10-27T06:57:46.787Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1793084266787","status":"RUNNING","metadata":{"approvalToken":"APPROVAL_TOKEN_9988"},"loggedAt":"2026-10-27T06:57:46.791Z"}
+{"action":"STEP_SAVED","sessionId":"test_step_up_1793084266787","stepIndex":2,"toolName":"query_escrow_ledger","interceptorStatus":"PASSED","loggedAt":"2026-10-27T06:58:31.799Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1793084266787","status":"COMPLETED","metadata":{"finalMessage":"Queried live platform ledger and refreshed member states.","totalDurationMs":45007},"loggedAt":"2026-10-27T06:58:31.803Z"}
