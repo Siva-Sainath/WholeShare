@@ -2,7 +2,8 @@
 """
 Wholeshare Commercial Data Lake Construction and Curation Pipeline.
 Generates, normalizes, decontaminates, and partitions datasets for System 1 (Laya)
-and System 2 (Qwen 9B) across all commercial archetypes and novel unseen domains.
+and System 2 (Qwen 9B) across all commercial archetypes, novel unseen domains,
+and full-lifecycle financial operations (PayPal Orders v2, Invoicing v2, Disputes, ACP tokens).
 """
 
 import os
@@ -199,6 +200,111 @@ COMMERCIAL_ARCHETYPE_SPECS = [
     }
 ]
 
+FINANCIAL_OPERATIONS_SPECS = [
+    {
+        "id": "fin_paypal_orders_v2_auth",
+        "operation": "PayPal Orders v2 Soft Authorization Hold",
+        "description": "Buyer pledges 150 units into coalition. System creates Orders v2 soft authorization hold with intent: AUTHORIZE for $1,080.00 (108,000 cents).",
+        "buyer_id": "sme_austin_bakery_01",
+        "monthly_spend_cents": 1200000,
+        "amount_cents": 108000,
+        "intent": "AUTHORIZE",
+        "direct_capture": False,
+        "step_up_required": True,
+        "risk_tier": "MEDIUM",
+        "next_action": "GENERATE_STEP_UP",
+        "expected_tool": "authorize_paypal_escrow",
+        "fsm_state_before": "FORMING",
+        "fsm_state_after": "NEGOTIATING",
+        "context_prompt": "Buyer sme_austin_bakery_01 requests authorization hold for 150 units of organic flour totaling $1080.00 USD. Verify spend limit ($12,000.00/mo) and intent rules."
+    },
+    {
+        "id": "fin_paypal_invoicing_v2_stepup",
+        "operation": "PayPal Invoicing v2 Step-Up QR Code Escalation",
+        "description": "High-value order of $1,850.00 (185,000 cents) triggers mandatory step-up KYC QR invoice generation before funds can be authorized.",
+        "buyer_id": "sme_pacific_electronics_03",
+        "monthly_spend_cents": 4000000,
+        "amount_cents": 185000,
+        "intent": "AUTHORIZE",
+        "direct_capture": False,
+        "step_up_required": True,
+        "risk_tier": "HIGH",
+        "next_action": "GENERATE_STEP_UP",
+        "expected_tool": "generate_step_up_invoice",
+        "fsm_state_before": "NEGOTIATING",
+        "fsm_state_after": "NEGOTIATING",
+        "context_prompt": "Transaction allocation of $1850.00 USD exceeds the $1000.00 USD threshold. Trigger Invoicing v2 step-up QR code generation."
+    },
+    {
+        "id": "fin_paypal_dispute_pro_rata",
+        "operation": "APIMatic Pro-Rata Customer Dispute Mediation",
+        "description": "Supplier delivered 80 out of 100 bags of organic flour. Buyer files partial delivery dispute. System calculates pro-rata refund of $570.00 (57,000 cents) without human intervention.",
+        "buyer_id": "sme_austin_bakery_01",
+        "monthly_spend_cents": 1200000,
+        "amount_cents": 57000,
+        "intent": "DISPUTE_PRO_RATA",
+        "direct_capture": False,
+        "step_up_required": False,
+        "risk_tier": "CRITICAL",
+        "next_action": "DISPUTE_MEDIATION",
+        "expected_tool": "dispute_mediation",
+        "fsm_state_before": "SETTLING",
+        "fsm_state_after": "DISPUTED",
+        "context_prompt": "Supplier shortage: 20 units missing out of 100 units pledged at $28.50 per unit. Mediate pro-rata dispute."
+    },
+    {
+        "id": "fin_paypal_shipment_tracking",
+        "operation": "PayPal Shipment Tracking and Batch Escrow Capture",
+        "description": "FedEx carrier tracking webhook confirms verified delivery of 500 units. System executes atomic batch capture of authorized funds and releases wholesale discount rebate.",
+        "buyer_id": "sme_bean_roasters_02",
+        "monthly_spend_cents": 2500000,
+        "amount_cents": 142500,
+        "intent": "CAPTURE",
+        "direct_capture": True,
+        "step_up_required": False,
+        "risk_tier": "LOW",
+        "next_action": "CAPTURE_ESCROW",
+        "expected_tool": "register_shipment_tracking",
+        "fsm_state_before": "LOCKED",
+        "fsm_state_after": "SETTLED",
+        "context_prompt": "FedEx tracking number 783492109412 status is DELIVERED. Settle escrow and capture authorized funds."
+    },
+    {
+        "id": "fin_acp_token_issuance",
+        "operation": "Agentic Commerce Protocol (ACP) Shared Payment Token",
+        "description": "Issues cryptographically signed ACP Shared Payment Token authorizing external buyer agent to pledge up to $2,500.00 (250,000 cents) within 24 hours.",
+        "buyer_id": "sme_green_organics_04",
+        "monthly_spend_cents": 950000,
+        "amount_cents": 250000,
+        "intent": "TOKEN_GRANT",
+        "direct_capture": False,
+        "step_up_required": True,
+        "risk_tier": "MEDIUM",
+        "next_action": "SPAWN_SME_MANDATE",
+        "expected_tool": "spawn_sme_mandate",
+        "fsm_state_before": "FORMING",
+        "fsm_state_after": "FORMING",
+        "context_prompt": "External bot requests ACP Shared Payment Token for buyer sme_green_organics_04 with $2500.00 limit."
+    },
+    {
+        "id": "fin_coalition_moq_tier_lock",
+        "operation": "Coalition Finite State Machine Volume Tier Lock",
+        "description": "Combined pledges reach 500 units, crossing the 28% wholesale discount threshold. State machine locks coalition and transitions status to LOCKED.",
+        "buyer_id": "coalition_flour_01",
+        "monthly_spend_cents": 5000000,
+        "amount_cents": 360000,
+        "intent": "FSM_TRANSITION",
+        "direct_capture": False,
+        "step_up_required": False,
+        "risk_tier": "LOW",
+        "next_action": "LOCK_COALITION",
+        "expected_tool": "run_coalition_negotiation",
+        "fsm_state_before": "NEGOTIATING",
+        "fsm_state_after": "LOCKED",
+        "context_prompt": "Coalition coalition_flour_01 volume reaches 500 units meeting Tier 2 MOQ. Transition state to LOCKED."
+    }
+]
+
 OOD_COMMERCIAL_SECTORS = [
     {
         "subsector": "Quantum Optics & Cryogenic Laser Sensing",
@@ -331,7 +437,7 @@ def build_data_lake():
                     },
                     "next_action": {
                         "type": "choice",
-                        "options": ["INSPECT_DOCUMENT", "INDUCE_BOM", "AUTHORIZE_HOLD", "GENERATE_STEP_UP", "CAPTURE_ESCROW"]
+                        "options": ["INSPECT_DOCUMENT", "INDUCE_BOM", "AUTHORIZE_HOLD", "GENERATE_STEP_UP", "CAPTURE_ESCROW", "DISPUTE_MEDIATION", "SPAWN_SME_MANDATE", "LOCK_COALITION"]
                     },
                     "confidence_score": {
                         "type": "score",
@@ -436,6 +542,130 @@ def build_data_lake():
                     "poolingEligible": it["poolingEligible"]
                 })
 
+    # Add Full-Lifecycle Financial Operations Scenarios
+    for fin in FINANCIAL_OPERATIONS_SPECS:
+        f_id = fin["id"]
+        state_str = (
+            f"Financial Lifecycle Event: {fin['operation']}. Buyer: {fin['buyer_id']}. "
+            f"Amount: ${fin['amount_cents']/100:.2f} USD. Monthly Spend: ${fin['monthly_spend_cents']/100:.2f}. "
+            f"FSM State: {fin['fsm_state_before']}. Intent: {fin['intent']}."
+        )
+
+        s1_fin_record = {
+            "id": f"s1_{f_id}",
+            "state": state_str,
+            "questions": {
+                "archetype": {
+                    "type": "choice",
+                    "options": [a["archetype_id"] for a in COMMERCIAL_ARCHETYPE_SPECS] + ["GENERALIZED_COMMERCIAL_OPERATIONS"]
+                },
+                "risk_tier": {
+                    "type": "choice",
+                    "options": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+                },
+                "next_action": {
+                    "type": "choice",
+                    "options": ["INSPECT_DOCUMENT", "INDUCE_BOM", "AUTHORIZE_HOLD", "GENERATE_STEP_UP", "CAPTURE_ESCROW", "DISPUTE_MEDIATION", "SPAWN_SME_MANDATE", "LOCK_COALITION"]
+                },
+                "confidence_score": {
+                    "type": "score",
+                    "min": 1,
+                    "max": 5
+                },
+                "requires_step_up": {
+                    "type": "noul"
+                },
+                "is_pooling_eligible": {
+                    "type": "noul"
+                },
+                "arithmetic_valid": {
+                    "type": "noul"
+                }
+            },
+            "answers": {
+                "archetype": "GENERALIZED_COMMERCIAL_OPERATIONS",
+                "risk_tier": fin["risk_tier"],
+                "next_action": fin["next_action"],
+                "confidence_score": 5,
+                "requires_step_up": fin["step_up_required"],
+                "is_pooling_eligible": True,
+                "arithmetic_valid": True
+            }
+        }
+        system1_records.append(s1_fin_record)
+
+        system_prompt = (
+            "You are the Wholeshare B2B FinTech & Escrow Orchestration Engine. "
+            "Enforce strict PayPal Orders v2 soft authorization holds, Invoicing v2 KYC escalation, "
+            "carrier shipment verification, and APIMatic pro-rata dispute mediation with exact integer cents."
+        )
+
+        assistant_thought = (
+            f"<think>\n"
+            f"1. Operation Analysis: {fin['operation']} for buyer {fin['buyer_id']}. "
+            f"2. Amount Validation: ${fin['amount_cents']/100:.2f} ({fin['amount_cents']} cents) with intent: {fin['intent']}. "
+            f"3. Risk Invariant: Step-up required is {fin['step_up_required']}. Direct capture forbidden during formation. "
+            f"4. FSM Guard: Transition from {fin['fsm_state_before']} to {fin['fsm_state_after']} satisfies state machine policy. "
+            f"5. Tool Execution: Route to {fin['expected_tool']}.\n"
+            f"</think>\n"
+        )
+
+        assistant_json = json.dumps({
+            "subsector": fin["operation"],
+            "industryDomain": "Financial Operations & Escrow Settlement",
+            "archetypeId": "GENERALIZED_COMMERCIAL_OPERATIONS",
+            "operation": fin["operation"],
+            "buyerId": fin["buyer_id"],
+            "amountCents": fin["amount_cents"],
+            "intent": fin["intent"],
+            "stepUpRequired": fin["step_up_required"],
+            "riskTier": fin["risk_tier"],
+            "recommendedTool": fin["expected_tool"],
+            "billOfMaterials": [
+                {
+                    "description": fin["operation"],
+                    "quantity": 1,
+                    "unitPriceCents": fin["amount_cents"],
+                    "totalCents": fin["amount_cents"],
+                    "category": "RAW_MATERIAL",
+                    "poolingEligible": False
+                }
+            ],
+            "fsmTransition": {
+                "from": fin["fsm_state_before"],
+                "to": fin["fsm_state_after"]
+            }
+        }, indent=2)
+
+        s2_fin_record = {
+            "id": f"s2_{f_id}",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": fin["context_prompt"]},
+                {"role": "assistant", "content": assistant_thought + assistant_json}
+            ]
+        }
+        system2_records.append(s2_fin_record)
+
+        rl_fin_record = {
+            "prompt_id": f"rl_{f_id}",
+            "prompt": fin["context_prompt"],
+            "ground_truth": {
+                "archetype_id": "GENERALIZED_COMMERCIAL_OPERATIONS",
+                "doc_total_cents": fin["amount_cents"],
+                "line_item_count": 1,
+                "required_categories": ["RAW_MATERIAL"],
+                "valid_outputs": ["escrow settlement", "financial operation"],
+                "operation": fin["operation"],
+                "amount_cents": fin["amount_cents"],
+                "expected_tool": fin["expected_tool"],
+                "step_up_required": fin["step_up_required"],
+                "risk_tier": fin["risk_tier"],
+                "fsm_state_after": fin["fsm_state_after"]
+            }
+        }
+        rl_records.append(rl_fin_record)
+
     # Generate Out-Of-Distribution (OOD) Generalization Suite
     for ood in OOD_COMMERCIAL_SECTORS:
         sub = ood["subsector"]
@@ -494,13 +724,18 @@ def build_data_lake():
             f.write(json.dumps(r) + "\n")
 
     manifest = {
-        "dataLakeVersion": "1.0.0",
+        "dataLakeVersion": "1.1.0",
         "partitions": {
             "system1_laya_records": len(system1_records),
             "system2_qwen_records": len(system2_records),
             "rl_verifiable_prompts": len(rl_records),
             "ood_holdout_records": len(ood_records),
             "catalog_taxonomies": len(catalog_records)
+        },
+        "coverage": {
+            "commercialArchetypes": len(COMMERCIAL_ARCHETYPE_SPECS),
+            "financialOperations": len(FINANCIAL_OPERATIONS_SPECS),
+            "oodHoldouts": len(OOD_COMMERCIAL_SECTORS)
         },
         "qualityGuarantees": {
             "exactIntegerCentsEnforced": True,
@@ -514,7 +749,7 @@ def build_data_lake():
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
-    print(f"Data Lake Partitioning Complete:")
+    print(f"Data Lake Partitioning Complete (v1.1.0):")
     print(f"  System 1 (Laya Decision Records): {len(system1_records)}")
     print(f"  System 2 (Qwen Reasoning Rollouts): {len(system2_records)}")
     print(f"  RL Verifiable Ground Truth Prompts: {len(rl_records)}")

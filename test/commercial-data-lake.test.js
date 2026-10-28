@@ -11,7 +11,7 @@ test("Data Lake Manifest exists and contains required partition counts", () => {
   assert.ok(existsSync(manifestPath), "Manifest must exist");
 
   const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-  assert.equal(manifest.dataLakeVersion, "1.0.0");
+  assert.ok(manifest.dataLakeVersion.startsWith("1."));
   assert.ok(manifest.partitions.system1_laya_records > 0);
   assert.ok(manifest.partitions.system2_qwen_records > 0);
   assert.ok(manifest.partitions.rl_verifiable_prompts > 0);
@@ -116,3 +116,4 @@ test("OOD Generalization Suite tests induction on completely novel commercial se
     assert.ok(profile.boundaries.stepUpThresholdCents >= profile.boundaries.maxAutoAuthorizeCents);
   }
 });
+
