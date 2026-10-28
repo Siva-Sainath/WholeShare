@@ -12,7 +12,8 @@ import { resolve, join } from 'node:path';
 const FEATURE_DIRS = [
   resolve(process.cwd(), '.cursor/skills/verify-syndicate/references/features'),
   resolve(process.cwd(), '.cursor/skills/verify-paypal/references/features'),
-  resolve(process.cwd(), '.cursor/skills/verify-ingestion/references/features')
+  resolve(process.cwd(), '.cursor/skills/verify-ingestion/references/features'),
+  resolve(process.cwd(), '.cursor/skills/verify-datalake/references/features')
 ];
 
 const REQUIRED_HEADERS = [
@@ -40,8 +41,8 @@ function lintFeatureFile(filePath, fileName) {
 
   // Check driving section quality
   if (content.includes('## Driving it with')) {
-    if (!content.includes('control-syndicate.mjs') && !content.includes('control-paypal.js') && !content.includes('control-ingestion.js')) {
-      errors.push('Driving section must cite control-syndicate.mjs, control-paypal.js, or control-ingestion.js command');
+    if (!content.includes('control-syndicate.mjs') && !content.includes('control-paypal.js') && !content.includes('control-ingestion.js') && !content.includes('control-datalake.js')) {
+      errors.push('Driving section must cite control-syndicate.mjs, control-paypal.js, control-ingestion.js, or control-datalake.js command');
     }
     if (!content.toLowerCase().includes('proof')) {
       errors.push('Driving section must define explicit Proof standards');
