@@ -197,6 +197,96 @@ COMMERCIAL_ARCHETYPE_SPECS = [
                 "monthly_spend_cents": 380000
             }
         ]
+    },
+    {
+        "archetype_id": "APAC_ELECTRONICS_HARDWARE",
+        "domain": "Cross-Border Electronics & Hardware Subassembly",
+        "sectors": [
+            {
+                "subsector": "Shenzhen PCBA & IoT Gateway Manufacturing",
+                "vendor": "Yantian Electronics Direct",
+                "items": [
+                    {"description": "Multi-Layer FR4 Bare Circuit Boards 4-Layer 100ct", "quantity": 15, "unit_price_cents": 14500, "category": "RAW_MATERIAL", "pooling": True},
+                    {"description": "Surface Mount Resistor Reels 0603 10k 5000ct", "quantity": 10, "unit_price_cents": 2200, "category": "RAW_MATERIAL", "pooling": True},
+                    {"description": "Lead-Free Solder Paste SAC305 Jar 500g", "quantity": 12, "unit_price_cents": 4600, "category": "CONSUMABLE", "pooling": True},
+                    {"description": "Static Dissipative Antistatic Shielding Bags 500ct", "quantity": 8, "unit_price_cents": 3400, "category": "PACKAGING", "pooling": True}
+                ],
+                "outputs": ["assembled IoT edge controllers", "industrial telemetry gateway PCBAs"],
+                "monthly_spend_cents": 4500000
+            }
+        ]
+    },
+    {
+        "archetype_id": "SOUTH_ASIA_TEXTILES_GARMENTS",
+        "domain": "International Textile Spinning, Weaving & Apparel Mills",
+        "sectors": [
+            {
+                "subsector": "Tiruppur Organic Cotton Spinning & Dyeing",
+                "vendor": "Tuticorin Cotton Mills Export",
+                "items": [
+                    {"description": "Combed Cotton Yarn 30s Count Hosiery Cone 50kg", "quantity": 80, "unit_price_cents": 16500, "category": "RAW_MATERIAL", "pooling": True},
+                    {"description": "Reactive Blue Textile Dye 21 Drum 25kg", "quantity": 6, "unit_price_cents": 42000, "category": "CONSUMABLE", "pooling": True},
+                    {"description": "Spun Polyester Sewing Thread 5000m Cones 10ct", "quantity": 25, "unit_price_cents": 2800, "category": "RAW_MATERIAL", "pooling": True},
+                    {"description": "Heavy Duty HDPE Woven Bales Packaging 100ct", "quantity": 10, "unit_price_cents": 5500, "category": "PACKAGING", "pooling": True}
+                ],
+                "outputs": ["OEKO-TEX certified cotton knit fabric", "export finished circular knit garments"],
+                "monthly_spend_cents": 3200000
+            }
+        ]
+    },
+    {
+        "archetype_id": "LATAM_SPECIALTY_AGRO_COMMODITY",
+        "domain": "Specialty Agriculture, Fair-Trade Agro-Commodities & Origin Minerals",
+        "sectors": [
+            {
+                "subsector": "Colombian High-Altitude Coffee Growers Federation",
+                "vendor": "Medellin Specialty Coffee Cooperative",
+                "items": [
+                    {"description": "Excelso EP Arabica Green Coffee 60kg Jute Bag", "quantity": 50, "unit_price_cents": 31000, "category": "RAW_MATERIAL", "pooling": True},
+                    {"description": "GrainPro Hermetic Storage Liner Bags 60kg 50ct", "quantity": 1, "unit_price_cents": 19500, "category": "PACKAGING", "pooling": True},
+                    {"description": "Organic Bio-Fertilizer Fermented Compost 50lb", "quantity": 30, "unit_price_cents": 3200, "category": "CONSUMABLE", "pooling": True},
+                    {"description": "Export Heat-Treated Wooden Pallets 48x40in", "quantity": 5, "unit_price_cents": 4800, "category": "PACKAGING", "pooling": True}
+                ],
+                "outputs": ["certified export green coffee (Grade 1)", "fine aroma single-origin cacao beans"],
+                "monthly_spend_cents": 2900000
+            }
+        ]
+    },
+    {
+        "archetype_id": "EMEA_PRECISION_ENGINEERING",
+        "domain": "European High-Tolerance Precision Engineering & Specialty Craft",
+        "sectors": [
+            {
+                "subsector": "Bavarian Industrial Transmission & Hydraulics",
+                "vendor": "Stuttgart Precision Drives GmbH",
+                "items": [
+                    {"description": "Precision Planetary Gearbox 500Nm Ratio 10:1", "quantity": 4, "unit_price_cents": 85000, "category": "RAW_MATERIAL", "pooling": False},
+                    {"description": "Proportional Hydraulic Directional Valve NG6", "quantity": 6, "unit_price_cents": 48000, "category": "RAW_MATERIAL", "pooling": False},
+                    {"description": "High-Pressure Anti-Wear Hydraulic Fluid ISO 46 20L", "quantity": 8, "unit_price_cents": 12500, "category": "CONSUMABLE", "pooling": True},
+                    {"description": "DIN 912 Class 12.9 Alloy Steel Socket Screws 500ct", "quantity": 10, "unit_price_cents": 3800, "category": "MRO", "pooling": True}
+                ],
+                "outputs": ["DIN-standard automated transmission units", "servo-hydraulic manifold assemblies"],
+                "monthly_spend_cents": 3800000
+            }
+        ]
+    },
+    {
+        "archetype_id": "AFRICAN_AGRO_COLD_CHAIN",
+        "domain": "Equatorial Cold-Chain Floriculture & International Trade",
+        "sectors": [
+            {
+                "subsector": "Naivasha Lake Horticultural Cold Chain",
+                "vendor": "Equatorial Blooms Export Kenya",
+                "items": [
+                    {"description": "Grade-A Long-Stem Cut Red Roses 200ct Carton", "quantity": 40, "unit_price_cents": 18500, "category": "RAW_MATERIAL", "pooling": True},
+                    {"description": "Perforated Export Poly Sleeves 1000ct Box", "quantity": 8, "unit_price_cents": 4500, "category": "PACKAGING", "pooling": True},
+                    {"description": "Cold-Chain USB Multi-Use Temperature Data Logger", "quantity": 12, "unit_price_cents": 2400, "category": "TOOLING", "pooling": True},
+                    {"description": "Florissant Flower Food Hydration Sachet 1000ct", "quantity": 5, "unit_price_cents": 3900, "category": "CONSUMABLE", "pooling": True}
+                ],
+                "outputs": ["premium fresh export long-stem roses", "chilled organic horticultural produce"],
+                "monthly_spend_cents": 2100000
+            }
+        ]
     }
 ]
 
@@ -302,6 +392,57 @@ FINANCIAL_OPERATIONS_SPECS = [
         "fsm_state_before": "NEGOTIATING",
         "fsm_state_after": "LOCKED",
         "context_prompt": "Coalition coalition_flour_01 volume reaches 500 units meeting Tier 2 MOQ. Transition state to LOCKED."
+    },
+    {
+        "id": "fin_cross_border_fob_escrow_auth",
+        "operation": "Cross-Border Orders v2 FOB Escrow Soft Authorization",
+        "description": "Cross-border Transpacific trade under FOB Shenzhen terms ($24,500.00 / 2,450,000 cents with 200 bps FX risk buffer = 49,000 cents buffer). Soft authorization locks total $24,990.00.",
+        "buyer_id": "sme_munich_gmbh_01",
+        "monthly_spend_cents": 10000000,
+        "amount_cents": 2450000,
+        "intent": "AUTHORIZE",
+        "direct_capture": False,
+        "step_up_required": True,
+        "risk_tier": "HIGH",
+        "next_action": "GENERATE_STEP_UP",
+        "expected_tool": "authorize_paypal_escrow",
+        "fsm_state_before": "FORMING",
+        "fsm_state_after": "NEGOTIATING",
+        "context_prompt": "Cross-border procurement of 500 PCBA modules under FOB Shenzhen terms. Lock $24,500.00 plus 2% FX buffer."
+    },
+    {
+        "id": "fin_cross_border_bill_of_lading_capture",
+        "operation": "Carrier On-Board Bill of Lading (BL) Batch Escrow Capture",
+        "description": "Ocean carrier Maersk confirms on-board Bill of Lading (BL) issued for 80 bales of combed cotton yarn. System executes atomic capture of $13,200.00 under CIF Rotterdam terms.",
+        "buyer_id": "sme_rotterdam_textiles_02",
+        "monthly_spend_cents": 6000000,
+        "amount_cents": 1320000,
+        "intent": "CAPTURE_BATCH",
+        "direct_capture": False,
+        "step_up_required": False,
+        "risk_tier": "LOW",
+        "next_action": "CAPTURE_ESCROW",
+        "expected_tool": "capture_batch_escrow",
+        "fsm_state_before": "LOCKED",
+        "fsm_state_after": "SETTLING",
+        "context_prompt": "Bill of Lading MAEU881920391 confirmed on-board vessel. Trigger batch capture of authorized funds."
+    },
+    {
+        "id": "fin_cross_border_coldchain_release",
+        "operation": "Cold-Chain Temperature Sensor Telemetry Settlement Release",
+        "description": "Air express cold-chain shipment arrives at Schiphol Airport. Temperature logger verifies continuous 2-4C environment. System settles seller payout and releases buyer FX buffer.",
+        "buyer_id": "sme_amsterdam_auction_03",
+        "monthly_spend_cents": 5000000,
+        "amount_cents": 740000,
+        "intent": "RELEASE_SETTLEMENT",
+        "direct_capture": False,
+        "step_up_required": False,
+        "risk_tier": "LOW",
+        "next_action": "RELEASE_RESIDUAL_BUFFER",
+        "expected_tool": "settle_cross_border_escrow",
+        "fsm_state_before": "SETTLING",
+        "fsm_state_after": "SETTLED",
+        "context_prompt": "Cold chain telemetry verified within 2-4C limits. Settle $7,400.00 to seller and return $148.00 FX buffer."
     }
 ]
 

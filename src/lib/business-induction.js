@@ -6,6 +6,7 @@ import {
   classifyMaterialCategory,
   isPoolingCandidate
 } from "./commercial-archetypes.js";
+import { GLOBAL_LOGISTICS_CORRIDORS, INCOTERMS_2020 } from "./international-trade.js";
 
 export class BusinessInductionEngine {
   induceDomain(rawItems = []) {
@@ -128,6 +129,18 @@ export class BusinessInductionEngine {
       .filter(m => m.poolingEligible)
       .map(m => m.materialName);
 
+    const isCrossBorder = Boolean(domainResult.signature.defaultCorridor) || metadata.isCrossBorder === true;
+    const corridorId = domainResult.signature.defaultCorridor || (isCrossBorder ? "CORRIDOR_PEARL_RIVER_TO_LONG_BEACH" : null);
+    const defaultIncoterm = domainResult.signature.defaultIncoterm || (isCrossBorder ? "FOB" : "EXW");
+    const currency = metadata.currency || "USD";
+
+    const internationalTrade = {
+      isCrossBorder,
+      corridorId,
+      defaultIncoterm,
+      currency
+    };
+
     const profile = {
       buyerId,
       legalName: metadata.legalName || `SME Buyer ${buyerId}`,
@@ -139,6 +152,7 @@ export class BusinessInductionEngine {
       billOfMaterials: bom,
       boundaries,
       poolingOpportunities,
+      internationalTrade,
       inducedAt: new Date().toISOString()
     };
 
@@ -152,7 +166,10 @@ export class BusinessInductionEngine {
       maxAutoAuthorizeUsd: boundaries.maxAutoAuthorizeUsd,
       stepUpThresholdUsd: boundaries.stepUpThresholdUsd,
       monthlySpendCents: boundaries.monthlySpendCents,
-      poolingCount: poolingOpportunities.length
+      poolingCount: poolingOpportunities.length,
+      isCrossBorder: internationalTrade.isCrossBorder,
+      corridorId: internationalTrade.corridorId,
+      incoterm: internationalTrade.defaultIncoterm
     };
 
     const bodyLines = [
@@ -177,7 +194,13 @@ export class BusinessInductionEngine {
       `- Step-Up KYC Threshold: $${boundaries.stepUpThresholdUsd}.00`,
       "",
       "## Identified Group Purchasing Opportunities",
-      ...poolingOpportunities.map(p => `- [[${p}]]`)
+      ...poolingOpportunities.map(p => `- [[${p}]]`),
+      "",
+      "## International Trade & Logistics Corridor",
+      `- Cross-Border Eligible: ${internationalTrade.isCrossBorder ? "YES" : "DOMESTIC"}`,
+      `- Preferred Logistics Corridor: ${internationalTrade.corridorId || "DOMESTIC_FREIGHT"}`,
+      `- Default Incoterm: ${internationalTrade.defaultIncoterm}`,
+      `- Settlement Currency: ${internationalTrade.currency}`
     ];
 
     const aliases = [buyerId, profile.legalName, profile.industryDomain];

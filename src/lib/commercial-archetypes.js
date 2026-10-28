@@ -166,6 +166,136 @@ export const COMMERCIAL_ARCHETYPES = Object.freeze([
       MRO: ["element wire", "thermocouple", "relay", "peephole plug"]
     },
     poolingCommodityKeywords: ["clay", "stoneware", "glaze", "kiln wash", "bubble wrap"]
+  },
+  {
+    id: "APAC_ELECTRONICS_HARDWARE",
+    domain: "Cross-Border Electronics & Hardware Subassembly",
+    archetypeTitle: "Global Electronics, PCB & Hardware Cluster",
+    description: "Slices surface-mount passive components, microcontrollers, and multi-layer PCBs into integrated electronics hardware.",
+    keywords: [
+      "pcb", "smt", "resistor", "capacitor", "microcontroller", "fpga",
+      "solder paste", "stencil", "reels", "mosfet", "diode", "sensor module",
+      "fob shenzhen", "yantian", "electronics", "circuit board"
+    ],
+    primaryOutputs: [
+      "assembled printed circuit boards",
+      "industrial IoT edge gateways",
+      "power converter subassemblies"
+    ],
+    categoryMatchers: {
+      RAW_MATERIAL: ["resistor", "capacitor", "microcontroller", "mosfet", "pcb", "fpga", "bare board"],
+      TOOLING: ["stencil", "reflow nozzle", "pick and place feeder", "soldering iron tip"],
+      CONSUMABLE: ["solder paste", "flux", "isopropyl alcohol", "cleaning wipe"],
+      PACKAGING: ["antistatic bag", "tape and reel", "conductive foam", "shielding box"],
+      MRO: ["vacuum suction cup", "feeder motor", "nozzle filter", "heating element"]
+    },
+    poolingCommodityKeywords: ["solder paste", "antistatic bag", "flux", "tape and reel", "capacitor", "resistor"],
+    defaultCorridor: "CORRIDOR_PEARL_RIVER_TO_LONG_BEACH",
+    defaultIncoterm: "FOB"
+  },
+  {
+    id: "SOUTH_ASIA_TEXTILES_GARMENTS",
+    domain: "International Textile Spinning, Weaving & Apparel Mills",
+    archetypeTitle: "South Asian Textile, Garments & Dyeing Mills",
+    description: "Processes raw combed cotton, synthetic yarn, and reactive dyes into export certified fabric and garments.",
+    keywords: [
+      "cotton yarn", "grey fabric", "reactive dye", "spun polyester", "combed cotton",
+      "knitwear", "weft", "warp", "oeko-tex", "tuticorin", "cif rotterdam",
+      "hosiery", "textile", "apparel mill"
+    ],
+    primaryOutputs: [
+      "certified organic combed cotton yarn",
+      "finished circular knit apparel",
+      "technical woven industrial fabrics"
+    ],
+    categoryMatchers: {
+      RAW_MATERIAL: ["cotton yarn", "raw cotton bale", "grey fabric", "spun polyester", "elastane"],
+      TOOLING: ["spinning ring", "knitting needle", "shuttle", "dyeing vat"],
+      CONSUMABLE: ["reactive dye", "bleaching agent", "lubricating spindle oil", "sizing starch"],
+      PACKAGING: ["hdpe woven sack", "poly wrapping roll", "carton box", "bale strapping"],
+      MRO: ["spinning spindle", "needle cylinder", "drive belt", "steam valve"]
+    },
+    poolingCommodityKeywords: ["cotton yarn", "reactive dye", "spun polyester", "hdpe woven sack", "bale strapping"],
+    defaultCorridor: "CORRIDOR_SOUTH_ASIA_TO_ROTTERDAM",
+    defaultIncoterm: "CIF"
+  },
+  {
+    id: "LATAM_SPECIALTY_AGRO_COMMODITY",
+    domain: "Specialty Agriculture, Fair-Trade Agro-Commodities & Origin Minerals",
+    archetypeTitle: "LATAM Specialty Agro-Commodities & Minerals",
+    description: "Cultivates, wet-processes, and bags high-altitude Arabica green coffee, cacao beans, and origin mineral cathodes.",
+    keywords: [
+      "green coffee", "arabica", "parchment coffee", "cacao", "fermented beans",
+      "jute bag", "phytosanitary", "cupping score", "grainpro", "cartagena",
+      "fob cartagena", "coffee cooperative", "mineral cathode"
+    ],
+    primaryOutputs: [
+      "specialty export green coffee (Grade 1)",
+      "fine aroma single-origin cacao beans",
+      "certified organic agro-commodities"
+    ],
+    categoryMatchers: {
+      RAW_MATERIAL: ["coffee cherry", "parchment coffee", "wet cacao", "mineral ore"],
+      TOOLING: ["depulper disc", "drying bed", "moisture meter", "cupping spoon"],
+      CONSUMABLE: ["organic bio-fertilizer", "fermentation yeast", "sanitizing wash"],
+      PACKAGING: ["grainpro hermetic liner", "jute bag 60kg", "wooden pallet", "container liner"],
+      MRO: ["depulper screen", "solar dryer fan", "water pump seal", "pulley"]
+    },
+    poolingCommodityKeywords: ["grainpro hermetic liner", "jute bag 60kg", "organic bio-fertilizer", "wooden pallet"],
+    defaultCorridor: "CORRIDOR_MEDELLIN_TO_HAMBURG",
+    defaultIncoterm: "FOB"
+  },
+  {
+    id: "EMEA_PRECISION_ENGINEERING",
+    domain: "European High-Tolerance Precision Engineering & Specialty Craft",
+    archetypeTitle: "EMEA Precision Engineering & Luxury Craftsmanship",
+    description: "Engineers high-torque planetary gearboxes, hydraulic proportional valves, and full-grain vegetable tanned leathergoods.",
+    keywords: [
+      "planetary gearbox", "hydraulic valve", "proportional valve", "din fastener",
+      "iso 9001", "ce mark", "full-grain leather", "vegetable tan", "stuttgart",
+      "dap", "precision engineering", "industrial transmission"
+    ],
+    primaryOutputs: [
+      "DIN-compliant industrial transmission units",
+      "high-pressure hydraulic manifolds",
+      "bespoke luxury leather goods"
+    ],
+    categoryMatchers: {
+      RAW_MATERIAL: ["alloy steel billet", "hydraulic casting", "vegetable tanned leather hide", "bronze bushing"],
+      TOOLING: ["gear hobbing tool", "precision hone", "leather skiving knife", "vernier caliper"],
+      CONSUMABLE: ["hydraulic oil", "synthetic gear lubricant", "tanning oil", "waxed thread"],
+      PACKAGING: ["heavy wooden crate", "vapor corrosion inhibitor wrap", "corrugated outer box"],
+      MRO: ["shaft seal", "o-ring viton", "filter cartridge", "guide rail"]
+    },
+    poolingCommodityKeywords: ["hydraulic oil", "din fastener", "heavy wooden crate", "shaft seal", "o-ring viton"],
+    defaultCorridor: "CORRIDOR_RHINE_ALPINE_OVERLAND",
+    defaultIncoterm: "DAP"
+  },
+  {
+    id: "AFRICAN_AGRO_COLD_CHAIN",
+    domain: "Equatorial Cold-Chain Floriculture & International Trade",
+    archetypeTitle: "African Agro-Commodity & Cold Chain Exporters",
+    description: "Harvests, grades, chills, and airfreights fresh cut flowers, runner beans, and single-origin cash crops under strict temperature control.",
+    keywords: [
+      "cut flowers", "fresh roses", "carnations", "cold-chain", "temperature logger",
+      "kephis", "schiphol", "fermented cocoa", "cip amsterdam", "chilled cargo",
+      "naivasha", "horticulture export"
+    ],
+    primaryOutputs: [
+      "fresh grade-A long-stem export roses",
+      "chilled organic fine beans",
+      "certified export-grade cashew nuts"
+    ],
+    categoryMatchers: {
+      RAW_MATERIAL: ["rose cuttings", "seed stock", "cocoa pods", "raw cashew nuts"],
+      TOOLING: ["harvest shears", "grading table", "temperature probe", "soil ec meter"],
+      CONSUMABLE: ["flower food solution", "preservative sachet", "chilled hydration gel"],
+      PACKAGING: ["procona bucket", "perforated flower sleeve", "chilled export telescopic carton", "temperature datalogger"],
+      MRO: ["chiller condenser fan", "cold room door seal", "drip irrigation emitter"]
+    },
+    poolingCommodityKeywords: ["perforated flower sleeve", "chilled export telescopic carton", "temperature datalogger", "flower food solution"],
+    defaultCorridor: "CORRIDOR_NAIVASHA_TO_SCHIPHOL_AIR",
+    defaultIncoterm: "CIP"
   }
 ]);
 
