@@ -1,0 +1,253 @@
+{
+  "startedAt": "2026-10-27T06:54:48.628Z",
+  "phases": {
+    "phase1_data_ingestion": {
+      "status": "PASS",
+      "documentsIngested": 4,
+      "records": [
+        {
+          "format": "PDF",
+          "path": "data/benchmark_corpus/07_vector_digital_invoice.pdf",
+          "buyerId": "sme_artisan_bakery_tx",
+          "vendorName": "Bay State Milling Wholesale",
+          "lineItemsCount": 3,
+          "totalAmountCents": 826610,
+          "extractionMethod": "PDF_DOCUMENT_PARSER",
+          "durationMs": 157
+        },
+        {
+          "format": "XLSX",
+          "path": "data/benchmark_corpus/04_distributor_multi_sheet.xlsx",
+          "buyerId": "sme_portland_roasters",
+          "vendorName": "Sysco Central Texas Wholesale",
+          "lineItemsCount": 3,
+          "totalAmountCents": 1129040,
+          "extractionMethod": "EXCEL_XLSX_PARSER",
+          "durationMs": 7
+        },
+        {
+          "format": "CSV",
+          "path": "data/benchmark_corpus/05_pharma_procurement.csv",
+          "buyerId": "sme_valley_hospital_supplies",
+          "vendorName": "Sysco Food Services Wholesale",
+          "lineItemsCount": 25,
+          "totalAmountCents": 3415984,
+          "extractionMethod": "DELIMITED_CSV_PARSER",
+          "durationMs": 1
+        },
+        {
+          "format": "PNG",
+          "path": "data/benchmark_corpus/01_sysco_commercial_invoice.png",
+          "buyerId": "sme_austin_bakery_chain",
+          "vendorName": "SYSCO ARTISAN BAKING DISTRIBUTORS",
+          "lineItemsCount": 3,
+          "totalAmountCents": 973592,
+          "extractionMethod": "OPTICAL_IMAGE_OCR",
+          "durationMs": 415
+        }
+      ],
+      "baselineVerified": true
+    },
+    "phase2_paypal_sandbox_operations": {
+      "status": "PASS",
+      "operations": {
+        "orderAuthorization": {
+          "status": "CREATED",
+          "orderId": "8GV66432U30172251",
+          "intent": "AUTHORIZE",
+          "amountCents": 826610,
+          "currency": "USD",
+          "referenceId": "mandate_ref_bay_state_flour"
+        },
+        "confirmedOrderDetails": {
+          "id": "8GV66432U30172251",
+          "status": "CREATED",
+          "intent": "AUTHORIZE",
+          "amountValue": "8266.10"
+        },
+        "stepUpInvoice": {
+          "status": "INVOICE_GENERATED",
+          "invoiceId": "INV2-LFLB-JPES-5U7S-D76Y",
+          "invoiceNumber": "INV2-1793084092458",
+          "qrCodeUrl": "https://www.sandbox.paypal.com/invoice/p/#INV2-LFLB-JPES-5U7S-D76Y",
+          "totalCents": 125000
+        },
+        "confirmedInvoiceDetails": {
+          "id": "INV2-LFLB-JPES-5U7S-D76Y",
+          "status": "DRAFT",
+          "recipient": "sme_artisan_bakery_tx@wholeshare.local"
+        },
+        "shipmentTracking": {
+          "status": "TRACKING_REGISTERED",
+          "orderId": "8GV66432U30172251",
+          "carrier": "UPS",
+          "statusLabel": "SHIPPED"
+        },
+        "subscriptionPlan": {
+          "planId": "P-7FW44212FP8992329NLQEVPY",
+          "name": "Artisan Bakers Wholesale Flour Clan Monthly",
+          "status": "ACTIVE",
+          "unitPriceCents": 45000,
+          "amountCents": 45000,
+          "currency": "USD",
+          "intervalUnit": "MONTH",
+          "intervalCount": 1,
+          "links": [
+            {
+              "href": "https://api.sandbox.paypal.com/v1/billing/plans/P-7FW44212FP8992329NLQEVPY",
+              "rel": "self",
+              "method": "GET",
+              "encType": "application/json"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v1/billing/plans/P-7FW44212FP8992329NLQEVPY",
+              "rel": "edit",
+              "method": "PATCH",
+              "encType": "application/json"
+            },
+            {
+              "href": "https://api.sandbox.paypal.com/v1/billing/plans/P-7FW44212FP8992329NLQEVPY/deactivate",
+              "rel": "self",
+              "method": "POST",
+              "encType": "application/json"
+            }
+          ],
+          "liveMode": true
+        },
+        "subscription": {
+          "subscriptionId": "I-G5188YBBV109",
+          "status": "APPROVAL_PENDING",
+          "planId": "P-7FW44212FP8992329NLQEVPY",
+          "subscriberEmail": "austin_artisan@wholeshare.local",
+          "approvalUrl": "https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token=BA-7KY9909249044091A",
+          "links": [
+            {
+              "href": "https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token=BA-7KY9909249044091A",
+              "rel": "approve",
+              "method": "GET"
+            },
+            {
+              "href": "https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-G5188YBBV109",
+              "rel": "edit",
+              "method": "PATCH"
+            },
+            {
+              "href": "https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-G5188YBBV109",
+              "rel": "self",
+              "method": "GET"
+            }
+          ],
+          "liveMode": true
+        }
+      }
+    },
+    "phase3_transaction_storage": {
+      "status": "PASS",
+      "ledgerCoalition": {
+        "coalitionId": "coalition_flour_01",
+        "sku": "organic-flour-50lb",
+        "skuName": "Golden Fields Organic Hard Red Wheat Flour (50 lb Bag)",
+        "targetUnits": 500,
+        "currentUnits": 800,
+        "unitPriceUsd": "7.20",
+        "totalEscrowUsd": "5760.00",
+        "discountTierPct": 28,
+        "status": "LOCKED",
+        "membersCount": 3,
+        "members": [
+          {
+            "smeId": "sme_austin_01",
+            "name": "Austin Artisan Bakery",
+            "pledgedUnits": 150,
+            "authorizedUsd": "1080.00",
+            "status": "AUTHORIZED",
+            "stepUpRequired": true,
+            "paypalOrderId": "28X72946K33130536",
+            "invoiceQrUrl": "https://sandbox.paypal.com/invoice/qr/INV2-1V36XD.png"
+          },
+          {
+            "smeId": "sme_bean_02",
+            "name": "Bean & Leaf Coffee Roasters",
+            "pledgedUnits": 150,
+            "authorizedUsd": "1080.00",
+            "status": "AUTHORIZED",
+            "stepUpRequired": true,
+            "paypalOrderId": "1M336513G4983135L",
+            "invoiceQrUrl": "https://sandbox.paypal.com/invoice/qr/INV2-DZCB3Q.png"
+          },
+          {
+            "smeId": "sme_bay_state_buyer",
+            "name": "Bay State Bakery Collective",
+            "pledgedUnits": 500,
+            "authorizedUsd": "3600.00",
+            "status": "AUTHORIZED",
+            "stepUpRequired": false,
+            "paypalOrderId": "4S145068JG2499903",
+            "invoiceQrUrl": null
+          }
+        ]
+      },
+      "durableJournalSessionId": "audit_sess_1793084105911",
+      "journaledSteps": 3
+    },
+    "phase4_security_gauntlet": {
+      "status": "PASS",
+      "totalVectorsTested": 10,
+      "vectorsBlocked": 10,
+      "results": [
+        {
+          "vector": 1,
+          "attack": "Floating Point Penny Injection",
+          "blocked": true
+        },
+        {
+          "vector": 2,
+          "attack": "Direct CAPTURE Bypass",
+          "blocked": true
+        },
+        {
+          "vector": 3,
+          "attack": "ACP Token Altered Buyer Identity",
+          "blocked": true
+        },
+        {
+          "vector": 4,
+          "attack": "ACP Token Inflated Spend Limit",
+          "blocked": true
+        },
+        {
+          "vector": 5,
+          "attack": "Expired Token Reuse",
+          "blocked": true
+        },
+        {
+          "vector": 6,
+          "attack": "External Agent Forged HMAC Signature",
+          "blocked": true
+        },
+        {
+          "vector": 7,
+          "attack": "Stale Replay Attack Beyond Window",
+          "blocked": true
+        },
+        {
+          "vector": 8,
+          "attack": "Negative Volume Injection",
+          "blocked": true
+        },
+        {
+          "vector": 9,
+          "attack": "Illegal State Machine Transition",
+          "blocked": true
+        },
+        {
+          "vector": 10,
+          "attack": "Spend Cap Overflow Order Flagged",
+          "blocked": true
+        }
+      ]
+    }
+  },
+  "completedAt": "2026-10-27T06:55:59.322Z",
+  "verdict": "ALL_SYSTEMS_OPERATIONAL_AND_SECURE"
+}

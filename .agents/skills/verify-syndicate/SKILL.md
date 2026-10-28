@@ -1,93 +1,93 @@
 ---
 name: verify-syndicate
-description: Deterministic verification harness for SyndicatePay PayPal Sandbox & Escrow infrastructure without mocks or in-memory substitutes.
+description: "Drive and verify SyndicatePay locally: inspect financial state, test rate-limiting prototypes, check Docker/Postgres microservices, run Chrome CDP and Python debugger probes, benchmark performance and inference, and audit feature maps. Built per pstack verification standards."
 ---
 
-# Verify Syndicate Skill
+# Verify SyndicatePay
 
-Deterministic verification harness for SyndicatePay's financial escrow, payment authorizations, payouts, and dispute mediation.
+This is the project-local verification skill for SyndicatePay. Every agent working on this repo uses `control-syndicate.mjs` to inspect and drive the application end-to-end without requiring human intervention.
 
-## Verification Invariant: Zero Mocks Policy
+## 1. Quick Reference: The Master Control CLI
 
-This repository strictly prohibits:
-- Mocking libraries: `nock`, `msw`, `sinon`, `jest.mock`, `vi.mock` of gateway or PayPal modules.
-- Hard-coded fake PayPal IDs (`FAKE_AUTH_*`, `MOCK_ORDER_*`, etc.).
-- "Mock PayPal" environment switches or local in-memory PayPal emulators.
+```bash
+# Verify environment dependencies (Node, Python, Docker, Postgres, PayPal Sandbox, Kernel, Ports)
+node .cursor/skills/verify-syndicate/control-syndicate.mjs doctor
 
-All verification runs directly against the real PayPal Sandbox (`api-m.sandbox.paypal.com`) with real credentials. Only two things may be simulated:
-1. `simulate-delivery`: Emulates physical freight delivery events (supplier & buyer delivery confirmations) in development/demo mode only.
-2. Pure money-math unit tests: Pure algorithmic assertions on tier calculations and claim caps that execute without any PayPal network calls.
+# Verify PostgreSQL database connection pool, migrations, and table counts
+node .cursor/skills/verify-syndicate/control-syndicate.mjs db:status
 
----
+# Verify Docker Compose services (app, postgres, redis, python-microservice)
+node .cursor/skills/verify-syndicate/control-syndicate.mjs docker:status
 
-## Execution Sequence
+# Validate Render IaC cloud blueprint and sandbox credentials
+node .cursor/skills/verify-syndicate/control-syndicate.mjs cloud:verify
 
-The harness executes in strict sequential order:
+# Audit feature maps against the mandatory pstack 4-header specification
+node .cursor/skills/verify-syndicate/control-syndicate.mjs features:lint
 
-1. **Anti-Mock Static Boundary Scan**:
-   ```bash
-   node scripts/check-no-mocks.mjs
-   ```
-   Fails the run if any prohibited mock or fake ID pattern is detected.
+# Run 3-way rate limiting benchmark (Token Bucket vs Leaky Bucket vs Sliding Window)
+node .cursor/skills/verify-syndicate/control-syndicate.mjs rate-limit --requests 1000
 
-2. **Read-Only Health Check (`doctor-escrow`)**:
-   ```bash
-   node scripts/control-syndicate.mjs doctor-escrow
-   ```
-   Verifies:
-   - PostgreSQL connectivity and `IdempotencyRecord` table existence.
-   - PayPal Sandbox OAuth2 token generation and caching.
-   - Gateway boundary check (no `@paypal` or `api-m.sandbox.paypal.com` references outside `src/gateway/`).
-   - Zod configuration schema validation.
+# Run HMAC-SHA256 and V8 event loop latency performance benchmarks
+node .cursor/skills/verify-syndicate/control-syndicate.mjs perf
 
-3. **Deterministic Fixture Seeding (`seed-demo`)**:
-   ```bash
-   node scripts/control-syndicate.mjs seed-demo
-   ```
-   Creates the Clan and member records for the 3-member Tier 2 + 1-member Tier 3 sandbox fixture.
+# Run Agent tool calling and policy sandwich latency benchmark
+node .cursor/skills/verify-syndicate/control-syndicate.mjs inference
 
-4. **The Sandbox Verification Suite**:
-   Runs the live sandbox tests sequentially, writing evidence files for each.
+# Inspect DOM/ARIA tree and Core Web Vitals via Chrome DevTools Protocol (CDP)
+node .cursor/skills/verify-syndicate/control-syndicate.mjs cdp:inspect
 
----
+# Inspect Python pdb debugger hooks and cProfile function trace
+node .cursor/skills/verify-syndicate/control-syndicate.mjs debug:python
 
-## Evidence and Read-Back Requirements
+# Inspect registered @paypal/agent-toolkit tools and status
+node .cursor/skills/verify-syndicate/control-syndicate.mjs toolkit:inspect
 
-Every sandbox test must produce an evidence file at:
-`.scratch/developer-2-escrow-settlement-disputes/evidence/<test-name>.json`
+# Inspect Agentic Commerce Protocol (ACP) specification manifest
+node .cursor/skills/verify-syndicate/control-syndicate.mjs acp:manifest
 
-The evidence file must contain:
-```json
-{
-  "timestamp": "ISO-8601 UTC timestamp",
-  "endpoint": "Exact HTTP method and PayPal URL called",
-  "request": { /* Request payload with secrets/tokens masked */ },
-  "response": { /* Raw unmodified response from PayPal Sandbox */ },
-  "paypalIds": {
-    "orderId": "...",
-    "authorizationId": "...",
-    "captureId": "...",
-    "refundId": "...",
-    "payoutBatchId": "...",
-    "disputeId": "..."
-  },
-  "readBackVerified": true,
-  "readBackDetails": { /* Result of GET lookup verifying status on PayPal's ledger */ }
-}
+# Test Conversational Natural Language Ingress with coffee shop prompt
+node .cursor/skills/verify-syndicate/control-syndicate.mjs ingress:nlp
+
+# Run 1-click Austin Coffee Syndicate Judge Simulation
+node .cursor/skills/verify-syndicate/control-syndicate.mjs judge:demo
+
+# Seed deterministic test state (3 SME Personas + 2 Clans + Scraped Wholesale Tiers)
+node .cursor/skills/verify-syndicate/control-syndicate.mjs seed-demo --reset
+
+# Drive Stage 1: Spawn SME with bounded policy & AR pre-flight check
+node .cursor/skills/verify-syndicate/control-syndicate.mjs spawn-sme \
+  --name "Austin Artisan Bakery" \
+  --sku "organic-flour-50lb" \
+  --qty 15 \
+  --max-usd 450
+
+# Drive Stage 2: Matchmake Clan to 100% MOQ threshold
+node .cursor/skills/verify-syndicate/control-syndicate.mjs match-clan \
+  --sku "organic-flour-50lb" \
+  --simulate-agents 3
+
+# Wait for SSE streams and database transitions to settle
+node .cursor/skills/verify-syndicate/control-syndicate.mjs wait-settle
+
+# Drive Stage 3: Lock PayPal Multiparty Escrow (Order AUTHORIZE + Batch CAPTURE)
+node .cursor/skills/verify-syndicate/control-syndicate.mjs lock-escrow \
+  --clan-id "clan_flour_01" \
+  --dry-run false
+
+# Drive Stage 4: Simulate damaged shipment & APIMatic pro-rata dispute refund
+node .cursor/skills/verify-syndicate/control-syndicate.mjs trigger-dispute \
+  --clan-id "clan_flour_01" \
+  --sme-index 2 \
+  --damage-pct 25
+
+# Capture UI accessibility snapshot (ARIA tree) and screenshot
+node .cursor/skills/verify-syndicate/control-syndicate.mjs snapshot --component "ag-grid-ledger"
+node .cursor/skills/verify-syndicate/control-syndicate.mjs screenshot docs/assets/syndicate-proof.png
 ```
 
-### Read-Back Rule
-A test **passes only if every PayPal ID generated can be fetched back from PayPal Sandbox via a GET request and its status matches the expected state**.
-- If a test cannot verify the ID via a GET lookup, it cannot be marked as passed.
-- Without an evidence file, the feature remains marked as `[Unconfirmed]`.
-- No specification or ADR may claim "Confirmed" without providing the specific evidence file path.
-
----
-
-## Failure Handling Protocol
-
-If any PayPal sandbox call fails (e.g. HTTP 401 Unauthorized, HTTP 403 Forbidden, missing Payouts permissions, unsupported sandbox feature):
-1. **Stop immediately**: Do not continue downstream dependent operations for that test.
-2. **Log the raw error**: Write the raw error response into `.scratch/developer-2-escrow-settlement-disputes/evidence/<test-name>-error.json`.
-3. **No falsification**: Never substitute a simulated response, never alter request payloads to force artificial success, and never adjust expected outcomes.
-4. **Mark status**: Mark the test item as `[Blocked]` or `[Unconfirmed]` and escalate to human operators if manual sandbox configuration is required.
+## 2. Zero-Simulation & Zero-Mock Policy
+Wholeshare strictly prohibits mocks, stubs, and simulated fallback tokens across all runtime code and integration verifications:
+1. Never mock, stub, or simulate PayPal, databases, or external APIs unless the operator grants prior explicit permission.
+2. If credentials or network endpoints are missing or invalid, doctor and runtime checks must fail fast with actionable recovery instructions.
+3. Every test verifying external integrations must exercise real network endpoints or be classified strictly as pure domain unit logic.

@@ -1,0 +1,50 @@
+[
+  {
+    "clanType": "SHORT_TERM_SPOT",
+    "category": "Perishable Commodities (Bakery Flour & Green Coffee)",
+    "contractTitle": "Multiparty Spot Master Purchase Agreement (SMPA)",
+    "lockDurationDays": 7,
+    "paypalHoldMechanism": "Orders v2 intent: AUTHORIZE soft lock",
+    "bondRequiredUsd": 0,
+    "inspectionWindowHours": 48,
+    "disputeProtocol": "APIMatic Pro-Rata Damage Settlement via Customer Disputes v1",
+    "cancellationPenaltyPct": 5,
+    "governingTerms": {
+      "jurisdiction": "Delaware Commercial Arbitration",
+      "moqRefundClause": "Full release of authorization hold if 100% MOQ unmet at deadline",
+      "carrierVerification": "PayPal Shipment Tracking delivery timestamp required for dispute filing"
+    }
+  },
+  {
+    "clanType": "RECURRING_MANUFACTURING",
+    "category": "Custom Branded Packaging & Eco-Containers",
+    "contractTitle": "Joint Volume Commitment Agreement (JVCA)",
+    "lockDurationDays": 14,
+    "paypalHoldMechanism": "Split Authorization with Sample Milestone Approval",
+    "bondRequiredUsd": 250,
+    "inspectionWindowHours": 72,
+    "disputeProtocol": "Pre-production proof rejection with instant dynamic rebate",
+    "cancellationPenaltyPct": 15,
+    "governingTerms": {
+      "jurisdiction": "Uniform Commercial Code (UCC) Article 2",
+      "volumeRebateClause": "Late-joining participants trigger retroactive pro-rata discount refunds to early pledgers",
+      "stepUpThresholdUsd": 1000
+    }
+  },
+  {
+    "clanType": "HIGH_STAKES_LOGISTICS",
+    "category": "40ft High Cube Ocean Freight Containers (FCL/LCL)",
+    "contractTitle": "Multi-Party Ocean Freight Forwarding Service Contract (MOFSC)",
+    "lockDurationDays": 30,
+    "paypalHoldMechanism": "Escrow Authorize Hold + Stepped-Up QR Invoicing",
+    "bondRequiredUsd": 1000,
+    "inspectionWindowHours": 120,
+    "disputeProtocol": "Maritime Admiralty Arbitration & Pro-Rata Demurrage Sharing",
+    "cancellationPenaltyPct": 25,
+    "governingTerms": {
+      "jurisdiction": "Federal Maritime Commission (FMC) Guidelines",
+      "billOfLadingMilestone": "Carrier electronic Bill of Lading (e-BOL) triggers batch escrow capture",
+      "demurrageSharingClause": "Port storage and demurrage fees split pro-rata by TEU allocation"
+    }
+  }
+]

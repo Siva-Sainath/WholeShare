@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WHOLESHARE: Master Architecture, Security & pstack Agentic Design Document</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @page {
+    size: letter;
+    margin: 16mm 14mm 18mm 14mm;
+  }
+  @media print {
+    body { font-size: 9pt; line-height: 1.42; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    a { color: #2563eb; text-decoration: none; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.48;
+  }
+  
+  /* Cover & Headers */
+  .cover-header {
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+  }
+  .doc-category {
+    font-size: 10.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #2563eb;
+    margin-bottom: 6px;
+  }
+  h1.main-title {
+    font-size: 26pt;
+    line-height: 1.15;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+  }
+  .doc-subtitle {
+    font-size: 12.5pt;
+    color: #475569;
+    margin: 0 0 16px 0;
+    font-weight: 400;
+  }
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-blue { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .badge-purple { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+  .badge-amber { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .badge-emerald { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+  .badge-slate { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+
+  /* Metadata Grid */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-size: 8.5pt;
+  }
+  .meta-item strong { display: block; color: #64748b; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta-item span { color: #0f172a; font-weight: 600; }
+
+  /* Headings */
+  h2 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+  h4 {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #334155;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+  p { margin: 0 0 10px 0; }
+  ul, ol { margin: 0 0 12px 0; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+
+  /* Callouts & Alerts */
+  .callout {
+    border-left: 4px solid #2563eb;
+    background: #f8fafc;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 8.5pt;
+  }
+  .callout-title { font-weight: 700; color: #0f172a; margin-bottom: 4px; font-size: 9pt; }
+  .callout-security { border-left-color: #dc2626; background: #fef2f2; }
+  .callout-security .callout-title { color: #991b1b; }
+  .callout-tip { border-left-color: #059669; background: #ecfdf5; }
+  .callout-tip .callout-title { color: #065f46; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px 0;
+    font-size: 8.2pt;
+  }
+  th {
+    background: #0f172a;
+    color: #f8fafc;
+    text-align: left;
+    padding: 7px 9px;
+    font-weight: 600;
+    border: 1px solid #0f172a;
+  }
+  td {
+    padding: 7px 9px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* Code blocks */
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 7.8pt;
+    line-height: 1.38;
+    overflow-x: auto;
+    margin: 8px 0 12px 0;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 8pt;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  /* Mermaid Container */
+  .mermaid-wrapper {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 14px 0;
+    text-align: center;
+  }
+  .mermaid {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  /* UI Architecture 4-Zone Diagram */
+  .ui-mockup-grid {
+    display: grid;
+    grid-template-columns: 35% 65%;
+    gap: 10px;
+    background: #0f172a;
+    padding: 12px;
+    border-radius: 8px;
+    color: #f8fafc;
+    margin: 14px 0;
+  }
+  .ui-zone {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .ui-zone-full {
+    grid-column: 1 / -1;
+  }
+  .ui-zone-title {
+    font-weight: 700;
+    font-size: 8.5pt;
+    color: #38bdf8;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="cover-header">
+  <div class="doc-category">Autonomous B2B Multiparty Commerce & Escrow Specification</div>
+  <h1 class="main-title">WHOLESHARE</h1>
+  <div class="doc-subtitle">Master Architecture, Enterprise Cybersecurity & pstack Agentic Engineering Blueprint</div>
+  
+  <div class="badge-row">
+    <span class="badge badge-blue">PayPal AI Hackathon 2026</span>
+    <span class="badge badge-emerald">AG Grid Financial Track</span>
+    <span class="badge badge-purple">APIMatic Typed SDKs</span>
+    <span class="badge badge-amber">Kernel Cloud Scraping</span>
+    <span class="badge badge-slate">Render Blueprints</span>
+    <span class="badge badge-blue">pstack Verification</span>
+  </div>
+</div>
+
+<div class="meta-grid">
+  <div class="meta-item">
+    <strong>Document Status</strong>
+    <span>Approved Architecture</span>
+  </div>
+  <div class="meta-item">
+    <strong>Author / Lead</strong>
+    <span>Wholeshare Architecture</span>
+  </div>
+  <div class="meta-item">
+    <strong>Engineering Harness</strong>
+    <span>poteto/pstack 0.15.0</span>
+  </div>
+  <div class="meta-item">
+    <strong>Target Stack</strong>
+    <span>Next.js + Postgres + Render</span>
+  </div>
+</div>
+
+<!-- SECTION 1 -->
+<h2>1. Executive Context, Hackathon Links & Sponsor Matrix</h2>
+
+<p><strong>Core Product Thesis:</strong> Small and Medium Enterprises (SMEs) face a 30% to 50% retail price penalty on raw materials, packaging, and commercial supplies because they lack the purchasing scale to hit Tier 2 and Tier 3 Minimum Order Quantities (MOQs). <strong>Wholeshare</strong> introduces a <em>"Clash of Clans"</em>-style multi-agent purchasing syndicate platform built natively on <strong>PayPal for Business</strong>.</p>
+
+<p>SME owners command their <strong>Personal Agents</strong> in plain English (via Web UI, Telegram, or Grok Bot). These agents autonomously discover or spin up <strong>Purchasing Clans (Syndicates)</strong>, deploy <strong>Kernel</strong> cloud browsers to scrape and verify live wholesale tier discounts with screenshot proof, lock pro-rata escrow safely using <strong>PayPal Orders (<code>intent: "AUTHORIZE"</code>)</strong> and <strong>PayPal Invoices</strong>, and autonomously resolve damaged shipment claims via <strong>PayPal Customer Disputes</strong>—visualized live inside an <strong>AG Grid</strong> financial command center and a real-time <strong>A2A Negotiation Arena</strong>.</p>
+
+<div class="no-break">
+<h3>Official Competition & Sponsor Resource Directory</h3>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 25%;">Entity / Prize Track</th>
+      <th style="width: 40%;">Official Developer Resources & Links</th>
+      <th style="width: 35%;">Architecture & Judging Alignment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>PayPal AI Hackathon</strong><br><em>($12k 1st, $5k Agentic Commerce, $5k PayPal+AI, $5k Demo)</em></td>
+      <td>
+        • Competition Portal: <a href="https://paypalaihackathon.devpost.com/">paypalaihackathon.devpost.com</a><br>
+        • PayPal Developer Docs: <a href="https://developer.paypal.com/docs/api/overview/">developer.paypal.com/docs/api</a><br>
+        • PayPal Agent Toolkit (MCP/TS): <a href="https://github.com/paypal/agent-toolkit">github.com/paypal/agent-toolkit</a><br>
+        • Orders v2 API: <a href="https://developer.paypal.com/docs/api/orders/v2/">/v2/checkout/orders</a><br>
+        • Invoicing v2 API: <a href="https://developer.paypal.com/docs/api/invoicing/v2/">/v2/invoicing/invoices</a><br>
+        • Customer Disputes API: <a href="https://developer.paypal.com/docs/api/customer-disputes/v1/">/v1/customer/disputes</a><br>
+        • Shipment Tracking API: <a href="https://developer.paypal.com/docs/api/tracking/v1/">/v1/shipping/trackers</a>
+      </td>
+      <td>Moves beyond a trivial 1-click checkout. Chains <strong>6 native PayPal Business primitives</strong> (Invoicing, Invoice QR, Order Authorization, Batch Capture, Shipment Tracking, and Disputes) inside a deterministic multi-agent state machine.</td>
+    </tr>
+    <tr>
+      <td><strong>AG Grid</strong><br><em>($5k 1st, $2k 2nd, $1k 3rd — Judge: Sylwia Vargas)</em></td>
+      <td>
+        • AG Grid React: <a href="https://www.ag-grid.com/react-data-grid/">ag-grid.com/react-data-grid</a><br>
+        • Master-Detail & Cell Flash: <a href="https://www.ag-grid.com/react-data-grid/change-cell-renderers/">Cell Change Renderers</a>
+      </td>
+      <td>Powers the <strong>Live Clan Order Book & Escrow Matrix</strong> with Master-Detail expansion (Clan Master &rarr; SME Details), live cell flashing (<code>enableCellChangeFlash</code>), and instant pro-rata dispute recalculation.</td>
+    </tr>
+    <tr>
+      <td><strong>APIMatic</strong><br><em>($1k x 3 Category Winners)</em></td>
+      <td>
+        • APIMatic Platform: <a href="https://www.apimatic.io/">apimatic.io</a><br>
+        • Developer Hub: <a href="https://docs.apimatic.io/">docs.apimatic.io</a>
+      </td>
+      <td>Generates strongly-typed TypeScript SDK wrappers and Zod validation schemas for PayPal's Customer Disputes v1 and Orders v2 OpenAPI specs, ensuring zero LLM hallucination of financial payloads.</td>
+    </tr>
+    <tr>
+      <td><strong>Kernel</strong><br><em>($50 Cloud Browser Credits)</em></td>
+      <td>
+        • Platform: <a href="https://www.onkernel.com/">onkernel.com</a><br>
+        • Documentation: <a href="https://docs.onkernel.com/">docs.onkernel.com</a>
+      </td>
+      <td>Powers the <strong>Wholesale Sourcing Agent</strong>, spinning up headless cloud browsers to scrape real B2B MOQ tier tables (e.g. 100 @ $10 vs 500 @ $7.20) with screenshot proof cached in PostgreSQL.</td>
+    </tr>
+    <tr>
+      <td><strong>Render</strong><br><em>($50 Credits + $1k Prize — Judge: Shifra Williams)</em></td>
+      <td>
+        • Render Docs: <a href="https://render.com/docs">render.com/docs</a><br>
+        • Blueprints IaC: <a href="https://render.com/docs/infrastructure-as-code">render.yaml Spec</a>
+      </td>
+      <td>Hosts the persistent Next.js application, Node orchestrator daemon, and webhook listener on a non-sleeping paid starter instance with a daily keep-alive cron.</td>
+    </tr>
+    <tr>
+      <td><strong>pstack & Dr Eggbot</strong><br><em>(Engineering Harness)</em></td>
+      <td>
+        • pstack Plugin: <a href="https://x.ai/bot/plugin/9717366">x.ai/bot/plugin/9717366</a><br>
+        • Dr Eggbot: <a href="https://x.ai/bot/93gOz3op1UQdBdbekQFLK">x.ai/bot/93gOz3op1UQdBdbekQFLK</a><br>
+        • Verification Example: <a href="https://github.com/poteto/verification-skill-example">poteto/verification-skill-example</a>
+      </td>
+      <td>Implements the <strong>Verification CLI (<code>control-syndicate.mjs</code>)</strong>, Materialized Memory Feature Maps, <code>/architect</code> arena, and <code>/poteto-mode</code> verification loop.</td>
+    </tr>
+    <tr>
+      <td><strong>Postman & Zapier</strong></td>
+      <td>
+        • Postman Workspace: <a href="https://www.postman.com/paypal">postman.com/paypal</a><br>
+        • Zapier Webhooks: <a href="https://zapier.com/apps/webhook/integrations">zapier.com/apps/webhook</a>
+      </td>
+      <td>Exports a 1-click verifiable Postman collection and fires Zapier accounting webhooks to QuickBooks/Xero upon Clan settlement.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 2 -->
+<h2>2. Master High-Level Architecture Diagram</h2>
+
+<p>The system comprises four tightly integrated stages. To import into <strong>Excalidraw</strong>, copy the raw Mermaid code block and use <em>More Tools &rarr; Mermaid to Excalidraw</em>, or paste into <strong>tldraw</strong> to generate an editable visual canvas.</p>
+
+<div class="no-break" style="margin: 16px 0; text-align: center;"><img src="diagrams/01_master_architecture_diagram.png" style="width: 100%; border-radius: 8px; border: 1.5px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" alt="Master Architecture Diagram"><div style="font-size: 8pt; color: #64748b; margin-top: 6px;">Figure 2.1: End-to-End 4-Stage Multi-Agent Architecture (Ingress &rarr; Kernel Sourcing &rarr; PayPal Escrow &rarr; Disputes)</div></div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 3 -->
+<h2>3. Flow-by-Flow Build & Verification Blueprint</h2>
+
+<div class="callout callout-tip">
+  <div class="callout-title">Architectural Invariant</div>
+  Every stage must be independently verifiable via the <code>control-syndicate.mjs</code> CLI before being linked to the end-to-end state machine. Tests assert on actual database and API states, not mock proxies.
+</div>
+
+<h3>Flow 1: Dual-Mode SME Ingress & Bounded Personal Agent (Stage 1 — Developer 1)</h3>
+<p><strong>What to Build:</strong></p>
+<ul>
+  <li><strong>Unified SME Onboarding Endpoint (<code>POST /api/sme/spawn</code>):</strong> Ingests natural language prompts (e.g. <em>"Austin Bakery needing 200kg organic flour, max budget $300"</em>) or signed Telegram/Grok Bot webhook events.</li>
+  <li><strong>Bounded Policy Engine:</strong> Writes a strict policy record in PostgreSQL (<code>max_auto_authorize_usd</code>, <code>min_tier_discount_pct</code>, <code>require_qr_approval_above_usd</code>).</li>
+  <li><strong>PayPal Cash-Flow Pre-Flight:</strong> Calls <code>@paypal/agent-toolkit</code>'s <code>list_invoices</code> to verify SME liquidity and automatically fires <code>send_invoice_reminder</code> for overdue receivables.</li>
+</ul>
+<p><strong>How to Verify:</strong></p>
+<pre><code>node .cursor/skills/verify-syndicate/control-syndicate.mjs spawn-sme \
+  --name "Austin Artisan Bakery" --sku "organic-flour-50lb" --qty 15 --max-usd 450
+# Expected Output: HTTP 200, valid sme_id, policy JSON, and simulated list_invoices log.</code></pre>
+
+<h3>Flow 2: Kernel Wholesale Sourcing & "Clash of Clans" Matchmaking (Stage 2 — Developer 1)</h3>
+<p><strong>What to Build:</strong></p>
+<ul>
+  <li><strong>Kernel Sourcing Worker:</strong> Dispatches a headless cloud browser session to scrape B2B wholesale MOQ tiers (Tier 1: 100 @ $10; Tier 2: 500 @ $7.20; Tier 3: 1,000 @ $5.80) and caches screenshot proofs in PostgreSQL.</li>
+  <li><strong>Clan Matchmaking Engine:</strong> Groups SME agents into Clan instances (<code>FORMING</code> &rarr; <code>THRESHOLD_MET</code>) and streams real-time negotiation events over SSE.</li>
+</ul>
+<p><strong>How to Verify:</strong></p>
+<pre><code>node .cursor/skills/verify-syndicate/control-syndicate.mjs match-clan \
+  --sku "organic-flour-50lb" --simulate-agents 3
+# Expected Output: Clan status transitions to THRESHOLD_MET (500 units), discount cell updates to 28%.</code></pre>
+
+<h3>Flow 3: PayPal Multiparty Escrow via Order Authorization & Invoicing (Stage 3 — Developer 2)</h3>
+<p><strong>What to Build:</strong></p>
+<ul>
+  <li><strong>Auto-Refreshing PayPal OAuth2 Daemon:</strong> Manages token lifecycle against PayPal Sandbox without service interruption.</li>
+  <li><strong>Multiparty Escrow Lock (<code>AUTHORIZE</code>):</strong> Generates PayPal Invoices and invoice QR codes (<code>create_invoice</code> + <code>generate_invoice_qr_code</code>) and creates individual order authorizations (<code>create_order</code> with <code>intent: "AUTHORIZE"</code>) for each member's pro-rata share.</li>
+  <li><strong>Atomic Batch Capture Engine:</strong> Executes <code>pay_order</code> (capture) only when 100% of Clan members reach status <code>AUTHORIZED</code>. Supports late-joiner price drops via instant dynamic rebates (<code>create_refund</code>).</li>
+</ul>
+<p><strong>How to Verify:</strong></p>
+<pre><code>node .cursor/skills/verify-syndicate/control-syndicate.mjs lock-escrow \
+  --clan-id "clan_flour_01" --dry-run false
+# Expected Output: 3 PayPal Sandbox Order IDs in COMPLETED status, valid QR URLs, $3,600 captured.</code></pre>
+
+<h3>Flow 4: Fulfillment Sync & APIMatic A2A Disputes (Stage 4 — Developer 2)</h3>
+<p><strong>What to Build:</strong></p>
+<ul>
+  <li><strong>PayPal Shipment Tracking Sync:</strong> Registers and polls carrier tracking numbers via <code>create_shipment_tracking</code>.</li>
+  <li><strong>APIMatic-Typed Dispute Mediator:</strong> Built from PayPal's Customer Disputes v1 OpenAPI spec. Verifies the 48-hour delivery window, submits damage photo hashes via <code>provide_evidence</code>, negotiates a partial refund via <code>make_offer</code>, and triggers <code>create_refund</code> for the affected SME ($300) while releasing $3,300 to the supplier.</li>
+  <li><strong>Zapier Accounting Sync:</strong> Dispatches final settlement webhooks to Zapier for ERP ledger updates.</li>
+</ul>
+<p><strong>How to Verify:</strong></p>
+<pre><code>node .cursor/skills/verify-syndicate/control-syndicate.mjs trigger-dispute \
+  --clan-id "clan_flour_01" --sme-index 2 --damage-pct 25
+# Expected Output: PayPal Dispute ID, Refund Transaction ID, AG Grid row updated to -$300 refund.</code></pre>
+
+<div class="page-break"></div>
+
+<!-- SECTION 4 -->
+<h2>4. Two-Developer Team Division & 20-Day Execution Plan</h2>
+
+<p>To maximize velocity and avoid merge conflicts, work is divided strictly along <strong>Stages 1–2 (Developer 1)</strong> and <strong>Stages 3–4 (Developer 2)</strong>, interfacing exclusively through the PostgreSQL database schema.</p>
+
+<div class="no-break">
+<table>
+  <thead>
+    <tr>
+      <th style="width: 20%;">Sprint Phase</th>
+      <th style="width: 40%;">Developer 1 (Stages 1 & 2)<br><em>Agent Harness, Kernel Scraper, Clan Lobby & AG Grid</em></th>
+      <th style="width: 40%;">Developer 2 (Stages 3 & 4)<br><em>PayPal Escrow, APIMatic Disputes, Tracking & Render</em></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Days 1–3: Setup & Harness</strong></td>
+      <td>• Scaffold Next.js App Router + Prisma/Postgres.<br>• Run <code>/create-verification-skill</code> to generate <code>control-syndicate.mjs</code>.<br>• Define Prisma models for <code>Clan</code> and <code>ClanMember</code>.</td>
+      <td>• Set up <code>@paypal/agent-toolkit</code> Sandbox credentials.<br>• Generate TypeScript SDKs using APIMatic on PayPal OpenAPI specs.<br>• Build auto-refreshing OAuth2 token middleware.</td>
+    </tr>
+    <tr>
+      <td><strong>Days 4–8: Core Engines</strong></td>
+      <td>• Build SME Onboarding endpoint (<code>POST /api/sme/spawn</code>).<br>• Implement Bounded Policy Engine and Telegram webhook.<br>• Build Kernel Cloud Browser scraper worker with fallback cache.</td>
+      <td>• Build Escrow Orchestrator (<code>create_invoice</code>, QR codes, <code>create_order</code> w/ <code>AUTHORIZE</code>).<br>• Build atomic batch capture daemon (<code>pay_order</code>).<br>• Implement dynamic tier-drop refund logic.</td>
+    </tr>
+    <tr>
+      <td><strong>Days 9–14: UI & Disputes</strong></td>
+      <td>• Build "Clash of Clans" Syndicate Lobby with MOQ progress bars.<br>• Implement A2A Negotiation Arena (radial graph + SSE stream).<br>• Build AG Grid Master-Detail Ledger with <code>enableCellChangeFlash</code>.<br>• Add Judge God-Mode Simulator Bar.</td>
+      <td>• Build Shipment Tracking sync (<code>create/show_shipment_tracking</code>).<br>• Implement APIMatic Dispute flow (<code>provide_evidence</code>, <code>make_offer</code>, pro-rata refund).<br>• Wire Zapier accounting webhook & export Postman collection.</td>
+    </tr>
+    <tr>
+      <td><strong>Days 15–20: Hardening & Demo</strong></td>
+      <td>• Run <code>/poteto-mode</code> and <code>/swarm</code> to fuzz UI state transitions.<br>• Capture proof screenshots via <code>control-syndicate.mjs</code>.<br>• Polish CSS, responsive styling, and animations.</td>
+      <td>• Deploy production blueprint on Render (<code>render.yaml</code>).<br>• Configure database keep-alive cron job.<br>• Record and edit the 2:45 hackathon video walkthrough.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- SECTION 5 -->
+<h2>5. Enterprise FinTech Cybersecurity & Anti-Fraud Architecture</h2>
+
+<div class="callout callout-security">
+  <div class="callout-title">FinTech Security Mandate</div>
+  PayPal hackathon judges prioritize security rigor in agentic commerce. Wholeshare implements six enterprise defense layers to guarantee zero unauthorized fund movement.
+</div>
+
+<div class="no-break" style="margin: 16px 0; text-align: center;"><img src="diagrams/03_fintech_security_pipeline.png" style="width: 100%; border-radius: 8px; border: 1.5px solid #cbd5e1;" alt="FinTech Security Pipeline"><div style="font-size: 8pt; color: #64748b; margin-top: 6px;">Figure 5.1: 6-Layer FinTech Security & Anti-Fraud Defense Pipeline</div></div>
+
+<ol>
+  <li><strong>Prompt-Injection Firewall & Deterministic Policy Sandwich:</strong>
+    LLMs never invoke PayPal mutation APIs with unconstrained arguments. Every tool call passes through a deterministic validator checking:
+    <code>orderAmount &le; smePolicy.max_auto_authorize_usd</code> and <code>unitPrice &le; clan.initialWholesalePrice</code>.
+    Violations halt execution in code before reaching PayPal.
+  </li>
+  <li><strong>Sybil & Phantom-Clan Prevention (Verified PayPal KYB Binding):</strong>
+    Prevents fraudulent suppliers from spinning up fake SME agents. Every joining SME must hold a verified PayPal account and sign an <code>AUTHORIZE</code> hold before their pledged units count toward the Clan threshold. Unbacked pledges remain <code>UNVERIFIED_INTENT</code>.
+  </li>
+  <li><strong>Cryptographic Webhook Verification:</strong>
+    PayPal webhooks verify <code>PAYPAL-TRANSMISSION-SIG</code> and cert headers against PayPal's verification endpoint. External Telegram/Grok webhooks require <code>X-Syndicate-HMAC-SHA256</code> signatures with a 300-second replay window.
+  </li>
+  <li><strong>Deterministic Idempotency Keys (<code>PayPal-Request-Id</code>):</strong>
+    Every call to <code>create_order</code>, <code>pay_order</code>, <code>create_invoice</code>, and <code>create_refund</code> includes a deterministic <code>PayPal-Request-Id: hash(clan_id + sme_id + stage)</code> header, guaranteeing exactly-once execution.
+  </li>
+  <li><strong>Multimodal Dispute Evidence Tamper Detection:</strong>
+    Dispute damage photos undergo SHA256 perceptual hashing to prevent evidence reuse. Delivery timestamps are cross-referenced with PayPal Shipment Tracking to reject claims filed before delivery or outside the 48-hour inspection window.
+  </li>
+  <li><strong>Human-in-the-Loop Step-Up via PayPal QR Code:</strong>
+    Transactions exceeding the SME's auto-spend cap trigger <code>generate_invoice_qr_code</code> and present a scannable PayPal QR code for cryptographic owner authorization.
+  </li>
+</ol>
+
+<div class="page-break"></div>
+
+<!-- SECTION 6 -->
+<h2>6. The pstack Agentic Engineering Master Handbook</h2>
+
+<p>Following the methodology established by Lauren (<code>@poteto</code>) on Grok Bot and Cursor, software quality and velocity compound exponentially when agents possess the infrastructure to verify their own work autonomously.</p>
+
+<div class="no-break" style="margin: 16px 0; text-align: center;"><img src="diagrams/02_pstack_engineering_flywheel.png" style="width: 100%; border-radius: 8px; border: 1.5px solid #cbd5e1;" alt="pstack Engineering Flywheel"><div style="font-size: 8pt; color: #64748b; margin-top: 6px;">Figure 6.1: The pstack Autonomous Agentic Engineering & Verification Flywheel</div></div>
+
+<h3>6.1 The Engineering Philosophy: Supervising Someone Smarter Than You</h3>
+<p>In the agentic era, frontier models write syntax faster than humans, but fail in two consistent modes: <strong>under-specified intent</strong> and <strong>lack of context</strong>. Operating effectively requires shifting from micromanagement to architecture and constraint design—acting as the "gardener" who tends code smells, maintains organic architecture, and establishes automated feedback loops. When an agent can verify its own work, human babysitting is eliminated, allowing developers to land thousands of high-quality PRs with zero downtime.</p>
+
+<h3>6.2 Context Priming & Mental Models</h3>
+<ul>
+  <li><strong>Indirect Prompting (<code>/in-your-own-words</code>):</strong> When an ambiguous requirement or bug arrives, instruct the agent to restate the problem in its own words before writing code. This forces compression, exposes false assumptions early, and prevents leading the agent down unproductive paths.</li>
+  <li><strong>Building Mental Models via <code>/teach</code>:</strong> Calls <code>/how</code> (tracing runtime mechanics across subsystems in parallel) and <code>/why</code> (investigating historical decisions across Git history, PR comments, Slack discussions, and telemetry) to provide deep grounding.</li>
+  <li><strong>Learning from History via <code>/recall</code>:</strong> Instead of starting from scratch in each new chat session, <code>/recall</code> extracts working context from previous conversation transcripts, preserving hard-won domain knowledge.</li>
+</ul>
+
+<h3>6.3 Working Backwards & Readme-Driven Development (The Diátaxis Framework)</h3>
+<p>Before implementing complex features, draft the documentation first. Using the <code>/technical-writing</code> and <code>/unslop</code> skills, documentation is separated into four distinct modes:</p>
+<ol>
+  <li><strong>Tutorial:</strong> Learning by doing. Step-by-step guidance producing visible results immediately.</li>
+  <li><strong>How-To Guide:</strong> Practical steps solving a specific real-world operational problem.</li>
+  <li><strong>Reference:</strong> Dry, complete, and authoritative descriptions of APIs, flags, and schemas.</li>
+  <li><strong>Explanation:</strong> High-level discussion illuminating design choices, history, and architectural tradeoffs.</li>
+</ol>
+
+<h3>6.4 "Measure a Hundred Times, Cut Once" — The Prototyping Playbook</h3>
+<p>Abstract plans create an illusion of progress but lack empirical grounding. Under <code>pstack</code>'s Prototyping Playbook, agents plan through throwaway code. When designing novel UI interactions or algorithms, the agent builds 2–3 competing variations behind a feature switcher, drives them programmatically using the verification CLI, and measures layout metrics, rendering times, and error rates to select the superior design based on empirical proof.</p>
+
+<h3>6.5 The <code>/architect</code> Arena Workflow</h3>
+<p>For non-trivial architectural changes crossing module boundaries, the agent executes five disciplined phases:</p>
+<ol>
+  <li><strong>Ground:</strong> Run <code>/how</code> and <code>/why</code> over affected subsystems to map ownership and constraints.</li>
+  <li><strong>Sketch:</strong> Spawn parallel candidate runners across different model families to draft caller usage, core types, and public signatures.</li>
+  <li><strong>Cross-Judge & Synthesize:</strong> An independent judge model evaluates candidates against an interface depth and red-flag rubric.</li>
+  <li><strong>Implement:</strong> Populate placeholder logic against the validated sketch.</li>
+  <li><strong>Scrap:</strong> If forced casts, <code>any</code> escape hatches, or recurring workarounds emerge during implementation, throw away the sketch and start over.</li>
+</ol>
+
+<div class="page-break"></div>
+
+<h3>6.6 "Build the Lever" — The <code>control-syndicate.mjs</code> CLI Specification</h3>
+<p>Following John Ousterhout's <em>deep modules</em> philosophy, the verification CLI provides an expansive capability matrix through a compact command surface:</p>
+<ul>
+  <li><code>doctor</code>: Health check verifying PostgreSQL, PayPal OAuth tokens, Kernel keys, and port 3000.</li>
+  <li><code>seed-demo</code>: Creates deterministic test fixtures (3 SME Personas, 2 Clans, cached Kernel pricing) with <code>--reset</code> support.</li>
+  <li><code>spawn-sme</code>: Onboards an SME with bounded policy validation and automated AR cash-flow reminders.</li>
+  <li><code>match-clan</code>: Simulates A2A matchmaking until the Clan hits the 100% MOQ unlock threshold.</li>
+  <li><code>lock-escrow</code>: Executes PayPal Sandbox Order Authorizations and atomic batch Capture (with mandatory <code>--dry-run</code> support).</li>
+  <li><code>trigger-dispute</code>: Validates delivery tracking, submits damage evidence hashes, and settles pro-rata refunds.</li>
+  <li><code>snapshot</code> & <code>screenshot</code>: Captures live accessibility trees (ARIA) and high-resolution viewport images.</li>
+  <li><code>wait-settle</code>: Waits for active Server-Sent Events (SSE) and asynchronous database transactions to settle.</li>
+</ul>
+
+<h3>6.7 Materialized Memory: Feature Maps (<code>references/features/</code>)</h3>
+<p>Code is the ultimate source of truth. Feature maps catalog every user journey into token-efficient markdown documents structured with four mandatory H2 headers: <code>Sub-features</code>, <code>How to get to it (user POV)</code>, <code>Driving it with control-syndicate</code>, and <code>Gotchas</code>. Agents reference these maps to navigate the application without wasting context window tokens.</p>
+
+<h3>6.8 Cloud Agents vs. Worktrees & Parallel Swarms</h3>
+<p>While local git worktrees consume excessive disk space and memory (capping concurrency at ~10 agents), Cursor cloud agents run on dedicated cloud machines with pre-warmed snapshot builds. This unlocks massive parallelism via <code>/swarm</code>, enabling agents to fan out dozens of workers to fuzz UI state machines, run statistical performance benchmarks, and automatically reproduce user bug reports.</p>
+
+<h3>6.9 Concrete Agentic Prompts & Real-World Playbooks</h3>
+<pre><code># Example 1: Researching an ambiguous bug
+/poteto-mode investigate why PayPal batch capture periodically stalls.
+restate the issue in your own words first, trace execution with /how, and give me your top 3 hypotheses.
+
+# Example 2: Designing a new service boundary
+/poteto-mode we need to add rate-limiting for external bot webhooks.
+/architect this across candidate runners, sketch the type signatures first, and test with throwaway prototypes.
+
+# Example 3: Executing a multi-PR migration
+/poteto-mode plan a migration of our dispute engine to APIMatic typed SDKs.
+break into small verifiable PRs. each unit must be provable via /control-syndicate before landing.
+
+# Example 4: Automatic bug reproduction
+/poteto-mode repro this dispute settlement calculation failure using control-syndicate.mjs.
+if reproducible on main, fix the root cause and provide a screenshot proof of the green AG Grid row.</code></pre>
+
+<!-- SECTION 7 -->
+<h2>7. High-Impact UI/UX & Real-Time Visualization Blueprint</h2>
+
+<p>To win design and demo delivery awards, Wholeshare organizes the screen into <strong>four synchronized visual zones</strong>:</p>
+
+<div class="no-break" style="margin: 16px 0; text-align: center;"><img src="diagrams/05_ui_4zone_dashboard_layout.png" style="width: 100%; border-radius: 8px; border: 1.5px solid #cbd5e1;" alt="4-Zone UI Wireframe"><div style="font-size: 8pt; color: #64748b; margin-top: 6px;">Figure 7.1: Wholeshare 4-Zone Synchronized Financial Command Center Layout</div></div>
+  <div class="ui-zone">
+    <div class="ui-zone-title">ZONE 2: Top-Left (35% Width)<br>"Clash of Clans" Syndicate Lobby</div>
+    <div style="font-size: 7.8pt;">
+      • Clan Strategy Cards with unit counters (350 / 500 units)<br>
+      • Tier Progress Rings: Tier 1 ($10) &rarr; Tier 2 ($7.20 — UNLOCKED!)<br>
+      • Natural Language Spawner Box + "Connect Grok/Telegram Bot" Drawer
+    </div>
+  </div>
+  <div class="ui-zone">
+    <div class="ui-zone-title">ZONE 3: Top-Right (65% Width)<br>Live A2A Negotiation & Deal Arena</div>
+    <div style="font-size: 7.8pt;">
+      • Radial Node Graph: Center Orchestrator + SME Nodes + Kernel + Supplier<br>
+      • Animated glowing particle pulses along active negotiation edges<br>
+      • Speech Bubbles: Plain English intent + Expandable APIMatic JSON payloads
+    </div>
+  </div>
+  <div class="ui-zone ui-zone-full">
+    <div class="ui-zone-title">ZONE 4: Bottom Panel (100% Width) — AG Grid Live Syndicate & Escrow Ledger</div>
+    <div style="font-size: 7.8pt;">
+      • <strong>Master Rows:</strong> Clan ID, Target SKU, Pooled Volume, Escrow Total, Discount %, PayPal Status, Tracking ID<br>
+      • <strong>Expandable Detail Rows:</strong> SME Member Name, Units, Authorized Amount, PayPal Order ID, QR Button, Dispute Status<br>
+      • <strong>Live Cell Flashing (<code>enableCellChangeFlash</code>):</strong> Green flash on fund lock/capture, amber flash on partial refund
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 8 -->
+<h2>8. Shared Database Schema (Prisma ORM Boundary Contract)</h2>
+
+<div class="no-break" style="margin: 16px 0; text-align: center;"><img src="diagrams/04_clan_state_lifecycle.png" style="width: 100%; border-radius: 8px; border: 1.5px solid #cbd5e1;" alt="Clan State Lifecycle"><div style="font-size: 8pt; color: #64748b; margin-top: 6px;">Figure 8.1: Syndicate Purchasing Clan Lifecycle (PostgreSQL & PayPal State Transitions)</div></div>
+
+<pre><code>datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ClanStatus {
+  FORMING
+  THRESHOLD_MET
+  LOCKED
+  FULFILLING
+  DISPUTED
+  SETTLED
+}
+
+enum MemberStatus {
+  PLEDGED
+  AUTHORIZED
+  CAPTURED
+  REFUNDED
+}
+
+model Clan {
+  id               String       @id @default(cuid())
+  sku              String
+  skuName          String
+  targetUnits      Int
+  currentUnits     Int          @default(0)
+  unitPriceUsd     Decimal      @db.Decimal(10, 2)
+  discountTierPct  Decimal      @db.Decimal(5, 2)
+  status           ClanStatus   @default(FORMING)
+  paypalBatchId    String?
+  trackingNumber   String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  members          ClanMember[]
+  events           A2AEvent[]
+  escrowRecords    EscrowRecord[]
+}
+
+model ClanMember {
+  id               String       @id @default(cuid())
+  clanId           String
+  smeName          String
+  smeEmail         String
+  pledgedUnits     Int
+  authorizedUsd    Decimal      @db.Decimal(10, 2)
+  status           MemberStatus @default(PLEDGED)
+  paypalOrderId    String?
+  paypalInvoiceId  String?
+  invoiceQrUrl     String?
+  createdAt        DateTime     @default(now())
+
+  clan             Clan         @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  disputes         DisputeCase[]
+}
+
+model A2AEvent {
+  id               String       @id @default(cuid())
+  clanId           String
+  senderNode       String
+  receiverNode     String
+  messageIntent    String
+  rawPayload       Json
+  timestamp        DateTime     @default(now())
+
+  clan             Clan         @relation(fields: [clanId], references: [id], onDelete: Cascade)
+}
+
+model EscrowRecord {
+  id               String       @id @default(cuid())
+  clanId           String
+  paypalCaptureId  String       @unique
+  totalCapturedUsd Decimal      @db.Decimal(10, 2)
+  capturedAt       DateTime     @default(now())
+
+  clan             Clan         @relation(fields: [clanId], references: [id], onDelete: Cascade)
+}
+
+model DisputeCase {
+  id               String       @id @default(cuid())
+  memberId         String
+  paypalDisputeId  String       @unique
+  claimedAmountUsd Decimal      @db.Decimal(10, 2)
+  refundAmountUsd  Decimal      @db.Decimal(10, 2)
+  status           String
+  evidenceSummary  String
+  createdAt        DateTime     @default(now())
+
+  member           ClanMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}</code></pre>
+
+<!-- SECTION 9 -->
+<h2>9. Operational Readiness Checklist</h2>
+
+<div class="callout callout-tip">
+  <div class="callout-title">Launch Verification Matrix</div>
+  <ul style="margin: 4px 0 0 0; padding-left: 18px;">
+    <li>[x] <code>node .cursor/skills/verify-syndicate/control-syndicate.mjs doctor</code> passes all environment and security checks.</li>
+    <li>[x] Feature Maps verified in <code>.cursor/skills/verify-syndicate/references/features/README.md</code>.</li>
+    <li>[x] Two-developer boundary contract locked in Prisma schema.</li>
+    <li>[x] Master Architecture & Security Document rendered as print-ready PDF (<code>SYNDICATE_SPEC.pdf</code>).</li>
+    <li>[x] 1-Click Postman test collection exported to <code>postman/wholesharepal.postman_collection.json</code>.</li>
+    <li>[x] Persistent cloud deployment blueprint configured in <code>render.yaml</code>.</li>
+  </ul>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'neutral',
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
+  });
+</script>
+</body>
+</html>

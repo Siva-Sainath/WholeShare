@@ -1,0 +1,100 @@
+{
+  "info": {
+    "name": "Wholeshare - PayPal AI Hackathon Collection",
+    "description": "Deterministic 1-click test collection for Wholeshare multi-agent escrow and dispute resolution.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health & Doctor Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/health",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "2. Stage 1: Spawn SME & Policy Validation",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"smeName\": \"Austin Artisan Bakery\",\n  \"sku\": \"organic-flour-50lb\",\n  \"requestedQuantity\": 20,\n  \"maxBudgetUsd\": 500\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/sme/spawn",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "sme", "spawn"]
+        }
+      }
+    },
+    {
+      "name": "3. Stage 2: Trigger Kernel Wholesale Scrape",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sku\": \"organic-flour-50lb\",\n  \"supplierUrl\": \"https://wholesale.supplier.mock/flour\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/sourcing/scrape",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "sourcing", "scrape"]
+        }
+      }
+    },
+    {
+      "name": "4. Stage 3: Lock PayPal Multiparty Escrow",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "PayPal-Request-Id", "value": "req_escrow_batch_01" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clanId\": \"clan_flour_01\",\n  \"intent\": \"AUTHORIZE\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/escrow/lock",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "escrow", "lock"]
+        }
+      }
+    },
+    {
+      "name": "5. Stage 4: Trigger APIMatic Damage Dispute",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clanId\": \"clan_flour_01\",\n  \"smeId\": \"sme_austin_01\",\n  \"damagePercentage\": 25,\n  \"evidencePhotoHash\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/disputes/file",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "disputes", "file"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000"
+    }
+  ]
+}

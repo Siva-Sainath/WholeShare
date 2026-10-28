@@ -1,0 +1,13 @@
+{
+  "buyerId": "sme_austin_artisan",
+  "vendorName": "Extravagant Bulk Corp",
+  "invoiceNumber": "INV_OVERFLOW_999",
+  "paymentTerms": "NET_30",
+  "lineItems": [
+    {
+      "description": "Organic Artisan Bread Flour 50lb",
+      "quantity": 1000000,
+      "unitPriceCents": 2800
+    }
+  ]
+}

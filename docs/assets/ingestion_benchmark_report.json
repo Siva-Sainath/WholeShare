@@ -1,0 +1,220 @@
+{
+  "summary": {
+    "totalDocuments": 13,
+    "supportRatePct": 100,
+    "safetyRatePct": 100,
+    "fieldAccuracyPct": 100,
+    "formatBreakdown": {
+      "PNG": {
+        "total": 3,
+        "successRatePct": 100,
+        "avgLatencyMs": 413
+      },
+      "XLSX": {
+        "total": 1,
+        "successRatePct": 100,
+        "avgLatencyMs": 6
+      },
+      "CSV": {
+        "total": 2,
+        "successRatePct": 100,
+        "avgLatencyMs": 1
+      },
+      "PDF": {
+        "total": 2,
+        "successRatePct": 100,
+        "avgLatencyMs": 324
+      },
+      "JSON": {
+        "total": 5,
+        "successRatePct": 100,
+        "avgLatencyMs": 0
+      }
+    },
+    "timestamp": "2026-10-27T07:33:53.274Z"
+  },
+  "details": [
+    {
+      "id": "DOC-01",
+      "file": "01_sysco_commercial_invoice.png",
+      "format": "PNG",
+      "category": "REAL_COMMERCIAL_INVOICE_IMAGE",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 459,
+      "extractedVendor": "SYSCO ARTISAN BAKING DISTRIBUTORS",
+      "extractedItems": 3,
+      "totalAmountCents": 973592,
+      "error": null
+    },
+    {
+      "id": "DOC-02",
+      "file": "02_supermarket_receipt_real.png",
+      "format": "PNG",
+      "category": "REAL_RETAIL_RECEIPT_IMAGE",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 197,
+      "extractedVendor": "Sysco Artisan Baking Supply",
+      "extractedItems": 1,
+      "totalAmountCents": 4200000,
+      "error": null
+    },
+    {
+      "id": "DOC-03",
+      "file": "03_donut_b2b_invoice_real.png",
+      "format": "PNG",
+      "category": "HUGGINGFACE_B2B_INVOICE_IMAGE",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 583,
+      "extractedVendor": "Bradley-Andrade",
+      "extractedItems": 1,
+      "totalAmountCents": 290600,
+      "error": null
+    },
+    {
+      "id": "DOC-04",
+      "file": "04_distributor_multi_sheet.xlsx",
+      "format": "XLSX",
+      "category": "MULTI_SHEET_SPREADSHEET",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 6,
+      "extractedVendor": "Sysco Central Texas Wholesale",
+      "extractedItems": 3,
+      "totalAmountCents": 1129040,
+      "error": null
+    },
+    {
+      "id": "DOC-05",
+      "file": "05_pharma_procurement.csv",
+      "format": "CSV",
+      "category": "PUBLIC_PROCUREMENT_CSV",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 1,
+      "extractedVendor": "Sysco Food Services Wholesale",
+      "extractedItems": 25,
+      "totalAmountCents": 3415984,
+      "error": null
+    },
+    {
+      "id": "DOC-06",
+      "file": "06_b2b_procurement_po.csv",
+      "format": "CSV",
+      "category": "QUOTED_RFC_PO_CSV",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 1,
+      "extractedVendor": "King Arthur Commercial INV-KA-99042 46319.22928240741 NET_30",
+      "extractedItems": 3,
+      "totalAmountCents": 1140515,
+      "error": null
+    },
+    {
+      "id": "DOC-07",
+      "file": "07_vector_digital_invoice.pdf",
+      "format": "PDF",
+      "category": "VECTOR_DIGITAL_INVOICE_PDF",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 155,
+      "extractedVendor": "Bay State Milling Wholesale",
+      "extractedItems": 3,
+      "totalAmountCents": 826610,
+      "error": null
+    },
+    {
+      "id": "DOC-08",
+      "file": "08_scanned_archive_bill.pdf",
+      "format": "PDF",
+      "category": "SCANNED_ARCHIVE_PDF",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 493,
+      "extractedVendor": "Bradley-Andrade",
+      "extractedItems": 1,
+      "totalAmountCents": 290600,
+      "error": null
+    },
+    {
+      "id": "DOC-09",
+      "file": "09_standard_b2b_contract.json",
+      "format": "JSON",
+      "category": "CANONICAL_B2B_JSON",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 0,
+      "extractedVendor": "Sysco Artisan Baking Supply",
+      "extractedItems": 2,
+      "totalAmountCents": 573650,
+      "error": null
+    },
+    {
+      "id": "DOC-10",
+      "file": "10_adversarial_floating_cents.json",
+      "format": "JSON",
+      "category": "ADVERSARIAL_FLOATING_CENTS",
+      "status": "PASS",
+      "safety": "PASS",
+      "fieldMatch": true,
+      "latencyMs": 0,
+      "extractedVendor": "Shady Brokerage LLC",
+      "extractedItems": 2,
+      "totalAmountCents": 561002,
+      "error": null
+    },
+    {
+      "id": "DOC-11",
+      "file": "11_adversarial_tampered_hmac.json",
+      "format": "JSON",
+      "category": "ADVERSARIAL_TAMPERED_HMAC",
+      "status": "PASS",
+      "safety": "PASS_REJECTED_FORGERY",
+      "fieldMatch": true,
+      "latencyMs": 1,
+      "extractedVendor": "N/A",
+      "extractedItems": 0,
+      "totalAmountCents": 0,
+      "error": null
+    },
+    {
+      "id": "DOC-12",
+      "file": "12_adversarial_stale_replay.json",
+      "format": "JSON",
+      "category": "ADVERSARIAL_STALE_REPLAY",
+      "status": "PASS",
+      "safety": "PASS_REJECTED_STALE_REPLAY",
+      "fieldMatch": true,
+      "latencyMs": 0,
+      "extractedVendor": "N/A",
+      "extractedItems": 0,
+      "totalAmountCents": 0,
+      "error": null
+    },
+    {
+      "id": "DOC-13",
+      "file": "13_adversarial_spend_cap_exceeded.json",
+      "format": "JSON",
+      "category": "ADVERSARIAL_SPEND_CAP_EXCEEDED",
+      "status": "PASS",
+      "safety": "PASS_FLAGGED_SPEND_CAP_EXCEEDED",
+      "fieldMatch": true,
+      "latencyMs": 0,
+      "extractedVendor": "Extravagant Bulk Corp",
+      "extractedItems": 1,
+      "totalAmountCents": 2856005000,
+      "error": null
+    }
+  ]
+}
