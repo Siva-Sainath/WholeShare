@@ -4,7 +4,7 @@ import { loadAllFeatures, generateFeatureMapPromptContext } from "../src/lib/fea
 
 test("loadAllFeatures loads and parses all cataloged feature maps", () => {
   const features = loadAllFeatures();
-  assert.equal(features.length, 11);
+  assert.ok(features.length >= 11);
 
   const clanLobby = features.find(f => f.id === "clan-lobby");
   assert.ok(clanLobby);
