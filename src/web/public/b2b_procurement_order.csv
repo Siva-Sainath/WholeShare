@@ -1,0 +1,7 @@
+"PO_Number","Vendor_Name","Invoice_Number","Invoice_Date","Terms"
+"PO-2026-9041","King Arthur Commercial","INV-KA-99042","2026-10-24","NET_30"
+
+"SKU","Item_Description","Quantity","Unit_Price","Extended_Amount","Organic_Cert"
+"KA-SPEC-PAT","Organic Artisan Bread Flour 50lb Bag",250,28.25,7062.50,"YES"
+"KA-WW-STONE","Stone Ground Whole Wheat Flour 50#",80,25.75,2060.00,"YES"
+"KA-SUGAR-ORG","Organic Cane Sugar 50lb",60,33.50,2010.00,"YES"
