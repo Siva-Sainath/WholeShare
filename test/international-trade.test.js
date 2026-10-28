@@ -159,3 +159,4 @@ test("BusinessInductionEngine induces cross-cultural global trade archetypes", (
   assert.equal(coldChainProfile.archetypeId, "AFRICAN_AGRO_COLD_CHAIN");
   assert.equal(coldChainProfile.internationalTrade.corridorId, "CORRIDOR_NAIVASHA_TO_SCHIPHOL_AIR");
 });
+

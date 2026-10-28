@@ -345,3 +345,4 @@ export function matchLogisticsCorridor(originRegion, destinationRegion, commodit
     return matchesOrigin && matchesDest && matchesCommodity;
   }) || GLOBAL_LOGISTICS_CORRIDORS[0];
 }
+
