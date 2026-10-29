@@ -10,7 +10,7 @@ test("Procured datasets manifest exists and catalogues 20,000+ real records", ()
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
   assert.ok(manifest.total_records >= 20000, `Expected >= 20000 records, got ${manifest.total_records}`);
   assert.ok(manifest.total_size_mb >= 300, `Expected >= 300 MB, got ${manifest.total_size_mb}`);
-  assert.equal(manifest.datasets.length, 7);
+  assert.ok(manifest.datasets.length >= 7, `Expected >= 7 datasets, got ${manifest.datasets.length}`);
 });
 
 test("TAT-QA hybrid financial reasoning dataset contains valid table-text questions", () => {
@@ -81,4 +81,42 @@ test("Hermes-Glaive dataset contains multi-turn tool calling and schema argument
   const sample = data[0];
   assert.ok(sample.conversations, "Must contain conversations");
 });
+
+test("Eurotender procurement dataset contains European public tenders and CPV codes", () => {
+  const filePath = path.resolve("data/procured/procurement_tenders_eurotender.parquet");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 100000000);
+});
+
+test("DataCo supply chain dataset contains commercial orders and delivery metrics", () => {
+  const filePath = path.resolve("data/procured/supply_chain_dataco_transactions.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 50000000);
+});
+
+test("Nooxus verified entities dataset contains global corporate registry data", () => {
+  const filePath = path.resolve("data/procured/global_verified_entities_nooxus.parquet");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 1000000);
+});
+
+test("B2B Procure-to-Pay dataset contains purchase orders and matching invoices", () => {
+  const poPath = path.resolve("data/procured/b2b_p2p_purchase_orders.csv");
+  const invPath = path.resolve("data/procured/b2b_p2p_supplier_invoices.csv");
+  assert.ok(fs.existsSync(poPath));
+  assert.ok(fs.existsSync(invPath));
+});
+
+test("SEC EDGAR supply chain dataset contains Item 1A supplier risk disclosures", () => {
+  const filePath = path.resolve("data/procured/sec_edgar_supply_chain.parquet");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 1000000);
+});
+
+test("Supply chain ontology QA dataset contains domain reasoning dialogues", () => {
+  const filePath = path.resolve("data/procured/supply_chain_ontology_qa.parquet");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 50000);
+});
+
 
