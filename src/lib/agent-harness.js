@@ -1,5 +1,6 @@
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "./tool-registry.js";
 import { actionDispatcher } from "./web-actions.js";
+import { generateFeatureMapPromptContext } from "./feature-map.js";
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
 const PRIMARY_MODEL = process.env.PRIMARY_MODEL || "qwen3.5:9b";
@@ -16,6 +17,8 @@ export class WholeshareAgentHarness {
     const sessionStartTime = Date.now();
     const steps = [];
 
+    const featureContext = generateFeatureMapPromptContext();
+
     const messages = [
       {
         role: "system",
@@ -23,7 +26,9 @@ export class WholeshareAgentHarness {
 You have access to tools that let you discover wholesale catalog tiers, onboard SME buyers, join coalitions, run price negotiations, generate PayPal Invoicing QR codes, and lock funds in PayPal Orders v2 soft authorization holds.
 Always select tools when actions are requested.
 Never execute direct CAPTURE intents. Always use AUTHORIZE soft holds.
-All financial arithmetic must use exact integer cents.`
+All financial arithmetic must use exact integer cents.
+
+${featureContext}`
       },
       {
         role: "user",

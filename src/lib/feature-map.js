@@ -1,7 +1,12 @@
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve, basename } from "node:path";
 
-const FEATURES_DIR = resolve(process.cwd(), ".cursor/skills/verify-syndicate/references/features");
+const FEATURE_DIRS = [
+  resolve(process.cwd(), ".cursor/skills/verify-syndicate/references/features"),
+  resolve(process.cwd(), ".cursor/skills/verify-paypal/references/features"),
+  resolve(process.cwd(), ".cursor/skills/verify-ingestion/references/features"),
+  resolve(process.cwd(), ".cursor/skills/verify-datalake/references/features")
+];
 
 export function parseFeatureMarkdown(filePath) {
   const content = readFileSync(filePath, "utf-8");
@@ -85,15 +90,18 @@ export function parseFeatureMarkdown(filePath) {
 }
 
 export function loadAllFeatures() {
-  if (!existsSync(FEATURES_DIR)) {
-    return [];
+  const allFeatures = [];
+  for (const dir of FEATURE_DIRS) {
+    if (existsSync(dir)) {
+      const files = readdirSync(dir)
+        .filter(f => f.endsWith(".md") && f !== "README.md")
+        .sort();
+      for (const f of files) {
+        allFeatures.push(parseFeatureMarkdown(resolve(dir, f)));
+      }
+    }
   }
-
-  const files = readdirSync(FEATURES_DIR)
-    .filter(f => f.endsWith(".md") && f !== "README.md")
-    .sort();
-
-  return files.map(f => parseFeatureMarkdown(resolve(FEATURES_DIR, f)));
+  return allFeatures;
 }
 
 export function generateFeatureMapPromptContext() {
