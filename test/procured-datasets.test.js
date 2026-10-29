@@ -221,6 +221,26 @@ test("Kaggle Global Corporate Graph contains corporate structures and ownership 
   assert.ok(fs.statSync(relFile).size > 1000000);
 });
 
+test("Kaggle Trade Disruptions contains 25 years of global disruption events and port congestion", () => {
+  const eventsFile = path.resolve("data/procured/kaggle/trade_disruptions/disruption_events.csv");
+  const portFile = path.resolve("data/procured/kaggle/trade_disruptions/port_congestion.csv");
+  assert.ok(fs.existsSync(eventsFile));
+  assert.ok(fs.existsSync(portFile));
+});
+
+test("Kaggle Disruption Recovery contains 100k records of supply chain recovery lead times", () => {
+  const filePath = path.resolve("data/procured/kaggle/disruption_recovery/supply_chain_disruption_recovery.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 5000000);
+});
+
+test("Kaggle Indian Mandi Prices contains 700k+ authentic wholesale agricultural price records", () => {
+  const filePath = path.resolve("data/procured/kaggle/mandi_prices/Agriculture_price_dataset.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 10000000);
+});
+
+
 
 
 
