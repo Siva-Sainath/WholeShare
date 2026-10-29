@@ -170,6 +170,58 @@ test("Kaggle India AP Markfed dataset contains state agricultural cooperative pr
   assert.ok(fs.statSync(filePath).size > 1000);
 });
 
+test("Kaggle DataCo Smart Supply Chain contains real shipping delivery and logistics records", () => {
+  const filePath = path.resolve("data/procured/kaggle/supply_chain/DataCoSupplyChainDataset.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 50000000);
+});
+
+test("Kaggle US Customs CBP Rulings contains 36k+ official classification determinations", () => {
+  const filePath = path.resolve("data/procured/kaggle/customs/cbp_cross_rulings_2020_2025.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 30000000);
+});
+
+test("Kaggle CFPB Payment Disputes contains 160k+ real consumer dispute resolution narratives", () => {
+  const filePath = path.resolve("data/procured/kaggle/disputes/complaints.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 50000000);
+});
+
+test("Hugging Face B2B Procure-to-Pay contains interconnected tables for 3-way matching", () => {
+  const poFile = path.resolve("data/procured/huggingface/procurement_erp/purchase_orders.csv");
+  const invFile = path.resolve("data/procured/huggingface/procurement_erp/supplier_invoices.csv");
+  assert.ok(fs.existsSync(poFile));
+  assert.ok(fs.existsSync(invFile));
+});
+
+test("Kaggle Federal Reserve FX Rates contains 20 years of daily currency exchange rates", () => {
+  const filePath = path.resolve("data/procured/kaggle/fx_rates/Foreign_Exchange_Rates.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 500000);
+});
+
+test("Kaggle World Bank Commodity Prices contains global benchmark spot commodity prices", () => {
+  const filePath = path.resolve("data/procured/kaggle/commodity_prices/commodity_prices.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 10000);
+});
+
+test("Kaggle Corporate Bankruptcy Prediction contains 95 financial statement ratios", () => {
+  const filePath = path.resolve("data/procured/kaggle/credit_risk/data.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 1000000);
+});
+
+test("Kaggle Global Corporate Graph contains corporate structures and ownership relationships", () => {
+  const relFile = path.resolve("data/procured/kaggle/corporate_graph/relationships.csv");
+  const unitsFile = path.resolve("data/procured/kaggle/corporate_graph/legal_units.csv");
+  assert.ok(fs.existsSync(relFile));
+  assert.ok(fs.existsSync(unitsFile));
+  assert.ok(fs.statSync(relFile).size > 1000000);
+});
+
+
 
 
 
