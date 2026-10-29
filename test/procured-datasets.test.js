@@ -119,4 +119,35 @@ test("Supply chain ontology QA dataset contains domain reasoning dialogues", () 
   assert.ok(fs.statSync(filePath).size > 50000);
 });
 
+test("Kaggle US SBA National Loans contains 890k+ real small business loan records", () => {
+  const filePath = path.resolve("data/procured/kaggle/sba_national_loans/SBAnational.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 100000000);
+});
+
+test("Kaggle World Bank Contract Awards contains enterprise B2B procurement awards", () => {
+  const filePath = path.resolve("data/procured/kaggle/corporate-procurement-contract-awards/corporate-procurement-contract-awards.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 100000);
+});
+
+test("Kaggle Procurement KPI dataset contains PO lifecycle and defect metrics", () => {
+  const filePath = path.resolve("data/procured/kaggle/procurement-kpi-analysis-dataset/Procurement KPI Analysis Dataset.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 10000);
+});
+
+test("Kaggle Kraljic Strategic Sourcing dataset contains supply risk and profit impact", () => {
+  const filePath = path.resolve("data/procured/kaggle/procurement-strategy-dataset-for-kraljic-matrix/realistic_kraljic_dataset.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 10000);
+});
+
+test("Kaggle SBA Loan Case Studies contains small business financial underwriting", () => {
+  const filePath = path.resolve("data/procured/kaggle/sba-loans-case-data-set/SBAcase.11.13.17.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 100000);
+});
+
+
 

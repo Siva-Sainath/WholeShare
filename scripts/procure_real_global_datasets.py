@@ -8,22 +8,25 @@ Kaggle, and public repositories across all core aspects of the Wholeshare platfo
 import os
 import json
 import shutil
+import subprocess
 import requests
 import pandas as pd
 from datetime import datetime, timezone
 from huggingface_hub import hf_hub_download
 
 PROCURED_DIR = "data/procured"
+KAGGLE_DIR = os.path.join(PROCURED_DIR, "kaggle")
 os.makedirs(PROCURED_DIR, exist_ok=True)
+os.makedirs(KAGGLE_DIR, exist_ok=True)
 
 manifest = {
-    "version": "2.0.0",
+    "version": "3.0.0",
     "updated_at": None,
     "datasets": []
 }
 
 def procure_tatqa():
-    print("[1/13] Procuring TAT-QA (Hybrid Table & Text Financial Reasoning)...")
+    print("[1/18] Procuring TAT-QA (Hybrid Table & Text Financial Reasoning)...")
     out_path = os.path.join(PROCURED_DIR, "financial_reasoning_tatqa.json")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("next-tat/TAT-QA", "tatqa_dataset_train.json", repo_type="dataset")
@@ -49,7 +52,7 @@ def procure_tatqa():
     print(f"  -> Successfully procured {count:,} TAT-QA financial reasoning records ({size_mb:.2f} MB)")
 
 def procure_cuad():
-    print("[2/13] Procuring Atticus CUAD (Commercial Legal Contracts & Clauses)...")
+    print("[2/18] Procuring Atticus CUAD (Commercial Legal Contracts & Clauses)...")
     out_path = os.path.join(PROCURED_DIR, "commercial_contracts_cuad.csv")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("theatticusproject/cuad", "CUAD_v1/master_clauses.csv", repo_type="dataset")
@@ -72,7 +75,7 @@ def procure_cuad():
     print(f"  -> Successfully procured {count:,} commercial contract records with 41 clause types ({size_mb:.2f} MB)")
 
 def procure_cfpb():
-    print("[3/13] Procuring CFPB Financial Complaints & Disputes...")
+    print("[3/18] Procuring CFPB Financial Complaints & Disputes...")
     out_path = os.path.join(PROCURED_DIR, "financial_disputes_cfpb.csv")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("claritystorm/cfpb-consumer-complaints", "sample_1000.csv", repo_type="dataset")
@@ -95,7 +98,7 @@ def procure_cfpb():
     print(f"  -> Successfully procured {count:,} real dispute narratives and resolutions ({size_mb:.2f} MB)")
 
 def procure_hs_codes():
-    print("[4/13] Procuring Global Harmonized System (HS) Commodity Codes...")
+    print("[4/18] Procuring Global Harmonized System (HS) Commodity Codes...")
     out_path = os.path.join(PROCURED_DIR, "international_hs_codes.csv")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("samabos/product_hscode", "train.csv", repo_type="dataset")
@@ -118,7 +121,7 @@ def procure_hs_codes():
     print(f"  -> Successfully procured {count:,} international HS commodity classifications ({size_mb:.2f} MB)")
 
 def procure_cord():
-    print("[5/13] Procuring CORD-v2 Real B2B Invoice & Receipt Dataset...")
+    print("[5/18] Procuring CORD-v2 Real B2B Invoice & Receipt Dataset...")
     out_path = os.path.join(PROCURED_DIR, "b2b_receipts_cord.parquet")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("naver-clova-ix/cord-v2", "data/test-00000-of-00001-9c204eb3f4e11791.parquet", repo_type="dataset")
@@ -141,7 +144,7 @@ def procure_cord():
     print(f"  -> Successfully procured {count:,} real receipt OCR and bounding-box records ({size_mb:.2f} MB)")
 
 def procure_finqa():
-    print("[6/13] Procuring FinQA (Financial Numerical Multi-Step Math)...")
+    print("[6/18] Procuring FinQA (Financial Numerical Multi-Step Math)...")
     out_path = os.path.join(PROCURED_DIR, "financial_reasoning_finqa.json")
     if not os.path.exists(out_path):
         url = "https://raw.githubusercontent.com/czyssrs/FinQA/main/dataset/train.json"
@@ -168,7 +171,7 @@ def procure_finqa():
     print(f"  -> Successfully procured {count:,} FinQA numerical reasoning episodes ({size_mb:.2f} MB)")
 
 def procure_hermes_function_calling():
-    print("[7/13] Procuring Hermes Function Calling (Agentic Tool Execution)...")
+    print("[7/18] Procuring Hermes Function Calling (Agentic Tool Execution)...")
     out_path = os.path.join(PROCURED_DIR, "function_calling_hermes_glaive.json")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("NousResearch/hermes-function-calling-v1", "sample_5k.json", repo_type="dataset")
@@ -194,7 +197,7 @@ def procure_hermes_function_calling():
     print(f"  -> Successfully procured {count:,} function calling episodes ({size_mb:.2f} MB)")
 
 def procure_eurotender():
-    print("[8/13] Procuring EU TED Public Procurement Tenders (CPV & Tenders)...")
+    print("[8/18] Procuring EU TED Public Procurement Tenders (CPV & Tenders)...")
     out_path = os.path.join(PROCURED_DIR, "procurement_tenders_eurotender.parquet")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("sinceaihq/eurotender-cpv", "data/train.parquet", repo_type="dataset")
@@ -214,7 +217,7 @@ def procure_eurotender():
     print(f"  -> Successfully procured {count:,} public procurement tenders ({size_mb:.2f} MB)")
 
 def procure_dataco_supply_chain():
-    print("[9/13] Procuring DataCo Global Commercial Supply Chain Transactions...")
+    print("[9/18] Procuring DataCo Global Commercial Supply Chain Transactions...")
     out_path = os.path.join(PROCURED_DIR, "supply_chain_dataco_transactions.csv")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("alalfi/SupplyChainDataset", "DataCoSupplyChainDataset1.csv", repo_type="dataset")
@@ -234,7 +237,7 @@ def procure_dataco_supply_chain():
     print(f"  -> Successfully procured {count:,} commercial supply chain orders ({size_mb:.2f} MB)")
 
 def procure_nooxus_verified_entities():
-    print("[10/13] Procuring Nooxus Verified Global Corporate Entities...")
+    print("[10/18] Procuring Nooxus Verified Global Corporate Entities...")
     out_path = os.path.join(PROCURED_DIR, "global_verified_entities_nooxus.parquet")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("Nooxus-AI/NOO-Verified-Global-Entities", "rolling_90d_nodes.parquet", repo_type="dataset")
@@ -256,7 +259,7 @@ def procure_nooxus_verified_entities():
     print(f"  -> Successfully procured {count:,} verified corporate entities ({size_mb:.2f} MB)")
 
 def procure_b2b_p2p_lifecycle():
-    print("[11/13] Procuring B2B Procure-to-Pay Lifecycle Relational Database...")
+    print("[11/18] Procuring B2B Procure-to-Pay Lifecycle Relational Database...")
     p2p_files = [
         "companies.csv", "suppliers.csv", "purchase_orders.csv",
         "purchase_order_lines.csv", "goods_receipts.csv",
@@ -287,7 +290,7 @@ def procure_b2b_p2p_lifecycle():
     print(f"  -> Successfully procured {total_records:,} B2B P2P relational records ({size_mb:.2f} MB)")
 
 def procure_sec_edgar_filings():
-    print("[12/13] Procuring SEC EDGAR Corporate Supply-Chain Disclosures...")
+    print("[12/18] Procuring SEC EDGAR Corporate Supply-Chain Disclosures...")
     out_path = os.path.join(PROCURED_DIR, "sec_edgar_supply_chain.parquet")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("darshvit20/SEC-Edgar-filings", "data.parquet", repo_type="dataset")
@@ -309,7 +312,7 @@ def procure_sec_edgar_filings():
     print(f"  -> Successfully procured {count:,} SEC EDGAR corporate filings ({size_mb:.2f} MB)")
 
 def procure_supply_chain_qa():
-    print("[13/13] Procuring Supply Chain Domain Ontology & Reasoning QA...")
+    print("[13/18] Procuring Supply Chain Domain Ontology & Reasoning QA...")
     out_path = os.path.join(PROCURED_DIR, "supply_chain_ontology_qa.parquet")
     if not os.path.exists(out_path):
         hub_path = hf_hub_download("sebdg/supply_chain_q_a", "data/train-00000-of-00001.parquet", repo_type="dataset")
@@ -330,6 +333,111 @@ def procure_supply_chain_qa():
     })
     print(f"  -> Successfully procured {count:,} supply chain reasoning dialogues ({size_mb:.2f} MB)")
 
+def procure_kaggle_sba_national():
+    print("[14/18] Procuring Kaggle US SBA National Loan Portfolio (Firmographics)...")
+    dir_path = os.path.join(KAGGLE_DIR, "sba_national_loans")
+    csv_path = os.path.join(dir_path, "SBAnational.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "mirbektoktogaraev/should-this-loan-be-approved-or-denied", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_sba_national_loans",
+        "aspect": "US Small Business Administration National Loan Portfolio & Firmographics",
+        "source": "Kaggle (mirbektoktogaraev/should-this-loan-be-approved-or-denied)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "CC0 Public Domain"
+    })
+    print(f"  -> Successfully procured {count:,} real US small business loans ({size_mb:.2f} MB)")
+
+def procure_kaggle_worldbank():
+    print("[15/18] Procuring Kaggle World Bank Corporate Procurement Contract Awards...")
+    dir_path = os.path.join(KAGGLE_DIR, "corporate-procurement-contract-awards")
+    csv_path = os.path.join(dir_path, "corporate-procurement-contract-awards.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "theworldbank/corporate-procurement-contract-awards", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_worldbank_contract_awards",
+        "aspect": "World Bank Corporate Procurement Contract Awards & Bids",
+        "source": "Kaggle (theworldbank/corporate-procurement-contract-awards)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "CC BY-4.0"
+    })
+    print(f"  -> Successfully procured {count:,} World Bank procurement contract awards ({size_mb:.2f} MB)")
+
+def procure_kaggle_procurement_kpis():
+    print("[16/18] Procuring Kaggle Enterprise Procurement KPI Analysis Dataset...")
+    dir_path = os.path.join(KAGGLE_DIR, "procurement-kpi-analysis-dataset")
+    csv_path = os.path.join(dir_path, "Procurement KPI Analysis Dataset.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "shahriarkabir/procurement-kpi-analysis-dataset", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_procurement_kpi_analysis",
+        "aspect": "Enterprise Procurement Purchase Orders, Lead Times & Defect KPIs",
+        "source": "Kaggle (shahriarkabir/procurement-kpi-analysis-dataset)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "CC0 Public Domain"
+    })
+    print(f"  -> Successfully procured {count:,} enterprise procurement orders ({size_mb:.2f} MB)")
+
+def procure_kaggle_kraljic_strategy():
+    print("[17/18] Procuring Kaggle Kraljic Strategic Sourcing Matrix...")
+    dir_path = os.path.join(KAGGLE_DIR, "procurement-strategy-dataset-for-kraljic-matrix")
+    csv_path = os.path.join(dir_path, "realistic_kraljic_dataset.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "shahriarkabir/procurement-strategy-dataset-for-kraljic-matrix", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_kraljic_procurement_strategy",
+        "aspect": "Kraljic Sourcing Matrix, Supply Risk & Profit Impact",
+        "source": "Kaggle (shahriarkabir/procurement-strategy-dataset-for-kraljic-matrix)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "CC0 Public Domain"
+    })
+    print(f"  -> Successfully procured {count:,} strategic sourcing records ({size_mb:.2f} MB)")
+
+def procure_kaggle_sba_case_loans():
+    print("[18/18] Procuring Kaggle Small Business Loan Financial Underwriting Case Studies...")
+    dir_path = os.path.join(KAGGLE_DIR, "sba-loans-case-data-set")
+    csv_path = os.path.join(dir_path, "SBAcase.11.13.17.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "larsen0966/sba-loans-case-data-set", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_sba_case_studies",
+        "aspect": "Small Business Financial Underwriting & Loan Default Case Studies",
+        "source": "Kaggle (larsen0966/sba-loans-case-data-set)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "CC0 Public Domain"
+    })
+    print(f"  -> Successfully procured {count:,} small business loan case studies ({size_mb:.2f} MB)")
+
 def main():
     print("=== Wholeshare Real Large-Scale Dataset Procurement ===")
     manifest["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -347,6 +455,11 @@ def main():
     procure_b2b_p2p_lifecycle()
     procure_sec_edgar_filings()
     procure_supply_chain_qa()
+    procure_kaggle_sba_national()
+    procure_kaggle_worldbank()
+    procure_kaggle_procurement_kpis()
+    procure_kaggle_kraljic_strategy()
+    procure_kaggle_sba_case_loans()
     
     total_records = sum(d["records"] for d in manifest["datasets"])
     total_mb = sum(d["size_mb"] for d in manifest["datasets"])
@@ -359,7 +472,7 @@ def main():
         
     print("\n[SUCCESS] Large-Scale Dataset Procurement Complete!")
     print(f"Total Authentic Records Procured: {total_records:,}")
-    print(f"Total Dataset Footprint: {total_mb:.2f} MB across 13 primary commercial aspects")
+    print(f"Total Dataset Footprint: {total_mb:.2f} MB across 18 primary commercial aspects")
     print(f"Catalog Manifest written to {manifest_path}")
 
 if __name__ == "__main__":
