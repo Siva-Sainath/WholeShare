@@ -418,7 +418,7 @@ def procure_kaggle_kraljic_strategy():
     print(f"  -> Successfully procured {count:,} strategic sourcing records ({size_mb:.2f} MB)")
 
 def procure_kaggle_sba_case_loans():
-    print("[18/18] Procuring Kaggle Small Business Loan Financial Underwriting Case Studies...")
+    print("[18/21] Procuring Kaggle Small Business Loan Financial Underwriting Case Studies...")
     dir_path = os.path.join(KAGGLE_DIR, "sba-loans-case-data-set")
     csv_path = os.path.join(dir_path, "SBAcase.11.13.17.csv")
     if not os.path.exists(csv_path):
@@ -437,6 +437,78 @@ def procure_kaggle_sba_case_loans():
         "license": "CC0 Public Domain"
     })
     print(f"  -> Successfully procured {count:,} small business loan case studies ({size_mb:.2f} MB)")
+
+def procure_kaggle_india_trade():
+    print("[19/21] Procuring Kaggle India Cross-Border Import-Export Trade Dataset...")
+    dir_path = os.path.join(KAGGLE_DIR, "india", "trade")
+    csv_files = [
+        "2018-2010_import.csv", "2018-2010_export.csv",
+        "2010_2021_HS2_export.csv", "2010_2021_HS2_import.csv"
+    ]
+    if not os.path.exists(os.path.join(dir_path, csv_files[0])):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "lakshyaag/india-trade-data", "-p", dir_path, "--unzip"], check=True)
+    total_records = 0
+    total_size = 0
+    for fname in csv_files:
+        p = os.path.join(dir_path, fname)
+        if os.path.exists(p):
+            df = pd.read_csv(p, low_memory=False)
+            total_records += len(df)
+            total_size += os.path.getsize(p)
+    size_mb = total_size / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_india_cross_border_trade",
+        "aspect": "India Cross-Border Commodity Imports & Exports (HS Codes, Values)",
+        "source": "Kaggle (lakshyaag/india-trade-data)",
+        "file": "data/procured/kaggle/india/trade/*.csv",
+        "records": total_records,
+        "size_mb": round(size_mb, 2),
+        "license": "CC0 Public Domain"
+    })
+    print(f"  -> Successfully procured {total_records:,} India trade records across {len(csv_files)} files ({size_mb:.2f} MB)")
+
+def procure_kaggle_india_udyam_msme():
+    print("[20/21] Procuring Kaggle India UDYAM District-Level MSME Enterprise Registry...")
+    dir_path = os.path.join(KAGGLE_DIR, "india", "udyam_msme")
+    csv_path = os.path.join(dir_path, "district_level_total_Registered_msme.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "fiq423ubf/udyam-registration-msme-registration-in-india", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_india_udyam_msme_registry",
+        "aspect": "India Ministry of MSME District-Level Enterprise Census (Micro, Small, Medium)",
+        "source": "Kaggle (fiq423ubf/udyam-registration-msme-registration-in-india)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "Government Open Data License - India"
+    })
+    print(f"  -> Successfully procured {count:,} district-level Indian MSME census records ({size_mb:.2f} MB)")
+
+def procure_kaggle_india_apmarkfed_procurement():
+    print("[21/21] Procuring Kaggle India State Cooperative Procurement (AP Markfed)...")
+    dir_path = os.path.join(KAGGLE_DIR, "india", "coop_procurement")
+    csv_path = os.path.join(dir_path, "Seasonwiseprocurementdetails2023_0.csv")
+    if not os.path.exists(csv_path):
+        os.makedirs(dir_path, exist_ok=True)
+        subprocess.run(["kaggle", "datasets", "download", "-d", "fiq423ubf/apmarkfed-season-wise-procurement-details", "-p", dir_path, "--unzip"], check=True)
+    df = pd.read_csv(csv_path, low_memory=False)
+    count = len(df)
+    size_mb = os.path.getsize(csv_path) / (1024 * 1024)
+    manifest["datasets"].append({
+        "id": "kaggle_india_cooperative_procurement",
+        "aspect": "India State Agricultural Cooperative Procurement (Farmer Headcount, Metric Tonnes, INR)",
+        "source": "Kaggle (fiq423ubf/apmarkfed-season-wise-procurement-details)",
+        "file": csv_path,
+        "records": count,
+        "size_mb": round(size_mb, 2),
+        "license": "Government Open Data License - India"
+    })
+    print(f"  -> Successfully procured {count:,} cooperative procurement transactions ({size_mb:.2f} MB)")
 
 def main():
     print("=== Wholeshare Real Large-Scale Dataset Procurement ===")
@@ -460,6 +532,9 @@ def main():
     procure_kaggle_procurement_kpis()
     procure_kaggle_kraljic_strategy()
     procure_kaggle_sba_case_loans()
+    procure_kaggle_india_trade()
+    procure_kaggle_india_udyam_msme()
+    procure_kaggle_india_apmarkfed_procurement()
     
     total_records = sum(d["records"] for d in manifest["datasets"])
     total_mb = sum(d["size_mb"] for d in manifest["datasets"])
@@ -472,8 +547,9 @@ def main():
         
     print("\n[SUCCESS] Large-Scale Dataset Procurement Complete!")
     print(f"Total Authentic Records Procured: {total_records:,}")
-    print(f"Total Dataset Footprint: {total_mb:.2f} MB across 18 primary commercial aspects")
+    print(f"Total Dataset Footprint: {total_mb:.2f} MB across 21 primary commercial aspects")
     print(f"Catalog Manifest written to {manifest_path}")
+
 
 if __name__ == "__main__":
     main()

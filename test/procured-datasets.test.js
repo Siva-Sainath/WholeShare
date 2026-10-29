@@ -149,5 +149,27 @@ test("Kaggle SBA Loan Case Studies contains small business financial underwritin
   assert.ok(fs.statSync(filePath).size > 100000);
 });
 
+test("Kaggle India Trade dataset contains 490k+ cross-border import-export commodities", () => {
+  const importFile = path.resolve("data/procured/kaggle/india/trade/2018-2010_import.csv");
+  const exportFile = path.resolve("data/procured/kaggle/india/trade/2018-2010_export.csv");
+  assert.ok(fs.existsSync(importFile));
+  assert.ok(fs.existsSync(exportFile));
+  assert.ok(fs.statSync(importFile).size > 5000000);
+  assert.ok(fs.statSync(exportFile).size > 10000000);
+});
+
+test("Kaggle India UDYAM dataset contains district-level MSME registration census", () => {
+  const filePath = path.resolve("data/procured/kaggle/india/udyam_msme/district_level_total_Registered_msme.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 20000);
+});
+
+test("Kaggle India AP Markfed dataset contains state agricultural cooperative procurement", () => {
+  const filePath = path.resolve("data/procured/kaggle/india/coop_procurement/Seasonwiseprocurementdetails2023_0.csv");
+  assert.ok(fs.existsSync(filePath));
+  assert.ok(fs.statSync(filePath).size > 1000);
+});
+
+
 
 
