@@ -65,13 +65,17 @@ export class InvalidCounterAmountError extends Error {
 }
 
 export interface IntakeClaimParams {
-  clanId: string;
-  memberId: string;
+  clanId?: string;
+  coalitionId?: string;
+  memberId?: string;
+  smeId?: string;
   orderId: string;
   captureId: string;
   damagedUnits: number;
-  unitPrice: number;
-  orderValue: number;
+  unitPrice?: number;
+  unitPriceCents?: number;
+  orderValue?: number;
+  orderValueCents?: number;
   evidence: DamageEvidence;
   autoBuyerApprove?: boolean;
 }
@@ -113,15 +117,30 @@ export class ClaimsAdapter {
       throw new Error("Damaged units must be greater than zero");
     }
 
+    const clanId = params.clanId || params.coalitionId || "";
+    const memberId = params.memberId || params.smeId || "";
+    const unitPrice =
+      typeof params.unitPrice === "number"
+        ? params.unitPrice
+        : typeof params.unitPriceCents === "number"
+        ? params.unitPriceCents / 100
+        : 0;
+    const orderValue =
+      typeof params.orderValue === "number"
+        ? params.orderValue
+        : typeof params.orderValueCents === "number"
+        ? params.orderValueCents / 100
+        : 0;
+
     // Verify 48-hour inspection clock
-    const deliveryRecord = this.deliveryStorage.getByMember(params.clanId, params.memberId);
+    const deliveryRecord = this.deliveryStorage.getByMember(clanId, memberId);
     if (deliveryRecord && deliveryRecord.inspectionWindowEndsAt) {
       const windowEnd = new Date(deliveryRecord.inspectionWindowEndsAt).getTime();
       const now = Date.now();
       if (now > windowEnd) {
         throw new InspectionWindowExpiredError(
-          params.clanId,
-          params.memberId,
+          clanId,
+          memberId,
           deliveryRecord.inspectionWindowEndsAt
         );
       }
@@ -129,8 +148,8 @@ export class ClaimsAdapter {
 
     const claimedAmount = calculateClaimCap(
       params.damagedUnits,
-      params.unitPrice,
-      params.orderValue
+      unitPrice,
+      orderValue
     );
 
     const nowIso = new Date().toISOString();
@@ -139,13 +158,13 @@ export class ClaimsAdapter {
 
     const record: DamageClaimRecord = {
       claimId,
-      clanId: params.clanId,
-      memberId: params.memberId,
+      clanId,
+      memberId,
       orderId: params.orderId,
       captureId: params.captureId,
       damagedUnits: params.damagedUnits,
-      unitPrice: params.unitPrice,
-      orderValue: params.orderValue,
+      unitPrice,
+      orderValue,
       claimedAmount,
       evidence: params.evidence,
       status: isApproved ? "BUYER_APPROVED" : "DRAFT",

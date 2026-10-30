@@ -27,8 +27,10 @@ export class DeliveryConfirmationError extends Error {
 }
 
 export interface ConfirmDeliveryParams {
-  clanId: string;
-  memberId: string;
+  clanId?: string;
+  coalitionId?: string;
+  memberId?: string;
+  smeId?: string;
   role: "supplier" | "buyer";
   deliveredAt?: string | Date;
   trackingNumber?: string;
@@ -53,10 +55,13 @@ export class DeliveryAdapter {
    * Computes the 48-hour inspection countdown ending at max(supplier, buyer) + 48 hours.
    */
   public confirmDelivery(params: ConfirmDeliveryParams): DeliveryRecord {
-    if (!params.clanId || !params.memberId || !params.role) {
+    const clanId = params.clanId || params.coalitionId;
+    const memberId = params.memberId || params.smeId;
+
+    if (!clanId || !memberId || !params.role) {
       throw new DeliveryConfirmationError(
         "MISSING_REQUIRED_FIELDS",
-        "clanId, memberId, and role are required for delivery confirmation."
+        "clanId (or coalitionId), memberId (or smeId), and role are required for delivery confirmation."
       );
     }
 
@@ -73,13 +78,13 @@ export class DeliveryAdapter {
         : params.deliveredAt.toISOString()
       : new Date().toISOString();
 
-    let record = this.storage.getByMember(params.clanId, params.memberId);
+    let record = this.storage.getByMember(clanId, memberId);
 
     if (!record) {
       record = {
-        id: `del_${params.clanId}_${params.memberId}`,
-        clanId: params.clanId,
-        memberId: params.memberId,
+        id: `del_${clanId}_${memberId}`,
+        clanId,
+        memberId,
         trackingNumber: params.trackingNumber || "1Z9999999999999999",
         carrierName: params.carrierName || "UPS",
         supplierDeliveredAt: null,

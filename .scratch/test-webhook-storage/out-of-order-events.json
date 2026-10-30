@@ -6,7 +6,7 @@
       "resourceId": "REF-EARLY-01",
       "clanId": "clan-refund-ooo",
       "memberId": "buyer-refund-01",
-      "bufferedAt": "2026-10-27T07:40:56.729Z",
+      "bufferedAt": "2026-10-30T16:52:14.820Z",
       "reason": "Refund arrived before capture recorded in local state",
       "event": {
         "id": "WH-REFUND-EARLY-001",
@@ -26,5 +26,5 @@
       }
     }
   ],
-  "lastUpdated": "2026-10-27T07:40:56.729Z"
+  "lastUpdated": "2026-10-30T16:52:14.820Z"
 }

@@ -98,4 +98,55 @@ describe("PayPalMoneyGateway Spending Limits and Invariant Tests", () => {
 
     assert.equal(amount, 1440.00);
   });
+
+  it("validates spending limits with Developer 1 coalitionId, smeId, and integer cents", () => {
+    const amount = gateway.validateSpendingLimits({
+      coalitionId: "coalition_flour_01",
+      smeId: "sme_artisan_tx",
+      quantity: 100,
+      unitPriceCents: 580,
+      quoteUnitPriceCents: 580,
+      maxSpendCents: 100000, // 100 * 580 = 58000 cents ($580.00) <= 100000 ($1000.00)
+    });
+
+    assert.equal(amount, 580.00);
+  });
+
+  it("refuses orders with integer cents when unitPriceCents exceeds quoteUnitPriceCents", () => {
+    assert.throws(
+      () =>
+        gateway.validateSpendingLimits({
+          coalitionId: "coalition_flour_01",
+          smeId: "sme_artisan_tx",
+          quantity: 100,
+          unitPriceCents: 750,
+          quoteUnitPriceCents: 720,
+          maxSpendCents: 100000,
+        }),
+      (err: Error) => {
+        assert(err instanceof SpendingLimitExceededError);
+        assert.equal(err.code, "UNIT_PRICE_EXCEEDS_QUOTE");
+        return true;
+      }
+    );
+  });
+
+  it("refuses orders with integer cents when total cents exceeds maxSpendCents", () => {
+    assert.throws(
+      () =>
+        gateway.validateSpendingLimits({
+          coalitionId: "coalition_flour_01",
+          smeId: "sme_artisan_tx",
+          quantity: 200,
+          unitPriceCents: 720,
+          quoteUnitPriceCents: 720,
+          maxSpendCents: 100000, // 200 * 720 = 144000 > 100000
+        }),
+      (err: Error) => {
+        assert(err instanceof SpendingLimitExceededError);
+        assert.equal(err.code, "AMOUNT_EXCEEDS_AUTO_SPENDING_LIMIT");
+        return true;
+      }
+    );
+  });
 });

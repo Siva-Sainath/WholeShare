@@ -60,11 +60,14 @@ export interface ExistingRefund {
 }
 
 export interface ForwardLateDisputeParams {
-  clanId: string;
-  memberId: string;
+  clanId?: string;
+  coalitionId?: string;
+  memberId?: string;
+  smeId?: string;
   captureId: string;
   disputeId?: string;
-  claimedAmount: number;
+  claimedAmount?: number;
+  claimedAmountCents?: number;
   reason: string;
   evidenceNotes?: string;
   buyerAgentNotes?: string;
@@ -88,11 +91,14 @@ export interface LateDisputeForwardingResult {
 
 export interface ProcessDisputeResolutionParams {
   disputeId: string;
-  clanId: string;
-  memberId: string;
+  clanId?: string;
+  coalitionId?: string;
+  memberId?: string;
+  smeId?: string;
   captureId: string;
   supplierEmail: string;
-  disputeAmount: number;
+  disputeAmount?: number;
+  disputeAmountCents?: number;
   resolution: "BUYER_FAVORED" | "SELLER_FAVORED";
   payoutAlreadySettled: boolean;
   reason?: string;
@@ -247,14 +253,26 @@ export class LateDisputeAdapter {
    * Enforces that the 48-hour inspection clock has expired unless explicitly permitted.
    */
   public forwardLateDispute(params: ForwardLateDisputeParams): LateDisputeForwardingResult {
-    const deliveryRecord = this.deliveryStorage.getByMember(params.clanId, params.memberId);
+    const clanId = params.clanId || params.coalitionId;
+    if (!clanId) {
+      throw new Error("Missing clanId or coalitionId");
+    }
+    const memberId = params.memberId || params.smeId;
+    if (!memberId) {
+      throw new Error("Missing memberId or smeId");
+    }
+    const claimedAmount =
+      params.claimedAmount ??
+      (params.claimedAmountCents !== undefined ? params.claimedAmountCents / 100 : 0);
+
+    const deliveryRecord = this.deliveryStorage.getByMember(clanId, memberId);
     const windowEndsAt = deliveryRecord ? deliveryRecord.inspectionWindowEndsAt : null;
-    const isLate = this.isLateDispute(params.clanId, params.memberId, params.asOfDate);
+    const isLate = this.isLateDispute(clanId, memberId, params.asOfDate);
 
     if (!isLate && !params.allowActiveWindow) {
       throw new InspectionWindowActiveError(
-        params.clanId,
-        params.memberId,
+        clanId,
+        memberId,
         windowEndsAt || "ACTIVE_OR_UNCONFIRMED"
       );
     }
@@ -265,11 +283,11 @@ export class LateDisputeAdapter {
     const forwardedAt = new Date().toISOString();
 
     const notes = buildBuyerAgentAssistanceNotes({
-      clanId: params.clanId,
-      memberId: params.memberId,
+      clanId,
+      memberId,
       captureId: params.captureId,
       disputeId,
-      claimedAmount: params.claimedAmount,
+      claimedAmount,
       reason: params.reason,
       inspectionWindowEndsAt: windowEndsAt,
       evidenceNotes: params.evidenceNotes,
@@ -278,8 +296,8 @@ export class LateDisputeAdapter {
 
     return {
       forwardingId,
-      clanId: params.clanId,
-      memberId: params.memberId,
+      clanId,
+      memberId,
       captureId: params.captureId,
       disputeId,
       isLate,
@@ -306,6 +324,18 @@ export class LateDisputeAdapter {
   public processDisputeResolution(
     params: ProcessDisputeResolutionParams
   ): DisputeResolutionResult {
+    const clanId = params.clanId || params.coalitionId;
+    if (!clanId) {
+      throw new Error("Missing clanId or coalitionId");
+    }
+    const memberId = params.memberId || params.smeId;
+    if (!memberId) {
+      throw new Error("Missing memberId or smeId");
+    }
+    const disputeAmount =
+      params.disputeAmount ??
+      (params.disputeAmountCents !== undefined ? params.disputeAmountCents / 100 : 0);
+
     if (params.resolution === "BUYER_FAVORED") {
       if (params.payoutAlreadySettled) {
         const nowIso = new Date().toISOString();
@@ -314,13 +344,13 @@ export class LateDisputeAdapter {
 
         const debtRecord: SupplierRepaymentDebt = {
           id: debtId,
-          clanId: params.clanId,
-          memberId: params.memberId,
+          clanId,
+          memberId,
           disputeId: params.disputeId,
           captureId: params.captureId,
           supplierEmail: params.supplierEmail,
-          disputeAmount: params.disputeAmount,
-          debtAmount: params.disputeAmount,
+          disputeAmount,
+          debtAmount: disputeAmount,
           reason:
             params.reason ||
             `PayPal dispute ${params.disputeId} resolved BUYER_FAVORED post-payout. Supplier repayment obligation recorded under external supplier agreement.`,
@@ -338,7 +368,7 @@ export class LateDisputeAdapter {
           payoutAlreadySettled: true,
           debtCreated: true,
           debtRecord,
-          message: `Recorded supplier repayment debt of $${params.disputeAmount.toFixed(2)} USD for supplier ${params.supplierEmail} under external supplier agreement.`,
+          message: `Recorded supplier repayment debt of $${disputeAmount.toFixed(2)} USD for supplier ${params.supplierEmail} under external supplier agreement.`,
         };
       }
 
@@ -349,7 +379,7 @@ export class LateDisputeAdapter {
         payoutAlreadySettled: false,
         debtCreated: false,
         debtRecord: null,
-        message: `Dispute resolved in buyer's favor prior to payout settlement. Refund of $${params.disputeAmount.toFixed(2)} USD settled from held escrow balance; no supplier debt created.`,
+        message: `Dispute resolved in buyer's favor prior to payout settlement. Refund of $${disputeAmount.toFixed(2)} USD settled from held escrow balance; no supplier debt created.`,
       };
     }
 

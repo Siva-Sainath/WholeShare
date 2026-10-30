@@ -1,67 +1,105 @@
-# SyndicatePay — Escrow, Payments & Settlement (Developer 2 Context)
+# SyndicatePay
 
-This context manages the multi-party escrow lifecycle, automated PayPal transactions, carrier fulfillment synchronization, and dispute mediation.
+SyndicatePay is a B2B group-purchasing and escrow platform enabling small businesses to aggregate purchase orders and reach wholesale volume pricing through PayPal.
 
 ## Language
 
-### Escrow & Lifecycle
+### Group Purchasing & Clan Formation
+
+**Clan**:
+A temporary collective of independent businesses pooling order volumes to unlock a supplier's wholesale pricing tier.
+_Avoid_: Buying group, pool, syndicate, cart
+
+**Member**:
+An independent business participating in a Clan by committing an order pledge.
+_Avoid_: Customer, user, buyer, account
+
+**Order Pledge**:
+A member's binding quantity commitment to a Clan, constrained by a pre-authorized spending cap.
+_Avoid_: Order, reservation, cart item
+
+**Discount Tier**:
+A supplier-defined bulk quantity threshold that reduces unit price for all Clan members once collectively achieved.
+_Avoid_: Bulk discount, pricing step, volume bracket
+
+**Spending Cap**:
+The maximum unit price or total spend pre-authorized by a member when joining a Clan.
+_Avoid_: Budget limit, order maximum, pledge ceiling
+
+**Clan Lock**:
+The state transition freezing Clan membership and pricing, triggering batch capture of authorized funds.
+_Avoid_: Pool freeze, checkout close, order finalization
+
+### Escrow & Payment Lifecycle
 
 **Authorization Hold**:
-A temporary freeze placed on a buyer's funds via PayPal Orders v2 with authorization intent, guaranteeing funds without immediate deduction.
+A temporary freeze placed on a member's payment method that guarantees fund availability without an immediate debit.
 _Avoid_: Charge, deposit, upfront payment
 
 **Final Capture**:
-A capture transaction executed with the `final_capture: true` flag set, which collects the final unlocked tier price and signals to PayPal that no further captures will occur against this authorization.
-_Avoid_: Full capture, partial debit
+The terminal debit of an authorized payment that collects the final unlocked tier price and permanently closes the authorization.
+_Avoid_: Full capture, partial debit, second charge
 
 **Batch Capture**:
-The sequential execution of final capture across all authorized Clan members once the Clan enters the locked state.
+The sequential execution of final captures across all Clan members once the Clan reaches its locked state.
 _Avoid_: Bulk checkout, mass payment, pooled charge
 
-**Member Opt-In Renewal**:
-A scheduled check-in sent to Clan members at day X (varying by order type: 5, 7, 10, or 12 days) prompting them to either maintain their authorization hold or opt out and release their credit line.
-_Avoid_: Re-authorization, contract extension
+**Opt-In Renewal**:
+A scheduled check-in presented to Clan members during prolonged formation to confirm their continued commitment before an authorization expires.
+_Avoid_: Re-authorization, contract extension, auto-renewal
 
 **Escrow Record**:
-An immutable record linking a collective Clan fulfillment to its underlying PayPal authorization and capture identifiers.
-_Avoid_: Holding account, wallet balance
-
-### Idempotency & Gateway
+An immutable audit trail linking a Clan order to its held, captured, or refunded funds.
+_Avoid_: Holding account, wallet balance, pool fund
 
 **Idempotency Record**:
-A durable PostgreSQL ledger record with no local expiration, storing a deterministic operation key (`hash(operation_type:clan_id:member_id:stage:reference)`), status (`PENDING`, `SUCCEEDED`, `FAILED`, `NEEDS_REVIEW`), `first_sent_at` timestamp, and PayPal reference identifiers to guarantee exactly-once financial mutation.
-_Avoid_: Request cache, dedup token
+A durable ledger entry capturing the intent, status, and external reference of a financial mutation to ensure exactly-once processing.
+_Avoid_: Request cache, dedup token, API retry log
 
 **Money Gateway**:
-The centralized application gateway through which all financial mutations and PayPal interactions must execute, enforcing idempotency pre-writes, Zod boundary validation, and token management.
-_Avoid_: API client, HTTP helper
+The authoritative system boundary through which all external financial movements and payment network interactions must pass.
+_Avoid_: API client, HTTP helper, payment service
 
-**Reconciliation Worker**:
-A background daemon that scans stale `PENDING` idempotency records using `FOR UPDATE SKIP LOCKED` and reconciles their actual status against PayPal's ledger before attempting safe retries or escalating to `NEEDS_REVIEW`.
-_Avoid_: Retry loop, polling script
+**Payment Reconciliation**:
+The automated verification of pending monetary state against the payment provider's authoritative ledger.
+_Avoid_: Polling loop, retry script, batch sweeper
 
-**Buyer-Agent Payment Report**:
-A diagnostic claim submitted by a buyer's agent reporting possible duplicate requests or payment history, treated strictly as an unverified claim that must be queried against PayPal before any action is taken.
-_Avoid_: User refund request, duplicate command
+### Fulfillment & Inspection
 
-### Disputes & Fulfillment
+**Delivery Confirmation**:
+A verified receipt signal submitted by either the supplier or buyer indicating that goods have arrived at the buyer's premises.
+_Avoid_: Carrier webhook, tracking status, shipping notice
 
-**Carrier Delivery Event**:
-An independent, verified signal provided by a delivery-source adapter that establishes the immutable `carrierDeliveredAt` timestamp (under either `DELIVERED` or `DAMAGED_IN_TRANSIT` conditions), which alone triggers the 48-hour inspection clock.
-_Avoid_: Supplier tracking upload, PayPal tracker delivery
+**Inspection Window**:
+A forty-eight-hour period triggered by delivery confirmation during which members verify delivered goods before supplier payout occurs.
+_Avoid_: Return period, cooling-off window, review delay
 
-**Dispute Case**:
-A formal damaged or missing delivery claim managed through PayPal Customer Disputes v1 with carrier delivery verification and photographic proof.
-_Avoid_: Support ticket, complaint, refund request
+**Buyer Silence Auto-Confirmation**:
+The automatic confirmation of delivery triggered two days after supplier confirmation when a member fails to acknowledge receipt.
+_Avoid_: Default delivery, timeout receipt, presumed arrival
 
-**Arbitration Review**:
-An internal frozen case state where funds are protected while a human manager evaluates damaged-unit claims, photographic hash flags, and carrier delivery records before any offer is submitted.
-_Avoid_: Automatic refund, AI settlement
+### Claims, Disputes & Settlement
 
-**Inquiry Stage**:
-The preliminary phase of a PayPal dispute where the buyer and merchant can negotiate settlement offers directly before escalating to a formal PayPal claim.
-_Avoid_: Open dispute, court phase
+**Damage Claim**:
+A structured buyer petition detailing damaged or missing items, bounded by the delivered value of those goods.
+_Avoid_: Dispute, complaint, support ticket, refund request
+
+**Supplier Dispute Offer**:
+A formal concession amount proposed by a supplier to resolve an active customer dispute.
+_Avoid_: Counter-claim, settlement bid, discount refund
+
+**Late Dispute**:
+A formal customer dispute initiated after the inspection window has closed, requiring post-settlement debt recovery if ruled in the buyer's favor.
+_Avoid_: Chargeback, post-window complaint, late claim
+
+**Supplier Debt**:
+An uncollected liability owed by a wholesale supplier back to the platform following a post-settlement dispute refund.
+_Avoid_: Clawback, supplier deficit, negative balance
+
+**Single-Refund Invariant**:
+The operational rule guaranteeing that a member payment can be refunded through at most one pathway (in-app escrow or payment provider dispute).
+_Avoid_: Double refund protection, duplicate refund guard
 
 **Settlement**:
-The final state where captured funds are released to the wholesale supplier and accounting webhooks are dispatched.
-_Avoid_: Payout, disbursement transfer
+The disbursement of a member's net payment share to the supplier once inspection concludes without open claims.
+_Avoid_: Payout, disbursement transfer, wire

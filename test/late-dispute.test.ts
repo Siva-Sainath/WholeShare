@@ -444,6 +444,43 @@ describe("Ticket 10b: Late Dispute Forwarding & Supplier Repayment Tracking", ()
       assert.throws(() => adapter.assertCanRefund(CAPTURE_ID, 0, []), /greater than zero/);
       assert.throws(() => adapter.assertCanRefund(CAPTURE_ID, -50.0, []), /greater than zero/);
     });
+    it("accepts Developer 1 coalitionId, smeId, and claimedAmountCents when forwarding late dispute", () => {
+      const checkDate = new Date("2026-10-22T15:00:00.000Z");
+
+      const result = adapter.forwardLateDispute({
+        coalitionId: CLAN_ID,
+        smeId: MEMBER_ID,
+        captureId: CAPTURE_ID,
+        claimedAmountCents: 11600,
+        reason: "Late discovery of damaged organic flour",
+        asOfDate: checkDate,
+      });
+
+      assert.equal(result.isLate, true);
+      assert.equal(result.status, "FORWARDED_TO_PAYPAL");
+      assert.equal(result.clanId, CLAN_ID);
+      assert.equal(result.memberId, MEMBER_ID);
+      assert.match(result.personalAgentAssistanceNotes, /\$116\.00 USD/);
+    });
+
+    it("accepts Developer 1 coalitionId, smeId, and disputeAmountCents for dispute resolution", () => {
+      const result = adapter.processDisputeResolution({
+        coalitionId: CLAN_ID,
+        smeId: MEMBER_ID,
+        disputeId: "PP-D-77889900",
+        captureId: CAPTURE_ID,
+        supplierEmail: "supplier-flour@example.com",
+        disputeAmountCents: 11600,
+        resolution: "BUYER_FAVORED",
+        payoutAlreadySettled: true,
+      });
+
+      assert.equal(result.resolution, "BUYER_FAVORED");
+      assert.equal(result.debtCreated, true);
+      assert.equal(result.debtRecord?.clanId, CLAN_ID);
+      assert.equal(result.debtRecord?.memberId, MEMBER_ID);
+      assert.equal(result.debtRecord?.debtAmount, 116.0);
+    });
   });
 
   describe("6. Architectural Boundary Verification", () => {

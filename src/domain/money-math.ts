@@ -37,6 +37,37 @@ export function calculateClaimCap(
   return Math.min(roundedDamageAmount, roundedOrderValue);
 }
 
+/**
+ * Pure claim capping in exact integer cents: min(damagedUnits * unitPriceCents, orderValueCents)
+ */
+export function calculateClaimCapCents(
+  damagedUnits: number,
+  unitPriceCents: number,
+  orderValueCents: number
+): number {
+  if (damagedUnits < 0) {
+    throw new Error("Damaged units cannot be negative");
+  }
+  if (unitPriceCents < 0) {
+    throw new Error("Unit price cents cannot be negative");
+  }
+  if (orderValueCents < 0) {
+    throw new Error("Order value cents cannot be negative");
+  }
+  if (!Number.isInteger(damagedUnits)) {
+    throw new Error("Damaged units must be an integer");
+  }
+  if (!Number.isInteger(unitPriceCents)) {
+    throw new Error("Unit price cents must be an integer");
+  }
+  if (!Number.isInteger(orderValueCents)) {
+    throw new Error("Order value cents must be an integer");
+  }
+
+  const damageCents = damagedUnits * unitPriceCents;
+  return Math.min(damageCents, orderValueCents);
+}
+
 // ============================================================================
 // 2. Pro-Rata Share and Pricing Tier Calculations
 // ============================================================================
@@ -44,6 +75,7 @@ export function calculateClaimCap(
 export interface PricingTier {
   minQuantity: number;
   unitPrice: number;
+  unitPriceCents?: number;
 }
 
 export interface MemberPledge {
@@ -105,6 +137,19 @@ export function calculateMemberShare(quantity: number, unitPrice: number): numbe
 }
 
 /**
+ * Calculates a single member's payment share in exact integer cents.
+ */
+export function calculateMemberShareCents(quantity: number, unitPriceCents: number): number {
+  if (quantity < 0 || unitPriceCents < 0) {
+    throw new Error("Quantity and unit price cents must be non-negative");
+  }
+  if (!Number.isInteger(quantity) || !Number.isInteger(unitPriceCents)) {
+    throw new Error("Quantity and unit price cents must be integers");
+  }
+  return quantity * unitPriceCents;
+}
+
+/**
  * Calculates the amount of uncaptured authorization hold released upon final capture.
  */
 export function calculateHoldRelease(
@@ -115,6 +160,33 @@ export function calculateHoldRelease(
     throw new Error("Initial hold cannot be less than final captured amount");
   }
   return Math.round((initialHoldAmount - finalCapturedAmount) * 100) / 100;
+}
+
+/**
+ * Calculates the amount of uncaptured authorization hold released in exact integer cents.
+ */
+export function calculateHoldReleaseCents(
+  initialHoldCents: number,
+  finalCapturedCents: number
+): number {
+  if (initialHoldCents < finalCapturedCents) {
+    throw new Error("Initial hold cents cannot be less than final captured cents");
+  }
+  return initialHoldCents - finalCapturedCents;
+}
+
+/**
+ * Converts integer cents to USD number.
+ */
+export function centsToUsd(cents: number): number {
+  return Math.round(cents) / 100;
+}
+
+/**
+ * Converts USD number to integer cents.
+ */
+export function usdToCents(usd: number): number {
+  return Math.round(usd * 100);
 }
 
 /**
@@ -185,6 +257,25 @@ export function calculateReducedSupplierPayout(
   return Math.round((grossPayout - refundAmount) * 100) / 100;
 }
 
+/**
+ * Calculates reduced supplier payout in exact integer cents.
+ */
+export function calculateReducedSupplierPayoutCents(
+  grossPayoutCents: number,
+  refundAmountCents: number
+): number {
+  if (grossPayoutCents < 0) {
+    throw new Error("Gross payout cents cannot be negative");
+  }
+  if (refundAmountCents < 0) {
+    throw new Error("Refund amount cents cannot be negative");
+  }
+  if (refundAmountCents > grossPayoutCents) {
+    throw new Error("Refund cents cannot exceed gross supplier payout cents");
+  }
+  return grossPayoutCents - refundAmountCents;
+}
+
 // ============================================================================
 // 3. Deterministic Idempotency Key Generator
 // ============================================================================
@@ -192,112 +283,123 @@ export function calculateReducedSupplierPayout(
 /**
  * Generates a deterministic SHA-256 idempotency key:
  * sha256(operation_type:clan_id:member_id:stage:reference)
+ * Supports both Clan and Coalition identifiers.
  */
 export function generateIdempotencyKey(
   operationType: string,
   clanId: string,
   memberId: string,
   stage: string,
-  reference: string
+  referenceId: string
 ): string {
   if (!operationType || !clanId || !stage) {
     throw new Error("operationType, clanId, and stage are required to generate an idempotency key");
   }
 
-  const payload = `${operationType}:${clanId}:${memberId || ""}:${stage}:${reference || ""}`;
-  return createHash("sha256").update(payload).digest("hex");
+  const rawKey = `${operationType.toUpperCase()}:${clanId}:${memberId || "GLOBAL"}:${stage.toUpperCase()}:${referenceId || "NONE"}`;
+  return createHash("sha256").update(rawKey).digest("hex");
 }
 
 // ============================================================================
-// 4. Clan & Member State Machines
+// 4. Clan & Coalition State Machine Transitions
 // ============================================================================
 
 export type ClanState =
   | "FORMING"
   | "THRESHOLD_MET"
+  | "AWAITING_STEP_UP"
   | "LOCKED"
   | "FULFILLING"
   | "SETTLED"
-  | "EXPIRED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "EXPIRED";
 
-export const CLAN_TRANSITIONS: Record<ClanState, readonly ClanState[]> = {
-  FORMING: ["THRESHOLD_MET", "EXPIRED", "CANCELLED"],
-  THRESHOLD_MET: ["LOCKED", "FORMING", "CANCELLED", "EXPIRED"],
+export type CoalitionState = ClanState;
+
+export class InvalidClanStateTransitionError extends Error {
+  readonly current: string;
+  readonly target: string;
+
+  constructor(current: string, target: string) {
+    super(`Illegal Clan state transition from '${current}' to '${target}'.`);
+    this.name = "InvalidClanStateTransitionError";
+    this.current = current;
+    this.target = target;
+  }
+}
+
+const VALID_CLAN_TRANSITIONS: Record<ClanState, ClanState[]> = {
+  FORMING: ["THRESHOLD_MET", "AWAITING_STEP_UP", "LOCKED", "CANCELLED", "EXPIRED"],
+  THRESHOLD_MET: ["FORMING", "AWAITING_STEP_UP", "LOCKED", "CANCELLED", "EXPIRED"],
+  AWAITING_STEP_UP: ["THRESHOLD_MET", "LOCKED", "CANCELLED", "EXPIRED"],
   LOCKED: ["FULFILLING", "CANCELLED"],
   FULFILLING: ["SETTLED"],
   SETTLED: [],
-  EXPIRED: [],
   CANCELLED: [],
+  EXPIRED: [],
 };
 
-export class InvalidClanStateTransitionError extends Error {
-  readonly current: ClanState;
-  readonly next: ClanState;
+export function canTransitionClanState(from: ClanState, to: ClanState): boolean {
+  const allowed = VALID_CLAN_TRANSITIONS[from];
+  return Boolean(allowed && allowed.includes(to));
+}
 
-  constructor(current: ClanState, next: ClanState) {
-    super(`Invalid Clan state transition: cannot transition from '${current}' to '${next}'.`);
-    this.name = "InvalidClanStateTransitionError";
-    this.current = current;
-    this.next = next;
+export function validateClanStateTransition(from: ClanState, to: ClanState): void {
+  if (!canTransitionClanState(from, to)) {
+    throw new InvalidClanStateTransitionError(from, to);
   }
 }
 
-export function canTransitionClanState(current: ClanState, next: ClanState): boolean {
-  const allowed = CLAN_TRANSITIONS[current];
-  return allowed ? allowed.includes(next) : false;
+export function transitionClanState(from: ClanState, to: ClanState): ClanState {
+  validateClanStateTransition(from, to);
+  return to;
 }
 
-export function validateClanStateTransition(current: ClanState, next: ClanState): void {
-  if (!canTransitionClanState(current, next)) {
-    throw new InvalidClanStateTransitionError(current, next);
-  }
-}
-
-export function transitionClanState(current: ClanState, next: ClanState): ClanState {
-  validateClanStateTransition(current, next);
-  return next;
-}
+// ============================================================================
+// 5. Member State Machine Transitions
+// ============================================================================
 
 export type MemberState =
   | "PLEDGED"
+  | "AWAITING_STEP_UP"
   | "AUTHORIZED"
   | "CAPTURED"
   | "REFUNDED"
   | "VOIDED";
 
-export const MEMBER_TRANSITIONS: Record<MemberState, readonly MemberState[]> = {
-  PLEDGED: ["AUTHORIZED", "VOIDED"],
+export class InvalidMemberStateTransitionError extends Error {
+  readonly current: string;
+  readonly target: string;
+
+  constructor(current: string, target: string) {
+    super(`Illegal Member state transition from '${current}' to '${target}'.`);
+    this.name = "InvalidMemberStateTransitionError";
+    this.current = current;
+    this.target = target;
+  }
+}
+
+const VALID_MEMBER_TRANSITIONS: Record<MemberState, MemberState[]> = {
+  PLEDGED: ["AWAITING_STEP_UP", "AUTHORIZED", "VOIDED"],
+  AWAITING_STEP_UP: ["AUTHORIZED", "VOIDED"],
   AUTHORIZED: ["CAPTURED", "VOIDED"],
   CAPTURED: ["REFUNDED"],
   REFUNDED: [],
   VOIDED: [],
 };
 
-export class InvalidMemberStateTransitionError extends Error {
-  readonly current: MemberState;
-  readonly next: MemberState;
+export function canTransitionMemberState(from: MemberState, to: MemberState): boolean {
+  const allowed = VALID_MEMBER_TRANSITIONS[from];
+  return Boolean(allowed && allowed.includes(to));
+}
 
-  constructor(current: MemberState, next: MemberState) {
-    super(`Invalid Member state transition: cannot transition from '${current}' to '${next}'.`);
-    this.name = "InvalidMemberStateTransitionError";
-    this.current = current;
-    this.next = next;
+export function validateMemberStateTransition(from: MemberState, to: MemberState): void {
+  if (!canTransitionMemberState(from, to)) {
+    throw new InvalidMemberStateTransitionError(from, to);
   }
 }
 
-export function canTransitionMemberState(current: MemberState, next: MemberState): boolean {
-  const allowed = MEMBER_TRANSITIONS[current];
-  return allowed ? allowed.includes(next) : false;
-}
-
-export function validateMemberStateTransition(current: MemberState, next: MemberState): void {
-  if (!canTransitionMemberState(current, next)) {
-    throw new InvalidMemberStateTransitionError(current, next);
-  }
-}
-
-export function transitionMemberState(current: MemberState, next: MemberState): MemberState {
-  validateMemberStateTransition(current, next);
-  return next;
+export function transitionMemberState(from: MemberState, to: MemberState): MemberState {
+  validateMemberStateTransition(from, to);
+  return to;
 }
