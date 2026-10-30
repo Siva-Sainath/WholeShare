@@ -2,7 +2,7 @@
 id: "sme_dream_01"
 type: "organization"
 aliases: ["sme_dream_01", "Dream Bakery Co", "sme", "procurement"]
-updatedAt: "2026-10-30T14:58:16.428Z"
+updatedAt: "2026-10-30T14:59:05.984Z"
 ---
 
 # Dream Bakery Co (sme_dream_01)
@@ -38,6 +38,8 @@ updatedAt: "2026-10-30T14:58:16.428Z"
 - Onboarded with ACP Token [[spt_dream_1234]] on 2026-10-27.
 - Max authorized spend ceiling: 100000 cents.
 - Onboarded with ACP Token [[spt_dream_1234]] on 2026-10-27.
+- Max authorized spend ceiling: 100000 cents.
+- Onboarded with ACP Token [[spt_dream_1234]] on 2026-10-30.
 - Max authorized spend ceiling: 100000 cents.
 - Onboarded with ACP Token [[spt_dream_1234]] on 2026-10-30.
 - Max authorized spend ceiling: 100000 cents.
