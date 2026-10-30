@@ -170,12 +170,17 @@ export class IdempotencyRetentionExpiredError extends Error {
 }
 
 export interface AuthorizeHoldParams {
-  clanId: string;
-  memberId: string;
+  clanId?: string;
+  coalitionId?: string;
+  memberId?: string;
+  smeId?: string;
   quantity: number;
-  unitPrice: number;
-  quoteUnitPrice: number;
-  maxAutoAuthorizeUsd: number;
+  unitPrice?: number;
+  unitPriceCents?: number;
+  quoteUnitPrice?: number;
+  quoteUnitPriceCents?: number;
+  maxAutoAuthorizeUsd?: number;
+  maxSpendCents?: number;
   currency?: string;
   description?: string;
   customId?: string;
@@ -365,7 +370,28 @@ export class PayPalMoneyGateway {
    * Invariant 2: orderAmount <= max_auto_authorize_usd
    */
   public validateSpendingLimits(params: AuthorizeHoldParams): number {
-    const { unitPrice, quoteUnitPrice, quantity, maxAutoAuthorizeUsd } = params;
+    const unitPrice =
+      typeof params.unitPrice === "number"
+        ? params.unitPrice
+        : typeof params.unitPriceCents === "number"
+        ? params.unitPriceCents / 100
+        : 0;
+
+    const quoteUnitPrice =
+      typeof params.quoteUnitPrice === "number"
+        ? params.quoteUnitPrice
+        : typeof params.quoteUnitPriceCents === "number"
+        ? params.quoteUnitPriceCents / 100
+        : unitPrice;
+
+    const maxAutoAuthorizeUsd =
+      typeof params.maxAutoAuthorizeUsd === "number"
+        ? params.maxAutoAuthorizeUsd
+        : typeof params.maxSpendCents === "number"
+        ? params.maxSpendCents / 100
+        : 10000;
+
+    const { quantity } = params;
 
     if (unitPrice > quoteUnitPrice) {
       throw new SpendingLimitExceededError(
@@ -488,21 +514,30 @@ export class PayPalMoneyGateway {
    * Enforces spending limits prior to dispatch and generates a deterministic idempotency key.
    */
   public async authorizeHold(params: AuthorizeHoldParams): Promise<AuthorizeHoldResult> {
+    const clanId = params.clanId || params.coalitionId || "DEFAULT_CLAN";
+    const memberId = params.memberId || params.smeId || "GLOBAL";
+    const unitPrice =
+      typeof params.unitPrice === "number"
+        ? params.unitPrice
+        : typeof params.unitPriceCents === "number"
+        ? params.unitPriceCents / 100
+        : 0;
+
     const orderAmount = this.validateSpendingLimits(params);
     const currency = params.currency || "USD";
     const formattedAmount = orderAmount.toFixed(2);
-    const referenceId = `${params.quantity}x${params.unitPrice.toFixed(2)}`;
+    const referenceId = `${params.quantity}x${unitPrice.toFixed(2)}`;
 
     return this.executeWithIdempotency<AuthorizeHoldResult>({
       keyOpType: "AUTHORIZE",
       operationType: "AUTHORIZATION",
-      clanId: params.clanId,
-      memberId: params.memberId,
+      clanId,
+      memberId,
       stage: "HOLD",
       referenceId,
       execute: async (operationKey) => {
-        const referenceIdCustom = `clan_${params.clanId}_member_${params.memberId}`;
-        const customId = params.customId || `${params.clanId}:${params.memberId}`;
+        const referenceIdCustom = `clan_${clanId}_member_${memberId}`;
+        const customId = params.customId || `${clanId}:${memberId}`;
 
         const apiResponse = await this.ordersController.createOrder({
           body: {
@@ -513,7 +548,7 @@ export class PayPalMoneyGateway {
                 customId,
                 description:
                   params.description ||
-                  `SyndicatePay Clan Hold - Clan ${params.clanId} (${params.quantity} units)`,
+                  `SyndicatePay Clan Hold - Clan ${clanId} (${params.quantity} units)`,
                 amount: {
                   currencyCode: currency,
                   value: formattedAmount,
@@ -540,10 +575,10 @@ export class PayPalMoneyGateway {
             status: order.status || "CREATED",
             approvalUrl: approvalLink?.href,
             idempotencyKey: operationKey,
-            clanId: params.clanId,
-            memberId: params.memberId,
+            clanId,
+            memberId,
             quantity: params.quantity,
-            unitPrice: params.unitPrice,
+            unitPrice,
             orderAmount,
             currency,
             rawResponse: order,
@@ -560,10 +595,10 @@ export class PayPalMoneyGateway {
             status: order.status || "CREATED",
             approvalUrl: approvalLink?.href,
             idempotencyKey: record.operationKey,
-            clanId: params.clanId,
-            memberId: params.memberId,
+            clanId,
+            memberId,
             quantity: params.quantity,
-            unitPrice: params.unitPrice,
+            unitPrice,
             orderAmount,
             currency,
             rawResponse: order,

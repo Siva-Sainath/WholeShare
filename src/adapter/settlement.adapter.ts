@@ -28,13 +28,17 @@ export interface MemberSettlementEvaluation {
 }
 
 export interface EvaluateMemberSettlementParams {
-  clanId: string;
-  memberId: string;
+  clanId?: string;
+  coalitionId?: string;
+  memberId?: string;
+  smeId?: string;
   orderId: string;
   captureId: string;
-  grossCaptured: number;
+  grossCaptured?: number;
+  grossCapturedCents?: number;
   now?: Date;
   acceptedRefunds?: number;
+  acceptedRefundsCents?: number;
   hasOpenDispute?: boolean;
 }
 
@@ -110,12 +114,21 @@ export class SettlementAdapter {
   public evaluateMemberSettlement(
     params: EvaluateMemberSettlementParams
   ): MemberSettlementEvaluation {
+    const clanId = params.clanId || params.coalitionId || "";
+    const memberId = params.memberId || params.smeId || "";
+    const grossCaptured =
+      typeof params.grossCaptured === "number"
+        ? params.grossCaptured
+        : typeof params.grossCapturedCents === "number"
+        ? params.grossCapturedCents / 100
+        : 0;
+
     const now = params.now || new Date();
 
     // 1. Check 48-hour inspection clock from DeliveryStorage
     const deliveryRecord = this.deliveryStorage.getByMember(
-      params.clanId,
-      params.memberId
+      clanId,
+      memberId
     );
 
     let inspectionWindowExpired = false;
@@ -128,8 +141,8 @@ export class SettlementAdapter {
 
     // 2. Check open claims from ClaimsStorage & compute accepted refunds
     const memberClaims = this.claimsStorage.getByMember(
-      params.clanId,
-      params.memberId
+      clanId,
+      memberId
     );
 
     const openClaims = memberClaims.filter(
@@ -143,6 +156,8 @@ export class SettlementAdapter {
     let acceptedRefunds = 0;
     if (params.acceptedRefunds !== undefined) {
       acceptedRefunds = params.acceptedRefunds;
+    } else if (params.acceptedRefundsCents !== undefined) {
+      acceptedRefunds = params.acceptedRefundsCents / 100;
     } else {
       const settledClaims = memberClaims.filter((c) => c.status === "SETTLED");
       acceptedRefunds = settledClaims.reduce((sum, c) => {
@@ -160,7 +175,7 @@ export class SettlementAdapter {
     if (!hasOpenDispute && this.disputeApprovalStorage) {
       const memberDisputes = this.disputeApprovalStorage.getAll().filter(
         (d) =>
-          (d.clanId === params.clanId && d.memberId === params.memberId) ||
+          (d.clanId === clanId && d.memberId === memberId) ||
           (Boolean(params.captureId) && d.captureId === params.captureId)
       );
 
@@ -176,7 +191,7 @@ export class SettlementAdapter {
     // Net payout share calculation: netPayoutShare = grossCaptured - acceptedRefunds
     const netPayoutShare =
       Math.round(
-        Math.max(0, params.grossCaptured - acceptedRefunds) * 100
+        Math.max(0, grossCaptured - acceptedRefunds) * 100
       ) / 100;
 
     // Enforce Hold Rule
@@ -194,10 +209,10 @@ export class SettlementAdapter {
     }
 
     return {
-      memberId: params.memberId,
+      memberId,
       orderId: params.orderId,
       captureId: params.captureId,
-      grossCaptured: params.grossCaptured,
+      grossCaptured,
       acceptedRefunds,
       netPayoutShare,
       inspectionWindowExpired,

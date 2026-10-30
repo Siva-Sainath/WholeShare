@@ -2,11 +2,17 @@ import test, { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   calculateClaimCap,
+  calculateClaimCapCents,
   resolveEffectiveTier,
   calculateMemberShare,
+  calculateMemberShareCents,
   calculateHoldRelease,
+  calculateHoldReleaseCents,
   calculateClanSettlement,
   calculateReducedSupplierPayout,
+  calculateReducedSupplierPayoutCents,
+  centsToUsd,
+  usdToCents,
   generateIdempotencyKey,
   canTransitionClanState,
   validateClanStateTransition,
@@ -24,8 +30,8 @@ import type {
 
 describe("Domain Money Math & Pure Rules Verification", () => {
   const pricingTiers: PricingTier[] = [
-    { minQuantity: 500, unitPrice: 7.20 },
-    { minQuantity: 1000, unitPrice: 5.80 },
+    { minQuantity: 500, unitPrice: 7.20, unitPriceCents: 720 },
+    { minQuantity: 1000, unitPrice: 5.80, unitPriceCents: 580 },
   ];
 
   describe("Claim Capping [min(damagedUnits * unitPrice, orderValue)]", () => {
@@ -53,6 +59,53 @@ describe("Domain Money Math & Pure Rules Verification", () => {
       assert.throws(() => calculateClaimCap(-1, 5.80, 580.00), /Damaged units cannot be negative/);
       assert.throws(() => calculateClaimCap(10, -5.80, 580.00), /Unit price cannot be negative/);
       assert.throws(() => calculateClaimCap(10, 5.80, -100.00), /Order value cannot be negative/);
+    });
+  });
+
+  describe("Integer Cents Pure Calculations (Developer 1 & 2 Seam)", () => {
+    it("caps refund in integer cents when below order value ($116.00 = 11600 cents)", () => {
+      const capCents = calculateClaimCapCents(20, 580, 58000);
+      assert.equal(capCents, 11600);
+    });
+
+    it("caps refund in integer cents to order value when damage exceeds order value", () => {
+      const capCents = calculateClaimCapCents(120, 580, 58000);
+      assert.equal(capCents, 58000);
+    });
+
+    it("returns zero cents when damaged units are zero", () => {
+      const capCents = calculateClaimCapCents(0, 580, 58000);
+      assert.equal(capCents, 0);
+    });
+
+    it("calculates member share in exact integer cents", () => {
+      const shareCents = calculateMemberShareCents(100, 580);
+      assert.equal(shareCents, 58000);
+    });
+
+    it("calculates hold release in exact integer cents ($720 hold - $580 capture = $140 release)", () => {
+      const releaseCents = calculateHoldReleaseCents(72000, 58000);
+      assert.equal(releaseCents, 14000);
+    });
+
+    it("calculates reduced supplier payout in exact integer cents ($580 - $116 = $464)", () => {
+      const payoutCents = calculateReducedSupplierPayoutCents(58000, 11600);
+      assert.equal(payoutCents, 46400);
+    });
+
+    it("converts between integer cents and USD cleanly", () => {
+      assert.equal(centsToUsd(58000), 580.00);
+      assert.equal(centsToUsd(11600), 116.00);
+      assert.equal(usdToCents(5.80), 580);
+      assert.equal(usdToCents(7.20), 720);
+    });
+
+    it("throws on non-integer or negative inputs in cents calculations", () => {
+      assert.throws(() => calculateClaimCapCents(-5, 580, 58000), /Damaged units cannot be negative/);
+      assert.throws(() => calculateClaimCapCents(10, -580, 58000), /Unit price cents cannot be negative/);
+      assert.throws(() => calculateClaimCapCents(10, 580.5, 58000), /Unit price cents must be an integer/);
+      assert.throws(() => calculateHoldReleaseCents(50000, 58000), /Initial hold cents cannot be less than final captured cents/);
+      assert.throws(() => calculateReducedSupplierPayoutCents(58000, 60000), /Refund cents cannot exceed gross supplier payout cents/);
     });
   });
 
@@ -166,6 +219,27 @@ describe("Domain Money Math & Pure Rules Verification", () => {
         "member-maria-bakery",
         "FINAL_CAPTURE",
         "auth-txn-88192"
+      );
+
+      assert.equal(typeof key1, "string");
+      assert.equal(key1.length, 64);
+      assert.equal(key1, key2);
+    });
+
+    it("generates deterministic key with Developer 1 coalitionId and smeId", () => {
+      const key1 = generateIdempotencyKey(
+        "AUTHORIZE",
+        "coalition_flour_01",
+        "sme_maria_artisan",
+        "HOLD",
+        "spt_token_99182"
+      );
+      const key2 = generateIdempotencyKey(
+        "AUTHORIZE",
+        "coalition_flour_01",
+        "sme_maria_artisan",
+        "HOLD",
+        "spt_token_99182"
       );
 
       assert.equal(typeof key1, "string");

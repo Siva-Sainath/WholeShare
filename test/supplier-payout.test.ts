@@ -573,6 +573,41 @@ describe("Ticket 11: Per-Member Supplier Payouts & Settlement Integration", () =
       assert.equal(evaluation.acceptedRefunds, 116.0);
       assert.equal(evaluation.netPayoutShare, 1044.0);
     });
+
+    it("evaluates member settlement using Developer 1 coalitionId, smeId, and integer cents", () => {
+      const now = new Date("2026-10-26T12:00:00.000Z");
+      const inspectionEndsAt = new Date("2026-10-25T12:00:00.000Z").toISOString();
+
+      deliveryStorage.upsert({
+        id: "del_coalition_flour_01_sme_artisan_tx",
+        clanId: "coalition_flour_01",
+        memberId: "sme_artisan_tx",
+        trackingNumber: "1Z9999999999999999",
+        carrierName: "UPS",
+        supplierDeliveredAt: "2026-10-23T12:00:00.000Z",
+        buyerDeliveredAt: "2026-10-23T12:00:00.000Z",
+        inspectionWindowEndsAt: inspectionEndsAt,
+        source: "supplier",
+        conditionNotes: null,
+        createdAt: "2026-10-23T12:00:00.000Z",
+      });
+
+      const evaluation = settlementAdapter.evaluateMemberSettlement({
+        coalitionId: "coalition_flour_01",
+        smeId: "sme_artisan_tx",
+        orderId: "ORD-COALITION-99182",
+        captureId: "CAP-COALITION-99182",
+        grossCapturedCents: 116000,
+        acceptedRefundsCents: 11600,
+        now,
+      });
+
+      assert.equal(evaluation.memberId, "sme_artisan_tx");
+      assert.equal(evaluation.isReadyForPayout, true);
+      assert.equal(evaluation.grossCaptured, 1160.0);
+      assert.equal(evaluation.acceptedRefunds, 116.0);
+      assert.equal(evaluation.netPayoutShare, 1044.0);
+    });
   });
 
   describe("6. Clan-Level Batch Settlement Evaluation", () => {

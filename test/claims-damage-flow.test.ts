@@ -103,6 +103,29 @@ describe("Ticket 09: In-App Damage Claim Flow & Capped Escrow Refunds", () => {
         /Damaged units must be greater than zero/
       );
     });
+
+    it("intakes claims with Developer 1 coalitionId, smeId, and integer cents", () => {
+      const claim = claimsAdapter.intakeClaim({
+        coalitionId: "coalition_flour_01",
+        smeId: "sme_artisan_tx",
+        orderId: "ORD-COALITION-99182",
+        captureId: "CAP-COALITION-99182",
+        damagedUnits: 20,
+        unitPriceCents: 580,
+        orderValueCents: 116000,
+        evidence: {
+          photoUrls: ["https://storage.syndicatepay.internal/sme-punctured-bag.jpg"],
+          description: "20 bags punctured during transit",
+        },
+      });
+
+      assert.equal(claim.clanId, "coalition_flour_01");
+      assert.equal(claim.memberId, "sme_artisan_tx");
+      assert.equal(claim.unitPrice, 5.8);
+      assert.equal(claim.orderValue, 1160.0);
+      assert.equal(claim.claimedAmount, 116.0);
+      assert.equal(claim.status, "DRAFT");
+    });
   });
 
   describe("2. 48-Hour Inspection Clock Enforcement", () => {

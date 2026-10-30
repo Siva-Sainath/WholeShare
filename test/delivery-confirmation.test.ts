@@ -96,6 +96,21 @@ describe("Ticket 08: Two-Party Delivery Confirmation & Inspection Clock Invarian
         }
       );
     });
+
+    it("accepts Developer 1 coalitionId and smeId for delivery confirmation", () => {
+      const t0 = new Date("2026-10-26T10:00:00.000Z");
+      const record = adapter.confirmDelivery({
+        coalitionId: "coalition_flour_01",
+        smeId: "sme_artisan_tx",
+        role: "supplier",
+        deliveredAt: t0,
+        trackingNumber: "1Z9999999999999999",
+      });
+
+      assert.equal(record.clanId, "coalition_flour_01");
+      assert.equal(record.memberId, "sme_artisan_tx");
+      assert.equal(record.supplierDeliveredAt, t0.toISOString());
+    });
   });
 
   describe("2. 48-Hour Inspection Clock Trigger (ADR-0011)", () => {
