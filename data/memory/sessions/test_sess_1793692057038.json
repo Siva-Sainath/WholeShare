@@ -1,0 +1,75 @@
+{
+  "id": "test_sess_1793692057038",
+  "model": "qwen3.5:9b",
+  "status": "COMPLETED",
+  "prompt": "Coordinate flour coalition and lock escrow",
+  "finalMessage": "Autonomous deal cycle executed: buyer spawned, volume discount negotiated, and PayPal Orders v2 soft authorization holds locked.",
+  "totalDurationMs": 4512,
+  "metadata": {},
+  "createdAt": "2026-11-03T07:47:37.039Z",
+  "updatedAt": "2026-11-03T07:47:41.552Z",
+  "steps": [
+    {
+      "sessionId": "test_sess_1793692057038",
+      "stepIndex": 2,
+      "thought": "Executing deterministic recovery plan.",
+      "toolName": "spawn_sme_mandate",
+      "toolArgs": {
+        "name": "Artisan Flour House",
+        "units": 200
+      },
+      "toolResult": {
+        "status": "SPAWNED",
+        "smeId": "sme_artisan_1793692057158",
+        "name": "Artisan Flour House",
+        "tokenId": "spt_b031441c0a0e7ccb50b5dfff",
+        "maxAuthorizedCents": 250000
+      },
+      "interceptorStatus": "PASSED",
+      "violations": null,
+      "durationMs": 5,
+      "createdAt": "2026-11-03T07:47:41.536Z"
+    },
+    {
+      "sessionId": "test_sess_1793692057038",
+      "stepIndex": 3,
+      "thought": "Executing deterministic recovery plan.",
+      "toolName": "run_coalition_negotiation",
+      "toolArgs": {
+        "coalitionId": "coalition_flour_01"
+      },
+      "toolResult": {
+        "status": "NEGOTIATED",
+        "coalitionId": "coalition_flour_01",
+        "unitPriceCents": 720,
+        "discountPct": 28,
+        "allocationsCount": 3,
+        "executionSource": "deterministic-rule-engine"
+      },
+      "interceptorStatus": "PASSED",
+      "violations": null,
+      "durationMs": 12,
+      "createdAt": "2026-11-03T07:47:41.542Z"
+    },
+    {
+      "sessionId": "test_sess_1793692057038",
+      "stepIndex": 4,
+      "thought": "Executing deterministic recovery plan.",
+      "toolName": "authorize_paypal_escrow",
+      "toolArgs": {
+        "coalitionId": "coalition_flour_01"
+      },
+      "toolResult": {
+        "status": "ESCROW_LOCKED",
+        "coalitionId": "coalition_flour_01",
+        "totalEscrowCents": 360000,
+        "membersCount": 3,
+        "coalitionStatus": "LOCKED"
+      },
+      "interceptorStatus": "PASSED",
+      "violations": null,
+      "durationMs": 8,
+      "createdAt": "2026-11-03T07:47:41.546Z"
+    }
+  ]
+}

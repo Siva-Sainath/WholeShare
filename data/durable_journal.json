@@ -483,3 +483,18 @@
 {"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1793691893666","status":"RUNNING","metadata":{"approvalToken":"APPROVAL_TOKEN_9988"},"loggedAt":"2026-11-03T07:44:53.674Z"}
 {"action":"STEP_SAVED","sessionId":"test_step_up_1793691893666","stepIndex":2,"toolName":"query_escrow_ledger","interceptorStatus":"PASSED","loggedAt":"2026-11-03T07:44:53.691Z"}
 {"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1793691893666","status":"COMPLETED","metadata":{"finalMessage":"Queried live platform ledger and refreshed member states.","totalDurationMs":7},"loggedAt":"2026-11-03T07:44:53.696Z"}
+{"action":"SESSION_CREATED","id":"test_sess_1793692057038","status":"RUNNING","model":"qwen3.5:9b","loggedAt":"2026-11-03T07:47:37.039Z"}
+{"action":"DISPUTE_RECORDED","disputeId":"DISPUTE_TEST_1793692057051","orderId":"ORD_HOLD_99","status":"UNDER_REVIEW","loggedAt":"2026-11-03T07:47:37.074Z"}
+{"action":"DISPUTE_RECORDED","disputeId":"DISPUTE_RESOLVE_1793692057107","orderId":"ORD_HOLD_100","status":"RESOLVED","loggedAt":"2026-11-03T07:47:37.112Z"}
+{"action":"STEP_SAVED","sessionId":"test_sess_1793692057038","stepIndex":2,"toolName":"spawn_sme_mandate","interceptorStatus":"PASSED","loggedAt":"2026-11-03T07:47:41.539Z"}
+{"action":"STEP_SAVED","sessionId":"test_sess_1793692057038","stepIndex":3,"toolName":"run_coalition_negotiation","interceptorStatus":"PASSED","loggedAt":"2026-11-03T07:47:41.544Z"}
+{"action":"STEP_SAVED","sessionId":"test_sess_1793692057038","stepIndex":4,"toolName":"authorize_paypal_escrow","interceptorStatus":"PASSED","loggedAt":"2026-11-03T07:47:41.548Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_sess_1793692057038","status":"COMPLETED","metadata":{"finalMessage":"Autonomous deal cycle executed: buyer spawned, volume discount negotiated, and PayPal Orders v2 soft authorization holds locked.","totalDurationMs":4512},"loggedAt":"2026-11-03T07:47:41.553Z"}
+{"action":"SESSION_CREATED","id":"test_resume_1793692061854","status":"SUSPENDED","model":"qwen3.5:9b","loggedAt":"2026-11-03T07:47:41.854Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_resume_1793692061854","status":"RUNNING","metadata":{},"loggedAt":"2026-11-03T07:47:41.863Z"}
+{"action":"STEP_SAVED","sessionId":"test_resume_1793692061854","stepIndex":2,"toolName":"query_escrow_ledger","interceptorStatus":"PASSED","loggedAt":"2026-11-03T07:47:41.883Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_resume_1793692061854","status":"COMPLETED","metadata":{"finalMessage":"Queried live platform ledger and refreshed member states.","totalDurationMs":24},"loggedAt":"2026-11-03T07:47:41.887Z"}
+{"action":"SESSION_CREATED","id":"test_step_up_1793692061895","status":"AWAITING_STEP_UP","model":"qwen3.5:9b","loggedAt":"2026-11-03T07:47:41.896Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1793692061895","status":"RUNNING","metadata":{"approvalToken":"APPROVAL_TOKEN_9988"},"loggedAt":"2026-11-03T07:47:41.905Z"}
+{"action":"STEP_SAVED","sessionId":"test_step_up_1793692061895","stepIndex":2,"toolName":"query_escrow_ledger","interceptorStatus":"PASSED","loggedAt":"2026-11-03T07:47:41.926Z"}
+{"action":"SESSION_STATUS_UPDATED","id":"test_step_up_1793692061895","status":"COMPLETED","metadata":{"finalMessage":"Queried live platform ledger and refreshed member states.","totalDurationMs":7},"loggedAt":"2026-11-03T07:47:41.930Z"}

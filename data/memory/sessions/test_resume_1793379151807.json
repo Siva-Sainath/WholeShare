@@ -1,0 +1,63 @@
+{
+  "id": "test_resume_1793379151807",
+  "model": "qwen3.5:9b",
+  "status": "COMPLETED",
+  "prompt": "Query escrow ledger state",
+  "finalMessage": "Queried live platform ledger and refreshed member states.",
+  "totalDurationMs": 14,
+  "metadata": {},
+  "createdAt": "2026-10-30T16:52:31.807Z",
+  "updatedAt": "2026-10-30T16:52:31.826Z",
+  "steps": [
+    {
+      "sessionId": "test_resume_1793379151807",
+      "stepIndex": 2,
+      "thought": "Executing deterministic recovery plan.",
+      "toolName": "query_escrow_ledger",
+      "toolArgs": {},
+      "toolResult": {
+        "coalitionsCount": 1,
+        "coalitions": [
+          {
+            "coalitionId": "coalition_flour_01",
+            "sku": "organic-flour-50lb",
+            "skuName": "Golden Fields Organic Hard Red Wheat Flour (50 lb Bag)",
+            "targetUnits": 500,
+            "currentUnits": 300,
+            "unitPriceUsd": "10.00",
+            "totalEscrowUsd": "3000.00",
+            "discountTierPct": 0,
+            "status": "FORMING",
+            "membersCount": 2,
+            "members": [
+              {
+                "smeId": "sme_austin_01",
+                "name": "Austin Artisan Bakery",
+                "pledgedUnits": 150,
+                "authorizedUsd": "1500.00",
+                "status": "PLEDGED",
+                "stepUpRequired": false,
+                "paypalOrderId": null,
+                "invoiceQrUrl": null
+              },
+              {
+                "smeId": "sme_bean_02",
+                "name": "Bean & Leaf Coffee Roasters",
+                "pledgedUnits": 150,
+                "authorizedUsd": "1500.00",
+                "status": "PLEDGED",
+                "stepUpRequired": false,
+                "paypalOrderId": null,
+                "invoiceQrUrl": null
+              }
+            ]
+          }
+        ]
+      },
+      "interceptorStatus": "PASSED",
+      "violations": null,
+      "durationMs": 4,
+      "createdAt": "2026-10-30T16:52:31.822Z"
+    }
+  ]
+}
