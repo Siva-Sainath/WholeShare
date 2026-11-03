@@ -70,5 +70,35 @@
     "reducedSupplierPayout": 1044,
     "createdAt": "2026-10-26T16:07:59.941Z",
     "updatedAt": "2026-10-26T16:08:08.797Z"
+  },
+  {
+    "claimId": "claim-1793382205660-ipkk4j",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_greenleaf",
+    "orderId": "6T233405300612614",
+    "captureId": "1BW63323PX771024W",
+    "damagedUnits": 10,
+    "unitPrice": 7.2,
+    "orderValue": 720,
+    "claimedAmount": 72,
+    "evidence": {
+      "photoUrls": [
+        "https://sandbox.wholeshare.local/evidence/flour_bag_01.jpg"
+      ],
+      "description": "Damaged packaging: 10 bags torn in transit with moisture contamination"
+    },
+    "status": "SETTLED",
+    "buyerApprovedAt": "2026-10-30T17:43:25.662Z",
+    "supplierResponse": {
+      "action": "ACCEPT",
+      "notes": "Golden Fields Wholesale accepts damage claim. Issuing $72.00 refund from held escrow.",
+      "respondedAt": "2026-10-30T17:43:25.664Z"
+    },
+    "agreedRefundAmount": 72,
+    "refundId": null,
+    "refundTransaction": null,
+    "reducedSupplierPayout": 648,
+    "createdAt": "2026-10-30T17:43:25.660Z",
+    "updatedAt": "2026-10-30T17:43:25.664Z"
   }
 ]

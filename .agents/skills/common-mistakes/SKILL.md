@@ -21,6 +21,9 @@ This skill records recurring mistakes made by agents in this repository and esta
 | **Unscored Invariant Refusals** | Scoring model refusal of an unsafe action as a tool omission. | Assert and score active policy refusals (such as refusing direct capture) as invariant defense passes. | Security Evaluation |
 | **Token Budget Starvation** | Constraining local reasoning models to 256 tokens, truncating JSON argument blocks. | Enforce minimum `num_predict: 1024` for all function calling invocations on local models. | Inference Standard |
 | **Floating Currency Drift** | Mixing dollar decimals with integer cents in schemas or prompts. | Brand all monetary values as integer cents (`amountCents: number`) with runtime integer guards. | Type System Discipline |
+| **Synthetic Identifier Fallbacks** | Fabricating synthetic IDs (such as `AUTH-...`) when missing credentials or records. | Fail fast immediately when IDs are missing. Never invent fake fallback strings in production paths. | Zero-Mock Policy |
+| **String Casing Invariant Drift** | Using uppercase or inconsistent casing on domain role strings (such as `SUPPLIER` vs `supplier`). | Normalize strings with `.toLowerCase()` and enforce strict TypeScript union types at entry points. | Type & Invariant Guard |
+| **Scattered Identity Aliasing** | Aliasing `clanId`/`coalitionId` across internal modules (shotgun surgery). | Resolve and unify identity terms strictly at the outer adapter boundary seam. | Architectural Boundary |
 
 ---
 

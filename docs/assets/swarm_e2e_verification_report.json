@@ -1,0 +1,174 @@
+{
+  "startedAt": "2026-10-30T17:41:43.920Z",
+  "completedAt": "2026-10-30T17:43:30.562Z",
+  "durationMs": 106642,
+  "stages": {
+    "stage1_ingress": {
+      "status": "PASS",
+      "buyersCount": 4,
+      "totalPledgedUnits": 500
+    },
+    "stage2_threshold": {
+      "status": "PASS",
+      "coalitionId": "coalition_flour_01",
+      "targetUnits": 500,
+      "totalUnits": 500,
+      "unitPriceUsd": 7.2,
+      "discountPct": 28,
+      "stepUpGenerated": true
+    },
+    "stage3_escrow_lock": {
+      "status": "PASS",
+      "authorizationsCount": 4,
+      "authorizations": [
+        {
+          "memberId": "sme_austin_artisan",
+          "orderId": "27C89194AN3524826",
+          "authorizationId": "53X61090MN917862P",
+          "amountUsd": 1080
+        },
+        {
+          "memberId": "sme_bean_leaf",
+          "orderId": "70E358675M210682G",
+          "authorizationId": "9YB50146EC154540J",
+          "amountUsd": 1080
+        },
+        {
+          "memberId": "sme_greenleaf",
+          "orderId": "6T233405300612614",
+          "authorizationId": "4JC55422B41070332",
+          "amountUsd": 720
+        },
+        {
+          "memberId": "sme_sweet_treats",
+          "orderId": "2X704353LK972672L",
+          "authorizationId": "69H20641NH581553N",
+          "amountUsd": 720
+        }
+      ]
+    },
+    "stage4_batch_capture": {
+      "status": "PASS",
+      "totalCapturedUsd": 3600,
+      "captures": [
+        {
+          "memberId": "sme_austin_artisan",
+          "captureId": "7J779912EB032032P",
+          "amountUsd": 1080
+        },
+        {
+          "memberId": "sme_bean_leaf",
+          "captureId": "3CW91542TE957320V",
+          "amountUsd": 1080
+        },
+        {
+          "memberId": "sme_greenleaf",
+          "captureId": "1BW63323PX771024W",
+          "amountUsd": 720
+        },
+        {
+          "memberId": "sme_sweet_treats",
+          "captureId": "3F905331XB118621S",
+          "amountUsd": 720
+        }
+      ]
+    },
+    "stage5_tracking": {
+      "status": "PASS",
+      "carrier": "UPS",
+      "trackingNumber": "1Z1793382204307TX",
+      "orderId": "27C89194AN3524826"
+    },
+    "stage6_delivery": {
+      "status": "PASS",
+      "confirmations": [
+        {
+          "memberId": "sme_austin_artisan",
+          "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z"
+        },
+        {
+          "memberId": "sme_bean_leaf",
+          "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z"
+        },
+        {
+          "memberId": "sme_greenleaf",
+          "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z"
+        },
+        {
+          "memberId": "sme_sweet_treats",
+          "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z"
+        }
+      ]
+    },
+    "stage7_dispute": {
+      "status": "PASS",
+      "claimId": "claim-1793382205660-ipkk4j",
+      "damagedUnits": 10,
+      "refundAmountUsd": 72,
+      "refundId": "6MA77015L0249025M",
+      "captureId": "1BW63323PX771024W"
+    },
+    "stage8_settlement": {
+      "status": "PASS",
+      "supplierEmail": "sb-t43fur53471579@business.example.com",
+      "netPayoutUsd": 3528,
+      "payoutBatchId": "3GZ7D8ZCLKZBL",
+      "batchStatus": "PENDING",
+      "readBack": {
+        "payout_batch_id": "3GZ7D8ZCLKZBL",
+        "batch_status": "PENDING",
+        "time_created": "2026-10-30T17:43:31Z",
+        "sender_batch_header": {
+          "sender_batch_id": "payout_coalition_flour_01_1793382208883",
+          "email_subject": "Wholeshare Wholesale Supplier Settlement Payout",
+          "email_message": "Settlement payout for Clan coalition_flour_01 (500 units of organic-flour-50lb). Net of accepted damage refunds."
+        },
+        "funding_source": "BALANCE",
+        "amount": {
+          "currency": "USD",
+          "value": "3528.00"
+        }
+      }
+    },
+    "stage9_ui_webhook": {
+      "status": "PASS",
+      "finalCoalitionStatus": "SETTLED",
+      "sseBroadcastVerified": true
+    }
+  },
+  "paypalArtifacts": {
+    "stepUpInvoiceId": "INV2-82105252",
+    "orders": [
+      "27C89194AN3524826",
+      "70E358675M210682G",
+      "6T233405300612614",
+      "2X704353LK972672L"
+    ],
+    "authorizations": [
+      "53X61090MN917862P",
+      "9YB50146EC154540J",
+      "4JC55422B41070332",
+      "69H20641NH581553N"
+    ],
+    "captures": [
+      "7J779912EB032032P",
+      "3CW91542TE957320V",
+      "1BW63323PX771024W",
+      "3F905331XB118621S"
+    ],
+    "trackingNumber": "1Z1793382204307TX",
+    "refundId": "6MA77015L0249025M",
+    "payoutBatchId": "3GZ7D8ZCLKZBL"
+  },
+  "invariantsPassed": [
+    "ACP_SHARED_PAYMENT_TOKENS_VERIFIED",
+    "MOQ_THRESHOLD_VOLUME_DISCOUNT_UNLOCKED",
+    "ALL_4_BUYERS_SOFT_AUTHORIZED_REAL_PAYPAL",
+    "ONE_SHOT_FINAL_CAPTURE_ACROSS_ALL_MEMBERS",
+    "REAL_PAYPAL_ORDERS_V2_CARRIER_TRACKING_REGISTERED",
+    "TWO_PARTY_DELIVERY_CONFIRMATION_INSPECTION_WINDOW_ACTIVE",
+    "DETERMINISTIC_CLAIM_CAPPING_AND_ESCROW_REFUND_EXECUTED",
+    "PER_MEMBER_SETTLEMENT_NET_PAYOUT_RELEASED",
+    "AG_GRID_SSE_SYNCHRONIZED_SETTLED"
+  ]
+}

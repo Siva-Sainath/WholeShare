@@ -5,9 +5,9 @@
       "eventType": "PAYMENT.CAPTURE.REFUNDED",
       "resourceType": "refund",
       "resourceId": "REF-EARLY-01",
-      "processedAt": "2026-10-30T16:52:14.820Z",
+      "processedAt": "2026-11-03T07:45:02.005Z",
       "status": "OUT_OF_ORDER_BUFFERED"
     }
   ],
-  "lastUpdated": "2026-10-30T16:52:14.820Z"
+  "lastUpdated": "2026-11-03T07:45:02.005Z"
 }

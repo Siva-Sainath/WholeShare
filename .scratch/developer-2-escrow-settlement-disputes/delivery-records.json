@@ -11,5 +11,57 @@
     "source": "simulated",
     "conditionNotes": "Delivery received; 20 bags punctured during freight transit.",
     "createdAt": "2026-10-26T15:30:52.829Z"
+  },
+  {
+    "id": "del_coalition_flour_01_sme_austin_artisan",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_austin_artisan",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "buyerDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z",
+    "source": "buyer",
+    "conditionNotes": null,
+    "createdAt": "2026-10-30T17:43:25.645Z"
+  },
+  {
+    "id": "del_coalition_flour_01_sme_bean_leaf",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_bean_leaf",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "buyerDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z",
+    "source": "buyer",
+    "conditionNotes": null,
+    "createdAt": "2026-10-30T17:43:25.649Z"
+  },
+  {
+    "id": "del_coalition_flour_01_sme_greenleaf",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_greenleaf",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "buyerDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z",
+    "source": "buyer",
+    "conditionNotes": null,
+    "createdAt": "2026-10-30T17:43:25.652Z"
+  },
+  {
+    "id": "del_coalition_flour_01_sme_sweet_treats",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_sweet_treats",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "buyerDeliveredAt": "2026-10-30T17:43:25.643Z",
+    "inspectionWindowEndsAt": "2026-11-01T17:43:25.643Z",
+    "source": "buyer",
+    "conditionNotes": null,
+    "createdAt": "2026-10-30T17:43:25.656Z"
   }
 ]

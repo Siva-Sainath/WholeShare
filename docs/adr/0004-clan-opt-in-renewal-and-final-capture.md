@@ -9,7 +9,7 @@ Fixed 7-day timeouts across all purchasing groups either prematurely cancel legi
    - Standard: 7 days
    - Specialty / seasonal: 10 days
    - High-value / custom: 12 days
-   At day X, members receive an opt-in renewal request. Lack of response within 48 hours defaults to Opt-Out, automatically voiding their individual authorization. A hard deadline (3–7 days post-check-in) force-voids any remaining unrenewed authorizations.
+   At day X, members receive an opt-in renewal request. Lack of response within 48 hours defaults to Opt-Out, automatically voiding their individual authorization. A hard deadline (3 to 7 days post-check-in) force-voids any remaining unrenewed authorizations.
 2. **Tier-Based Final Capture**: Clan pricing is finalized before money moves. When a Clan reaches `LOCKED`, the batch capture daemon executes captures at the final unlocked tier price using `final_capture: true`.
 3. PayPal's `create_refund` endpoint is reserved strictly for post-delivery disputes and operational errors, never for pre-capture volume pricing drops.
 

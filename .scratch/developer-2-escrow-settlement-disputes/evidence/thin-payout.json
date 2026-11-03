@@ -1,25 +1,25 @@
 {
-  "timestamp": "2026-10-26T15:27:51.429Z",
+  "timestamp": "2026-10-30T17:31:59.441Z",
   "endpoint": "POST https://api-m.sandbox.paypal.com/v1/payments/payouts",
   "operation": "SUPPLIER_PAYOUT",
-  "senderBatchId": "payout_clan_austin_1793028467341",
-  "payoutBatchId": "4YARQWK7HTLRN",
+  "senderBatchId": "payout_clan_austin_1793381515875",
+  "payoutBatchId": "VEM9R7GS347P4",
   "targetSupplierEmail": "sb-t43fur53471579@business.example.com",
   "payoutAmountUsd": 464,
   "currency": "USD",
   "initialResponse": {
     "batch_header": {
-      "payout_batch_id": "4YARQWK7HTLRN",
+      "payout_batch_id": "VEM9R7GS347P4",
       "batch_status": "PENDING",
       "sender_batch_header": {
-        "sender_batch_id": "payout_clan_austin_1793028467341",
+        "sender_batch_id": "payout_clan_austin_1793381515875",
         "email_subject": "SyndicatePay Wholesale Supplier Settlement Payout",
         "email_message": "You received a payout for Clan Austin Organic Flour fulfillment."
       }
     },
     "links": [
       {
-        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/4YARQWK7HTLRN",
+        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/VEM9R7GS347P4",
         "rel": "self",
         "method": "GET",
         "encType": "application/json"
@@ -29,11 +29,11 @@
   "readBackVerified": true,
   "readBackDetails": {
     "batch_header": {
-      "payout_batch_id": "4YARQWK7HTLRN",
+      "payout_batch_id": "VEM9R7GS347P4",
       "batch_status": "PENDING",
-      "time_created": "2026-10-26T15:27:48Z",
+      "time_created": "2026-10-30T17:31:58Z",
       "sender_batch_header": {
-        "sender_batch_id": "payout_clan_austin_1793028467341",
+        "sender_batch_id": "payout_clan_austin_1793381515875",
         "email_subject": "SyndicatePay Wholesale Supplier Settlement Payout",
         "email_message": "You received a payout for Clan Austin Organic Flour fulfillment."
       },
@@ -45,9 +45,9 @@
     },
     "items": [
       {
-        "payout_item_id": "KKM5T2R28KG5C",
+        "payout_item_id": "BL6V35699954G",
         "transaction_status": "PENDING",
-        "payout_batch_id": "4YARQWK7HTLRN",
+        "payout_batch_id": "VEM9R7GS347P4",
         "payout_item": {
           "recipient_type": "EMAIL",
           "amount": {
@@ -56,13 +56,13 @@
           },
           "note": "SyndicatePay Wholesale Escrow Settlement: Austin Organic Flour Clan",
           "receiver": "sb-t43fur53471579@business.example.com",
-          "sender_item_id": "item_supplier_1793028467341",
+          "sender_item_id": "item_supplier_1793381515875",
           "recipient_wallet": "PAYPAL",
           "purpose": "GOODS"
         },
         "links": [
           {
-            "href": "https://api.sandbox.paypal.com/v1/payments/payouts-item/KKM5T2R28KG5C",
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts-item/BL6V35699954G",
             "rel": "item",
             "method": "GET",
             "encType": "application/json"
@@ -72,7 +72,7 @@
     ],
     "links": [
       {
-        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/4YARQWK7HTLRN?page_size=1000&page=1",
+        "href": "https://api.sandbox.paypal.com/v1/payments/payouts/VEM9R7GS347P4?page_size=1000&page=1",
         "rel": "self",
         "method": "GET",
         "encType": "application/json"
