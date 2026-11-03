@@ -56,3 +56,9 @@ data/memory/entities/test_*
 # Procured Large-Scale Datasets (Keep manifest in git, raw data local/Kaggle)
 data/procured/*
 !data/procured/manifest.json
+
+# Model Weights and Large Binary Checkpoints
+*.safetensors
+*.bin
+*.pt
+
