@@ -46,3 +46,16 @@ This skill records recurring mistakes made by agents in this repository and esta
 - Always verify hardware through `npx @wecko-ai/modelfit --json --no-install`.
 - Never substitute older cached models when the user specifies models from the verified dataset.
 - On Apple Silicon M3 (16 GB unified memory), models must fit within the 10.7 GB memory ceiling to preserve 5 GB for the OS, dev server, PostgreSQL, and Chrome CDP.
+
+### D. Zero-Mock Identity & Identifier Integrity
+- **Do not invent fallback identifiers:** When an upstream authorization ID or capture ID is not present, never write code like `authorizationId: m.authorizationId || 'AUTH-${m.smeId}-${Date.now()}'`.
+- **Enforcement:** Fail fast immediately by throwing an explicit, actionable domain error (`MissingAuthorizationError`).
+- Synthetic fallback strings violate the Zero-Mock Policy, pollute audit ledgers, and mask upstream protocol bugs.
+
+### E. Domain Role Casing Normalization
+- **Do not mix uppercase and lowercase roles:** For example, passing `SUPPLIER` instead of `supplier` triggers runtime errors in strict invariant guards.
+- **Enforcement:** Normalize role strings using `.toLowerCase()` at the outer adapter boundary seam, and constrain parameters using strict TypeScript string literal unions (`type ParticipantRole = 'supplier' | 'buyer'`).
+
+### F. Seam-Level Identity Translation
+- **Do not scatter aliasing across modules:** Avoid writing `const id = params.coalitionId || params.clanId` inside internal storage and calculation functions.
+- **Enforcement:** Canonicalize domain terminology at the adapter seam (`EscrowBridgeAdapter`). Downstream modules must consume only one canonical vocabulary.
