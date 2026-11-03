@@ -166,7 +166,7 @@ function handleOneShotSubmit(e) {
   const btn = document.getElementById("btnRunOneShot");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Executing with Qwen 3.5 9B...";
+    btn.textContent = "Executing with Qwen 3.5 4B...";
     btn.style.opacity = "0.7";
   }
 

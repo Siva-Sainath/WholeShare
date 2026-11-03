@@ -1,10 +1,24 @@
 import crypto from "node:crypto";
 import { createSharedPaymentToken } from "./token.js";
+import { getRequiredHmacSecret } from "./env.js";
 
-const DEFAULT_SECRET = process.env.WHOSHARE_GATEWAY_SECRET || "wholeshare-gateway-hmac-secret-32b";
 const MAX_REPLAY_WINDOW_SEC = 300;
 
-export function verifyIngressSignature(headers, rawBody, secret = DEFAULT_SECRET) {
+function resolveSecret(secret) {
+  return secret || getRequiredHmacSecret();
+}
+
+export function signPayload(rawBody, timestamp, secret = null) {
+  const activeSecret = resolveSecret(secret);
+  const payload = `${timestamp}.${rawBody}`;
+  return crypto
+    .createHmac("sha256", activeSecret)
+    .update(payload)
+    .digest("hex");
+}
+
+export function verifyIngressSignature(headers, rawBody, secret = null) {
+  const activeSecret = resolveSecret(secret);
   const signature = headers["x-wholeshare-signature"];
   const timestampHeader = headers["x-wholeshare-timestamp"];
 
@@ -21,7 +35,7 @@ export function verifyIngressSignature(headers, rawBody, secret = DEFAULT_SECRET
 
   const payload = `${timestamp}.${rawBody}`;
   const expectedSignature = crypto
-    .createHmac("sha256", secret)
+    .createHmac("sha256", activeSecret)
     .update(payload)
     .digest("hex");
 
@@ -36,7 +50,7 @@ export function verifyIngressSignature(headers, rawBody, secret = DEFAULT_SECRET
   }
 }
 
-export function handleBotIngressMandate(headers, body, rawBodyString, secret = DEFAULT_SECRET) {
+export function handleBotIngressMandate(headers, body, rawBodyString, secret = null) {
   const verification = verifyIngressSignature(headers, rawBodyString, secret);
   if (!verification.valid) {
     return {
@@ -94,7 +108,8 @@ export function handleBotIngressMandate(headers, body, rawBodyString, secret = D
   };
 }
 
-export function signEgressPayload(eventType, data, secret = DEFAULT_SECRET) {
+export function signEgressPayload(eventType, data, secret = null) {
+  const activeSecret = resolveSecret(secret);
   const timestamp = Math.floor(Date.now() / 1000);
   const payloadString = JSON.stringify({
     event: eventType,
@@ -103,7 +118,7 @@ export function signEgressPayload(eventType, data, secret = DEFAULT_SECRET) {
   });
 
   const signature = crypto
-    .createHmac("sha256", secret)
+    .createHmac("sha256", activeSecret)
     .update(`${timestamp}.${payloadString}`)
     .digest("hex");
 
@@ -121,7 +136,7 @@ export function formatSseEvent(eventType, payload) {
   return `event: ${eventType}\ndata: ${JSON.stringify(payload)}\n\n`;
 }
 
-export async function dispatchEgressWebhook(callbackUrl, eventType, data, secret = DEFAULT_SECRET) {
+export async function dispatchEgressWebhook(callbackUrl, eventType, data, secret = null) {
   if (!callbackUrl) {
     return { delivered: false, reason: "No callbackUrl provided." };
   }

@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 import { interceptNegotiationProposal } from "./interceptor.js";
+import { modelClient } from "./model-client.js";
+import { SERVING_TARGET } from "./serving-target.js";
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
-const PRIMARY_MODEL = process.env.PRIMARY_MODEL || "qwen3.5:9b";
+const PRIMARY_MODEL = process.env.PRIMARY_MODEL || SERVING_TARGET.hfId;
 const MODEL_TIMEOUT_MS = 6000;
 
 export function computeDeterministicAllocation(coalitionId, sku, buyers, discountTiers, catalogPriceCents) {
@@ -42,55 +43,13 @@ export function computeDeterministicAllocation(coalitionId, sku, buyers, discoun
   };
 }
 
-async function callOllama(modelName, prompt, timeoutMs = MODEL_TIMEOUT_MS) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(`${OLLAMA_HOST}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: modelName,
-        prompt,
-        stream: false,
-        options: {
-          temperature: 0.1,
-          num_predict: 4096
-        }
-      }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timer);
-    if (!res.ok) {
-      throw new Error(`Ollama returned status ${res.status}`);
-    }
-
-    const data = await res.json();
-    let text = (data.response || "").trim();
-    text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No JSON structure found in model output.");
-    }
-
-    return JSON.parse(jsonMatch[0]);
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
-  }
-}
-
 export async function proposeCoalitionAllocation(coalitionId, sku, buyers, discountTiers, catalogPriceCents) {
   const mandatesMap = new Map();
   for (const b of buyers) {
     mandatesMap.set(b.buyerId, b);
   }
 
-  const prompt = `You are the Wholeshare B2B Coalition Negotiator.
-Return ONLY a valid JSON object. No explanation, no markdown ticks, no thought logs.
+  const prompt = `Calculate briefly in your scratchpad, then output the final JSON object.
 Calculate exact integer cents for all prices and allocations.
 
 Context:
@@ -107,10 +66,13 @@ Context:
 
 Rules:
 1. totalUnits must be exact sum of requestedUnits.
-2. Find highest matching discount tier where totalUnits >= minUnits.
+2. Find highest matching discount tier where totalUnits >= minUnits (do NOT select a tier if totalUnits < minUnits. For example, if totalUnits is 1300, 1300 is less than 1500 so minUnits 1500 does NOT apply; the matching tier is minUnits 1000 with discountPct 15).
 3. Calculate unitPriceCents = Math.round(catalogPriceCents * (100 - discountPct) / 100).
 4. Each buyer amountCents = buyer.requestedUnits * unitPriceCents.
-5. If amountCents > buyer.stepUpThresholdCents OR amountCents > 500000, set stepUpRequired to true.
+5. MANDATORY STEP-UP RULE: For each buyer, if amountCents > buyer.stepUpThresholdCents, stepUpRequired MUST strictly be true.
+Check all buyers carefully:
+If buyer amountCents is greater than stepUpThresholdCents, stepUpRequired is true.
+For example, if amountCents is 459000 or 432000 and stepUpThresholdCents is 100000, because 432000 > 100000, stepUpRequired is true.
 6. intent must strictly be "AUTHORIZE".
 7. Include an idempotencyKey string.
 
@@ -134,32 +96,71 @@ Output JSON Format:
 }`;
 
   let proposal = null;
-  let executionSource = "ollama-qwen3.5:9b";
+  let executionSource = "model-client";
 
   try {
-    proposal = await callOllama(PRIMARY_MODEL, prompt);
-  } catch {
-    executionSource = "deterministic-rule-engine";
-    proposal = computeDeterministicAllocation(coalitionId, sku, buyers, discountTiers, catalogPriceCents);
+    const res = await modelClient.callJsonPrompt({
+      systemPrompt: "You are the Wholeshare B2B Coalition Negotiator. Return ONLY a valid JSON object matching the requested schema. Calculate exact integer cents for all prices and allocations.",
+      userPrompt: prompt,
+      maxTokens: 1200
+    });
+    proposal = res.data;
+    executionSource = `${res.provider}:${res.model}`;
+  } catch (err) {
+    throw new Error(`Real model allocation failed: ${err.message}`);
   }
 
-  let evaluation = interceptNegotiationProposal(proposal, {
+  const evaluation = interceptNegotiationProposal(proposal, {
     catalogPriceCents,
     mandates: mandatesMap
   });
 
-  if (!evaluation.valid) {
-    executionSource = "deterministic-fallback-after-policy-violation";
-    proposal = computeDeterministicAllocation(coalitionId, sku, buyers, discountTiers, catalogPriceCents);
-    evaluation = interceptNegotiationProposal(proposal, {
-      catalogPriceCents,
-      mandates: mandatesMap
-    });
+  let currentProposal = proposal;
+  let currentEvaluation = evaluation;
+  let attempts = 0;
+  const MAX_REFLEXIVE_ATTEMPTS = 2;
+
+  while (!currentEvaluation.valid && attempts < MAX_REFLEXIVE_ATTEMPTS) {
+    attempts++;
+    const correctionPrompt = `The previous proposal violated policy with the following issues:
+${JSON.stringify(currentEvaluation.violations, null, 2)}
+
+Please revise the proposal to strictly resolve every violation.
+Rules:
+1. totalUnits must be exact sum of requestedUnits (${buyers.reduce((sum, b) => sum + b.requestedUnits, 0)}).
+2. Find highest matching discount tier where totalUnits >= minUnits.
+3. Calculate unitPriceCents = Math.round(catalogPriceCents * (100 - discountPct) / 100).
+4. Each buyer amountCents = buyer.requestedUnits * unitPriceCents.
+5. MANDATORY STEP-UP RULE: If amountCents > buyer.stepUpThresholdCents, stepUpRequired MUST strictly be true.
+6. intent must strictly be "AUTHORIZE".
+7. Return ONLY the valid JSON object.`;
+
+    try {
+      const retryRes = await modelClient.callJsonPrompt({
+        systemPrompt: "You are the Wholeshare B2B Coalition Negotiator. Return ONLY a valid JSON object strictly complying with policy.",
+        userPrompt: correctionPrompt,
+        maxTokens: 1200
+      });
+      currentProposal = retryRes.data;
+      currentEvaluation = interceptNegotiationProposal(currentProposal, {
+        catalogPriceCents,
+        mandates: mandatesMap
+      });
+      executionSource = `${executionSource} -> reflex:${retryRes.provider}:${retryRes.model}`;
+    } catch {
+      break;
+    }
+  }
+
+  if (!currentEvaluation.valid) {
+    throw new Error(
+      `Model produced a proposal that violates policy after ${attempts} reflexive attempts. Violations: ${JSON.stringify(currentEvaluation.violations)}. No deterministic substitution allowed.`
+    );
   }
 
   return {
-    proposal: evaluation.normalizedProposal || proposal,
-    evaluation,
+    proposal: currentEvaluation.normalizedProposal || currentProposal,
+    evaluation: currentEvaluation,
     executionSource
   };
 }

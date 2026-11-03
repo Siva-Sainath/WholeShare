@@ -196,6 +196,45 @@ export function interceptToolExecution(toolName, args = {}) {
     }
   }
 
+  if (toolName === "discover_wholesale_supplier_tiers" || toolName === "kernel_scrape_wholesale_tiers") {
+    if (args.sku !== undefined && (typeof args.sku !== "string" || !args.sku.trim())) {
+      violations.push("Wholesale SKU must be a non-empty string.");
+    }
+  }
+
+  if (toolName === "kernel_execute_browser_task") {
+    if (!args.targetUrl || typeof args.targetUrl !== "string" || !args.targetUrl.trim()) {
+      violations.push("Target URL must be a non-empty string.");
+    }
+    if (!args.script || typeof args.script !== "string" || !args.script.trim()) {
+      violations.push("Playwright script must be a non-empty string.");
+    }
+  }
+
+  if (toolName === "kernel_research_web_fact") {
+    if (!args.targetUrl || typeof args.targetUrl !== "string" || !args.targetUrl.trim()) {
+      violations.push("Target URL must be a non-empty string.");
+    }
+    if (!args.query || typeof args.query !== "string" || !args.query.trim()) {
+      violations.push("Research query must be a non-empty string.");
+    }
+  }
+
+  if (toolName === "verify_supplier_credibility") {
+    if (!args.targetUrl || typeof args.targetUrl !== "string" || !args.targetUrl.trim()) {
+      violations.push("Target URL must be a non-empty string.");
+    }
+  }
+
+  if (toolName === "verify_external_agent_proposal") {
+    if (!args.targetUrl || typeof args.targetUrl !== "string" || !args.targetUrl.trim()) {
+      violations.push("Target URL must be a non-empty string.");
+    }
+    if (args.claimedUnitPriceCents === undefined || args.claimedUnitPriceCents === null || isNaN(args.claimedUnitPriceCents) || args.claimedUnitPriceCents <= 0) {
+      violations.push("Claimed unit price must be a positive integer cent value.");
+    }
+  }
+
   return {
     valid: violations.length === 0,
     violations,

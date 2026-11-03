@@ -1,4 +1,4 @@
-import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "./tool-registry.js";
+import { WHOLESHARE_TOOL_DECLARATIONS, executeTool, parseToolCallsFromContent } from "./tool-registry.js";
 import { actionDispatcher } from "./web-actions.js";
 import {
   createAgentSession,
@@ -15,18 +15,20 @@ import {
   gateToolRisk,
   verifyDealProposal
 } from "./laya-engine.js";
+import { modelClient } from "./model-client.js";
+import { opsdEngine } from "./opsd-engine.js";
+import { SERVING_TARGET } from "./serving-target.js";
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
-const PRIMARY_MODEL = process.env.PRIMARY_MODEL || "qwen3.5:9b";
 const MAX_TURNS = 8;
 const MAX_REFLEXIVE_ATTEMPTS = 2;
-const AGENT_TIMEOUT_MS = 45000;
+const AGENT_TIMEOUT_MS = 90000;
 const STEP_UP_THRESHOLD_CENTS = 100000;
 
 export class WholeshareDurableHarness {
-  constructor(model = PRIMARY_MODEL, host = OLLAMA_HOST) {
-    this.model = model;
-    this.host = host;
+  constructor(model = null) {
+    this.model = model || ((modelClient.preferLocal || !modelClient.openRouterKey)
+      ? SERVING_TARGET.mlxId
+      : "nvidia/nemotron-3.5-super-vl:free");
   }
 
   buildInitialMessages(prompt, buyerId = "sme_austin_01") {
@@ -40,11 +42,16 @@ export class WholeshareDurableHarness {
 ${featureMapContext}
 
 You are the autonomous procurement agent for Wholeshare, a B2B group purchasing platform on PayPal.
-You have access to tools that let you discover wholesale catalog tiers, onboard SME buyers, join coalitions, run price negotiations, generate PayPal Invoicing QR codes, lock funds in PayPal Orders v2 soft authorization holds, and grep Instinct memory files.
-Always select tools when actions are requested.
-Never execute direct CAPTURE intents. Always use AUTHORIZE soft holds.
-All financial arithmetic must use exact integer cents.
-If a tool execution returns an invariant violation error, reflexively adjust your arguments to satisfy the invariant and retry.`
+Follow this operational protocol for sourcing, verification, and escrow:
+1. REAL-TIME FACTS, SUPPLIERS, & REGULATORY RESEARCH: When real-time or external facts are needed from the web (supplier pricing, regulatory status, corporate KYC, forex spot rates, sanctions screening, or technical specs), use Kernel cloud browsers:
+   - For live facts, forex rates, corporate registry checks, or compliance verification: use kernel_research_web_fact with intent, targetUrl, and query.
+   - For distributor volume pricing tiers: use discover_wholesale_supplier_tiers with sku and vendorUrl.
+   - For custom Playwright DOM automation: use kernel_execute_browser_task with targetUrl and script.
+2. INTERNAL CATALOG: When querying Wholeshare's own existing catalog without an external supplier URL, use discover_wholesale_catalog with sku.
+3. ZERO SIMULATION MANDATE: Never estimate, fabricate, or hallucinate pricing brackets, forex rates, or KYC clearances if web extraction fails or data is missing. Explain the failure honestly and request authentic documents or URLs.
+4. FINANCIAL CONSERVATION: All financial operations must use exact integer cents and intent: "AUTHORIZE". Direct CAPTURE is prohibited.
+5. COMPLETION: When all requested operations have been performed (such as locking escrow), stop calling tools and return a concise final summary message.
+6. REFLEXIVE RECOVERY: If a tool execution returns an invariant violation error, reflexively adjust your arguments to satisfy the invariant and retry.`
       },
       {
         role: "user",
@@ -72,12 +79,7 @@ If a tool execution returns an invariant violation error, reflexively adjust you
     });
 
     const layaStart = Date.now();
-    let layaDecision = null;
-    try {
-      layaDecision = await routeIntent(prompt);
-    } catch {
-      layaDecision = { intent: "coalition_negotiation", confidence: 0.5, requiresLlm: true, fallback: true };
-    }
+    const layaDecision = await routeIntent(prompt);
     const layaDurationMs = Date.now() - layaStart;
 
     actionDispatcher.broadcast("AGENT_LAYA_INTENT_ROUTED", {
@@ -115,6 +117,7 @@ If a tool execution returns an invariant violation error, reflexively adjust you
 
       return {
         sessionId,
+        success: true,
         status: "COMPLETED",
         routedBy: "LAYA_SYSTEM_ONE",
         totalDurationMs,
@@ -264,7 +267,10 @@ If a tool execution returns an invariant violation error, reflexively adjust you
         const assistantMessage = response.message || {};
         const thinking = assistantMessage.thinking || "";
         const content = assistantMessage.content || "";
-        const toolCalls = assistantMessage.tool_calls || [];
+        let toolCalls = assistantMessage.tool_calls || [];
+        if (toolCalls.length === 0 && content) {
+          toolCalls = parseToolCallsFromContent(content);
+        }
 
         if (thinking) {
           actionDispatcher.broadcast("AGENT_THOUGHT", {
@@ -314,7 +320,7 @@ If a tool execution returns an invariant violation error, reflexively adjust you
           try {
             layaRisk = await gateToolRisk(toolName, toolArgs);
           } catch {
-            layaRisk = { mutating: true, highValue: false, requiresStepUp: false };
+            layaRisk = { mutating: true, highValue: true, requiresStepUp: true };
           }
 
           actionDispatcher.broadcast("AGENT_LAYA_TOOL_GATED", {
@@ -341,6 +347,28 @@ If a tool execution returns an invariant violation error, reflexively adjust you
           const interception = interceptToolExecution(toolName, toolArgs);
 
           if (!interception.valid) {
+            const verifierError = interception.violations.join("; ");
+            try {
+              const teacherCorrection = await opsdEngine.rationalizeCorrection({
+                prompt: messages[1]?.content || "",
+                studentThought: thinking,
+                studentToolCall: { name: toolName, arguments: toolArgs },
+                verifierError
+              });
+
+              opsdEngine.commitDistillationTrace({
+                sessionId,
+                prompt: messages[1]?.content || "",
+                studentThought: thinking,
+                studentToolCall: { name: toolName, arguments: toolArgs },
+                verifierError,
+                teacherThought: teacherCorrection.teacherThought,
+                correctedToolCall: teacherCorrection.correctedToolCall
+              });
+            } catch {
+              // OPSD recording failure should not crash execution
+            }
+
             actionDispatcher.broadcast("AGENT_REFLEXIVE_RETRY", {
               sessionId,
               stepIndex: turn,
@@ -425,6 +453,30 @@ If a tool execution returns an invariant violation error, reflexively adjust you
 
           const toolResult = await executeTool(toolName, toolArgs);
 
+          if (toolResult && toolResult.status === "ERROR") {
+            const verifierError = toolResult.error || "Tool execution failed policy invariant.";
+            try {
+              const teacherCorrection = await opsdEngine.rationalizeCorrection({
+                prompt: messages[1]?.content || "",
+                studentThought: thinking,
+                studentToolCall: { name: toolName, arguments: toolArgs },
+                verifierError
+              });
+
+              opsdEngine.commitDistillationTrace({
+                sessionId,
+                prompt: messages[1]?.content || "",
+                studentThought: thinking,
+                studentToolCall: { name: toolName, arguments: toolArgs },
+                verifierError,
+                teacherThought: teacherCorrection.teacherThought,
+                correctedToolCall: teacherCorrection.correctedToolCall
+              });
+            } catch {
+              // Non-blocking trace capture
+            }
+          }
+
           actionDispatcher.broadcast("AGENT_TOOL_RESULT", {
             sessionId,
             stepIndex: turn,
@@ -451,46 +503,31 @@ If a tool execution returns an invariant violation error, reflexively adjust you
 
           messages.push({
             role: "tool",
+            tool_call_id: call.id || `call_${Date.now()}`,
             content: JSON.stringify(toolResult)
           });
         }
       } catch (err) {
-        actionDispatcher.broadcast("AGENT_FALLBACK", {
+        actionDispatcher.broadcast("AGENT_FAILURE", {
           sessionId,
-          reason: err.message,
+          error: `REAL_LLM_FAILURE: ${err.message}`,
           timestamp: new Date().toISOString()
         });
-
-        const fallbackResult = await this.executeDeterministicPlan(messages[messages.length - 1].content);
-        let fallbackIndex = turn;
-
-        for (const s of fallbackResult.steps) {
-          fallbackIndex++;
-          await saveAgentStep({
-            sessionId,
-            stepIndex: fallbackIndex,
-            thought: "Executing deterministic recovery plan.",
-            toolName: s.toolCall.name,
-            toolArgs: s.toolCall.arguments,
-            toolResult: s.toolResult,
-            interceptorStatus: "PASSED",
-            durationMs: s.durationMs
-          });
-        }
-
-        finalMessage = fallbackResult.finalMessage;
-        await updateAgentSessionStatus(sessionId, "COMPLETED", {
-          finalMessage,
+        await updateAgentSessionStatus(sessionId, "FAILED", {
+          finalMessage: `Real model failure: ${err.message}`,
           totalDurationMs: Date.now() - sessionStartTime
         });
-
-        break;
+        throw new Error(`Durable agent execution failed at model level: ${err.message}`);
       }
 
       turn++;
     }
 
     const totalDurationMs = Date.now() - sessionStartTime;
+    await updateAgentSessionStatus(sessionId, "COMPLETED", {
+      finalMessage: finalMessage || "Session completed successfully.",
+      totalDurationMs
+    });
     const finalTrajectory = await loadSessionTrajectory(sessionId);
 
     actionDispatcher.broadcast("AGENT_SESSION_COMPLETED", {
@@ -518,97 +555,15 @@ If a tool execution returns an invariant violation error, reflexively adjust you
   }
 
   async callModelWithTools(messages) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), AGENT_TIMEOUT_MS);
-
-    try {
-      const res = await fetch(`${this.host}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: this.model,
-          messages,
-          tools: WHOLESHARE_TOOL_DECLARATIONS,
-          stream: false,
-          options: {
-            temperature: 0.1
-          }
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timer);
-
-      if (!res.ok) {
-        throw new Error(`Ollama API error: ${res.status}`);
-      }
-
-      return await res.json();
-    } catch (err) {
-      clearTimeout(timer);
-      throw err;
-    }
-  }
-
-  async executeDeterministicPlan(prompt) {
-    const steps = [];
-    const lower = (prompt || "").toLowerCase();
-
-    if (lower.includes("flour") || lower.includes("coalition") || lower.includes("autopilot")) {
-      const spawnRes = await executeTool("spawn_sme_mandate", {
-        id: `sme_artisan_${Date.now()}`,
-        name: "Artisan Flour House",
-        sku: "organic-flour-50lb",
-        pledgedUnits: 200,
-        maxAutoAuthorizeUsd: 2500,
-        stepUpThresholdUsd: 1500
-      });
-      steps.push({
-        stepIndex: 1,
-        toolCall: { name: "spawn_sme_mandate", arguments: { name: "Artisan Flour House", units: 200 } },
-        toolResult: spawnRes,
-        durationMs: 5
-      });
-
-      const negRes = await executeTool("run_coalition_negotiation", {
-        coalitionId: "coalition_flour_01"
-      });
-      steps.push({
-        stepIndex: 2,
-        toolCall: { name: "run_coalition_negotiation", arguments: { coalitionId: "coalition_flour_01" } },
-        toolResult: negRes,
-        durationMs: 12
-      });
-
-      const lockRes = await executeTool("authorize_paypal_escrow", {
-        coalitionId: "coalition_flour_01"
-      });
-      steps.push({
-        stepIndex: 3,
-        toolCall: { name: "authorize_paypal_escrow", arguments: { coalitionId: "coalition_flour_01" } },
-        toolResult: lockRes,
-        durationMs: 8
-      });
-
-      return {
-        steps,
-        finalMessage: "Autonomous deal cycle executed: buyer spawned, volume discount negotiated, and PayPal Orders v2 soft authorization holds locked."
-      };
-    }
-
-    const ledgerRes = await executeTool("query_escrow_ledger", {});
-    steps.push({
-      stepIndex: 1,
-      toolCall: { name: "query_escrow_ledger", arguments: {} },
-      toolResult: ledgerRes,
-      durationMs: 4
+    const res = await modelClient.callChat({
+      messages,
+      tools: WHOLESHARE_TOOL_DECLARATIONS
     });
-
     return {
-      steps,
-      finalMessage: "Queried live platform ledger and refreshed member states."
+      message: res.message
     };
   }
+
 }
 
 export const durableHarness = new WholeshareDurableHarness();

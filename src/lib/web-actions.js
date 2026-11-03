@@ -5,6 +5,7 @@ import { createSharedPaymentToken } from "./token.js";
 import { interceptNegotiationProposal } from "./interceptor.js";
 import { proposeCoalitionAllocation } from "./model-runner.js";
 import { transitionCoalitionState } from "./fsm.js";
+import { generateInvoiceWithQr } from "./paypal-bridge.js";
 
 const catalogPath = resolve(process.cwd(), "data/processed/wholesale_catalog.json");
 const personasPath = resolve(process.cwd(), "data/processed/sme_personas.json");
@@ -306,7 +307,18 @@ class WholeshareActionDispatcher {
         member.stepUpRequired = alloc.stepUpRequired;
         if (alloc.stepUpRequired) {
           hasStepUp = true;
-          member.invoiceQrUrl = `https://sandbox.paypal.com/invoice/qr/INV2-${Math.random().toString(36).substring(2, 8).toUpperCase()}.png`;
+          try {
+            const invoice = await generateInvoiceWithQr({
+              recipientEmail: member.contactEmail || "buyer@example.com",
+              totalCents: alloc.amountCents,
+              memo: `Wholeshare Step-Up Invoice for Coalition ${coalitionId}`
+            });
+            member.invoiceId = invoice.invoiceId;
+            member.invoiceQrUrl = invoice.qrCodeUrl;
+            member.payerViewUrl = invoice.payerViewUrl;
+          } catch (invErr) {
+            console.error(`Step-up invoice generation error: ${invErr.message}`);
+          }
         }
       }
     }

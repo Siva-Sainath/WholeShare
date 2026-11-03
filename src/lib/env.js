@@ -28,10 +28,19 @@ export function loadProjectEnv() {
         process.env[key] = val;
       }
     }
-  } catch {
-    // Fail-safe env loading
+  } catch (err) {
+    console.error(`Warning: Failed to load .env file from ${envPath}: ${err.message}`);
   }
   envLoaded = true;
+}
+
+export function getRequiredHmacSecret() {
+  loadProjectEnv();
+  const secret = process.env.SYNDICATE_HMAC_SECRET || process.env.WHOSHARE_GATEWAY_SECRET || process.env.WHOSHARE_TOKEN_SECRET;
+  if (!secret) {
+    throw new Error("Missing required SYNDICATE_HMAC_SECRET in environment.");
+  }
+  return secret;
 }
 
 loadProjectEnv();

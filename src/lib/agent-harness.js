@@ -1,19 +1,22 @@
-import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "./tool-registry.js";
+import { WHOLESHARE_TOOL_DECLARATIONS, executeTool, parseToolCallsFromContent } from "./tool-registry.js";
 import { actionDispatcher } from "./web-actions.js";
 import { generateFeatureMapPromptContext } from "./feature-map.js";
+import { modelClient } from "./model-client.js";
+import { SERVING_TARGET } from "./serving-target.js";
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
-const PRIMARY_MODEL = process.env.PRIMARY_MODEL || "qwen3.5:9b";
 const MAX_TURNS = 6;
-const AGENT_TIMEOUT_MS = 25000;
 
 export class WholeshareAgentHarness {
   constructor() {
-    this.model = PRIMARY_MODEL;
-    this.host = OLLAMA_HOST;
+    this.model = (modelClient.preferLocal || !modelClient.openRouterKey)
+      ? SERVING_TARGET.mlxId
+      : "nvidia/nemotron-3.5-super-vl:free";
   }
 
-  async runSession({ prompt, sessionId = `sess_${Date.now()}` }) {
+  async runSession(options) {
+    const opts = typeof options === "string" ? { prompt: options } : (options || {});
+    const prompt = opts.prompt || "Reflect ledger state and evaluate active coalitions.";
+    const sessionId = opts.sessionId || `sess_${Date.now()}`;
     const sessionStartTime = Date.now();
     const steps = [];
 
@@ -23,10 +26,17 @@ export class WholeshareAgentHarness {
       {
         role: "system",
         content: `You are the autonomous procurement agent for Wholeshare, a B2B group purchasing platform on PayPal.
-You have access to tools that let you discover wholesale catalog tiers, onboard SME buyers, join coalitions, run price negotiations, generate PayPal Invoicing QR codes, and lock funds in PayPal Orders v2 soft authorization holds.
-Always select tools when actions are requested.
-Never execute direct CAPTURE intents. Always use AUTHORIZE soft holds.
-All financial arithmetic must use exact integer cents.
+Follow this operational protocol for sourcing, verification, and escrow:
+1. REAL-TIME FACTS, SUPPLIERS, & REGULATORY RESEARCH: When real-time or external facts are needed from the web (supplier pricing, regulatory status, corporate KYC, forex spot rates, sanctions screening, or technical specs), use Kernel cloud browsers:
+   - For live facts, forex rates, corporate registry checks, or compliance verification: use kernel_research_web_fact with intent, targetUrl, and query.
+   - For distributor volume pricing tiers: use discover_wholesale_supplier_tiers with sku and vendorUrl.
+   - For custom Playwright DOM automation: use kernel_execute_browser_task with targetUrl and script.
+2. SUPPLIER CREDIBILITY & SECURITY VETTING: Before pledging or escrowing funds with a new external vendor, use verify_supplier_credibility with targetUrl to audit SSL encryption, physical business identity, domain trust, and scam indicators. Refuse vendors flagged as suspicious or wire-only.
+3. CROSS-AGENT HYPERLINK & PROPOSAL FACT-CHECKING: When collaborating with other SME agents, never accept claimed prices or terms blindly. Use verify_external_agent_proposal with agentId, targetUrl, and claimedUnitPriceCents to verify the hyperlinked catalog live via Kernel cloud browsing. Flag price discrepancies before approving coalition holds.
+4. INTERNAL CATALOG: When querying Wholeshare's own existing catalog without an external supplier URL, use discover_wholesale_catalog with sku.
+5. ZERO SIMULATION MANDATE: Never estimate, fabricate, or hallucinate pricing brackets, forex rates, or KYC clearances if web extraction fails or data is missing. Explain the failure honestly and request authentic documents or URLs.
+6. FINANCIAL CONSERVATION: All financial operations must use exact integer cents and intent: "AUTHORIZE". Direct CAPTURE is prohibited.
+7. COMPLETION: When the requested actions have been executed, do not call redundant tools; return a concise text message to finish.
 
 ${featureContext}`
       },
@@ -57,7 +67,10 @@ ${featureContext}`
         const assistantMessage = response.message || {};
         const thinking = assistantMessage.thinking || "";
         const content = assistantMessage.content || "";
-        const toolCalls = assistantMessage.tool_calls || [];
+        let toolCalls = assistantMessage.tool_calls || [];
+        if (toolCalls.length === 0 && content) {
+          toolCalls = parseToolCallsFromContent(content);
+        }
 
         if (thinking) {
           actionDispatcher.broadcast("AGENT_THOUGHT", {
@@ -80,7 +93,14 @@ ${featureContext}`
 
         for (const call of toolCalls) {
           const toolName = call.function?.name || call.name;
-          const toolArgs = call.function?.arguments || call.arguments || {};
+          let toolArgs = call.function?.arguments || call.arguments || {};
+          if (typeof toolArgs === "string") {
+            try {
+              toolArgs = JSON.parse(toolArgs);
+            } catch {
+              // Leave as string if not JSON
+            }
+          }
 
           actionDispatcher.broadcast("AGENT_TOOL_CALL", {
             sessionId,
@@ -114,20 +134,17 @@ ${featureContext}`
 
           messages.push({
             role: "tool",
+            tool_call_id: call.id || `call_${Date.now()}`,
             content: JSON.stringify(toolResult)
           });
         }
       } catch (err) {
-        actionDispatcher.broadcast("AGENT_FALLBACK", {
+        actionDispatcher.broadcast("AGENT_FAILURE", {
           sessionId,
-          reason: err.message,
+          error: `REAL_LLM_FAILURE: ${err.message}`,
           timestamp: new Date().toISOString()
         });
-
-        const fallbackResult = await this.executeDeterministicPlan(prompt);
-        steps.push(...fallbackResult.steps);
-        finalMessage = fallbackResult.finalMessage;
-        break;
+        throw new Error(`Agent execution failed at model level: ${err.message}`);
       }
     }
 
@@ -151,97 +168,15 @@ ${featureContext}`
   }
 
   async callModelWithTools(messages) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), AGENT_TIMEOUT_MS);
-
-    try {
-      const res = await fetch(`${this.host}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: this.model,
-          messages,
-          tools: WHOLESHARE_TOOL_DECLARATIONS,
-          stream: false,
-          options: {
-            temperature: 0.1
-          }
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timer);
-
-      if (!res.ok) {
-        throw new Error(`Ollama API error: ${res.status}`);
-      }
-
-      return await res.json();
-    } catch (err) {
-      clearTimeout(timer);
-      throw err;
-    }
-  }
-
-  async executeDeterministicPlan(prompt) {
-    const steps = [];
-    const lower = prompt.toLowerCase();
-
-    if (lower.includes("flour") || lower.includes("coalition") || lower.includes("autopilot")) {
-      const spawnRes = await executeTool("spawn_sme_mandate", {
-        id: `sme_artisan_${Date.now()}`,
-        name: "Artisan Flour House",
-        sku: "organic-flour-50lb",
-        pledgedUnits: 200,
-        maxAutoAuthorizeUsd: 2500,
-        stepUpThresholdUsd: 1500
-      });
-      steps.push({
-        stepIndex: 1,
-        toolCall: { name: "spawn_sme_mandate", arguments: { name: "Artisan Flour House", units: 200 } },
-        toolResult: spawnRes,
-        durationMs: 5
-      });
-
-      const negRes = await executeTool("run_coalition_negotiation", {
-        coalitionId: "coalition_flour_01"
-      });
-      steps.push({
-        stepIndex: 2,
-        toolCall: { name: "run_coalition_negotiation", arguments: { coalitionId: "coalition_flour_01" } },
-        toolResult: negRes,
-        durationMs: 12
-      });
-
-      const lockRes = await executeTool("authorize_paypal_escrow", {
-        coalitionId: "coalition_flour_01"
-      });
-      steps.push({
-        stepIndex: 3,
-        toolCall: { name: "authorize_paypal_escrow", arguments: { coalitionId: "coalition_flour_01" } },
-        toolResult: lockRes,
-        durationMs: 8
-      });
-
-      return {
-        steps,
-        finalMessage: "Autonomous deal cycle executed: buyer spawned, volume discount negotiated, and PayPal Orders v2 soft authorization holds locked."
-      };
-    }
-
-    const ledgerRes = await executeTool("query_escrow_ledger", {});
-    steps.push({
-      stepIndex: 1,
-      toolCall: { name: "query_escrow_ledger", arguments: {} },
-      toolResult: ledgerRes,
-      durationMs: 4
+    const res = await modelClient.callChat({
+      messages,
+      tools: WHOLESHARE_TOOL_DECLARATIONS
     });
-
     return {
-      steps,
-      finalMessage: "Queried live platform ledger and refreshed member states."
+      message: res.message
     };
   }
+
 }
 
 export const agentHarness = new WholeshareAgentHarness();

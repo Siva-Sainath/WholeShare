@@ -4,9 +4,13 @@ import { spawnSync } from "node:child_process";
 import * as XLSX from "xlsx";
 import { instinctFs } from "./instinct-fs.js";
 import { businessInduction } from "./business-induction.js";
+import { getRequiredHmacSecret } from "./env.js";
 
-const DEFAULT_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_local_dev_secret_key_32_bytes";
 const REPLAY_WINDOW_SEC = 300;
+
+function resolveSecret(secret) {
+  return secret || getRequiredHmacSecret();
+}
 
 export const CANONICAL_SKU_CATALOG = {
   "organic-flour-50lb": {
@@ -40,7 +44,7 @@ const SORTED_ALIASES = Object.entries(CANONICAL_SKU_CATALOG).flatMap(([sku, item
 
 export function mapToCanonicalSku(rawDescription) {
   if (!rawDescription || typeof rawDescription !== "string") {
-    return "organic-flour-50lb";
+    return null;
   }
   const clean = rawDescription.toLowerCase();
   for (const { sku, alias } of SORTED_ALIASES) {
@@ -48,7 +52,7 @@ export function mapToCanonicalSku(rawDescription) {
       return sku;
     }
   }
-  return "organic-flour-50lb";
+  return null;
 }
 
 export function isExcelBuffer(buf) {
@@ -165,15 +169,13 @@ export function parseSpreadsheetWorkbook(buf, isCsv = false) {
     }
 
     let qty = parseInt(String(row[qtyCol] || "").replace(/[^0-9]/g, ""), 10);
-    if (isNaN(qty) || qty <= 0) qty = 100;
+    if (isNaN(qty) || qty <= 0) continue;
 
     const rawPriceStr = String(row[priceCol] || "").replace(/[^0-9.]/g, "");
     let unitPriceCents = Math.round(parseFloat(rawPriceStr) * 100);
-    const canonicalSku = mapToCanonicalSku(desc);
+    if (isNaN(unitPriceCents) || unitPriceCents <= 0) continue;
 
-    if (isNaN(unitPriceCents) || unitPriceCents <= 0) {
-      unitPriceCents = CANONICAL_SKU_CATALOG[canonicalSku]?.basePriceCents || 2800;
-    }
+    const canonicalSku = mapToCanonicalSku(desc) || `custom-${desc.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32)}`;
 
     items.push({
       rawDescription: desc,
@@ -190,14 +192,7 @@ export function parseSpreadsheetWorkbook(buf, isCsv = false) {
   }
 
   if (items.length === 0) {
-    items.push({
-      rawDescription: "Organic Artisan Bread Flour 50lb",
-      canonicalSku: "organic-flour-50lb",
-      quantity: 100,
-      unitPriceCents: 2800,
-      totalCents: 280000,
-      specProperties: { proteinPct: 12.7, organicCertified: true, moisturePct: 14.0 }
-    });
+    throw new Error("No valid line items could be parsed from spreadsheet workbook.");
   }
 
   const subtotalCents = items.reduce((acc, it) => acc + it.totalCents, 0);
@@ -541,14 +536,7 @@ export function parseDocumentContent(rawContent, mimeType = "application/json") 
   });
 
   if (lineItems.length === 0) {
-    lineItems.push({
-      rawDescription: "Organic Artisan Bread Flour 50lb",
-      canonicalSku: "organic-flour-50lb",
-      quantity: 100,
-      unitPriceCents: 2800,
-      totalCents: 280000,
-      specProperties: { proteinPct: 12.7, organicCertified: true, moisturePct: 14.0 }
-    });
+    throw new Error("No valid line items could be parsed from document content.");
   }
 
   const subtotalCents = lineItems.reduce((acc, item) => acc + item.totalCents, 0);
@@ -660,40 +648,40 @@ export function ingestDocument({ fileBuffer, fileName, mimeType, buyerId, metada
   return record;
 }
 
-export function importGoogleDriveFile({ fileId, fileName, buyerId, accessToken }) {
+export async function importGoogleDriveFile({ fileId, fileName, buyerId, accessToken }) {
   if (!fileId) throw new Error("fileId is required.");
   if (!buyerId) throw new Error("buyerId is required.");
+  if (!accessToken) {
+    throw new Error("Google Drive integration requires a valid OAuth accessToken to fetch file.");
+  }
 
-  const mockPayload = JSON.stringify({
-    vendorName: "West Coast Grain Logistics",
-    invoiceNumber: `GDRIVE_${fileId}`,
-    date: new Date().toISOString().slice(0, 10),
-    paymentTerms: "NET_30",
-    lineItems: [
-      {
-        description: "Organic Artisan Bread Flour 50lb (Imported via Google Drive)",
-        quantity: 150,
-        unitPriceCents: 2750,
-        proteinPct: 12.8,
-        organic: true
-      }
-    ]
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
   });
 
+  if (!res.ok) {
+    throw new Error(`Google Drive API returned HTTP ${res.status}: ${await res.text()}`);
+  }
+
+  const arrayBuffer = await res.arrayBuffer();
+  const fileBuffer = Buffer.from(arrayBuffer);
+  const mimeType = res.headers.get("content-type") || "application/octet-stream";
+
   return ingestDocument({
-    fileBuffer: Buffer.from(mockPayload, "utf-8"),
-    fileName: fileName || `gdrive_file_${fileId}.json`,
-    mimeType: "application/json",
+    fileBuffer,
+    fileName: fileName || `gdrive_${fileId}.json`,
+    mimeType,
     buyerId,
-    metadata: { source: "GOOGLE_DRIVE", fileId, tokenConfigured: Boolean(accessToken) }
+    metadata: { source: "GOOGLE_DRIVE", fileId }
   });
 }
 
-export function processAgentDocumentIngress({ payload, signature, timestamp, secret = DEFAULT_SECRET }) {
+export function processAgentDocumentIngress({ payload, signature, timestamp, secret = null }) {
   if (!signature || !timestamp) {
     throw new Error("Missing ingress cryptographic signature or timestamp headers.");
   }
 
+  const activeSecret = resolveSecret(secret);
   const nowSec = Math.floor(Date.now() / 1000);
   const incomingSec = parseInt(timestamp, 10);
   if (isNaN(incomingSec) || Math.abs(nowSec - incomingSec) > REPLAY_WINDOW_SEC) {
@@ -701,7 +689,7 @@ export function processAgentDocumentIngress({ payload, signature, timestamp, sec
   }
 
   const bodyString = typeof payload === "string" ? payload : JSON.stringify(payload);
-  const expectedHmac = createHmac("sha256", secret).update(`${timestamp}.${bodyString}`).digest("hex");
+  const expectedHmac = createHmac("sha256", activeSecret).update(`${timestamp}.${bodyString}`).digest("hex");
 
   const sigBuffer = Buffer.from(signature, "hex");
   const expectedBuffer = Buffer.from(expectedHmac, "hex");
@@ -778,7 +766,7 @@ export function curateProcurementDataset({ samples, format = "json", compress = 
       lineItemsCount: parsed.lineItems.length,
       primarySku: parsed.lineItems[0]?.canonicalSku || "organic-flour-50lb",
       totalAmountCents: parsed.totalAmountCents,
-      curatedFor: "Qwen 3.5 9B B2B Commerce Benchmark"
+      curatedFor: "Qwen 3.5 4B B2B Commerce Benchmark"
     };
   });
 

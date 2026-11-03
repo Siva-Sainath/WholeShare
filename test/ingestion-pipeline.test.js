@@ -23,7 +23,7 @@ test("ingestion pipeline maps vendor text to canonical SKUs accurately", () => {
   assert.equal(mapToCanonicalSku("King Arthur Special Patent Flour 50#"), "organic-flour-50lb");
   assert.equal(mapToCanonicalSku("Stone Ground Wheat Flour 50#"), "whole-wheat-flour-50lb");
   assert.equal(mapToCanonicalSku("Organic Cane Sugar 50lb Bag"), "organic-cane-sugar-50lb");
-  assert.equal(mapToCanonicalSku("Unknown item"), "organic-flour-50lb");
+  assert.equal(mapToCanonicalSku("Unknown item"), null);
 });
 
 test("parseDocumentContent normalizes line items and enforces exact integer cents", () => {
@@ -82,18 +82,18 @@ test("ingestDocument indexes facts into Instinct Memory", () => {
   assert.ok(memory.body.includes("2780 integer cents"));
 });
 
-test("importGoogleDriveFile processes document from mock drive payload", () => {
+test("importGoogleDriveFile fails fast when accessToken is missing", async () => {
   const buyerId = `test_gdrive_${Date.now()}`;
-  const record = importGoogleDriveFile({
-    fileId: "drive_file_12345",
-    fileName: "grain_order.json",
-    buyerId,
-    accessToken: "test_token"
-  });
-
-  assert.equal(record.status, "PROCESSED");
-  assert.equal(record.metadata.source, "GOOGLE_DRIVE");
-  assert.equal(record.metadata.fileId, "drive_file_12345");
+  await assert.rejects(
+    async () => {
+      await importGoogleDriveFile({
+        fileId: "drive_file_12345",
+        fileName: "grain_order.json",
+        buyerId
+      });
+    },
+    /Google Drive integration requires a valid OAuth accessToken/
+  );
 });
 
 test("processAgentDocumentIngress verifies cryptographic HMAC signature", () => {
@@ -198,11 +198,12 @@ test("isImageBuffer accurately identifies image formats", () => {
 
 test("ingestDocument handles picture and scanned bill ingestion with optical OCR", () => {
   const buyerId = `test_photo_buyer_${Date.now()}`;
-  const pngHeader = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x00, 0x00]);
+  const imagePath = "data/benchmark_corpus/01_sysco_commercial_invoice.png";
+  const pngBuffer = readFileSync(imagePath);
 
   const record = ingestDocument({
-    fileBuffer: pngHeader,
-    fileName: "scanned_bill.png",
+    fileBuffer: pngBuffer,
+    fileName: "01_sysco_commercial_invoice.png",
     mimeType: "image/png",
     buyerId
   });

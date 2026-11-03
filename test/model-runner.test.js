@@ -38,7 +38,7 @@ test("deterministic allocation calculates exact volume, tier discount, and integ
   assert.equal(proposal.allocations[0].stepUpRequired, true);
 });
 
-test("proposeCoalitionAllocation returns an interceptor-verified proposal", async () => {
+test("proposeCoalitionAllocation returns an interceptor-verified proposal", { timeout: 180000 }, async () => {
   const result = await proposeCoalitionAllocation(
     "coalition_test_02",
     "organic-flour-50lb",
@@ -51,5 +51,10 @@ test("proposeCoalitionAllocation returns an interceptor-verified proposal", asyn
   assert.equal(result.evaluation.invariantsPassed.length, 10);
   assert.equal(result.proposal.totalUnits, 1300);
   assert.equal(result.proposal.intent, "AUTHORIZE");
-  assert.ok(["ollama-qwen3.5:9b", "deterministic-rule-engine"].includes(result.executionSource));
+  assert.ok(
+    result.executionSource.includes("openrouter") ||
+    result.executionSource.includes("mlx") ||
+    result.executionSource.includes("nemotron") ||
+    result.executionSource.includes("qwen")
+  );
 });

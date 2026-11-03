@@ -155,7 +155,7 @@ export function createWebServer() {
       return;
     }
 
-    // Autopilot: Executes full deal cycle with local Qwen 3.5 9B
+    // Autopilot: Executes full deal cycle with local Qwen 3.5 4B
     if (pathname === "/api/v1/autopilot" && req.method === "POST") {
       try {
         actionDispatcher.spawnSme({
@@ -317,7 +317,7 @@ export function createWebServer() {
     if (pathname === "/api/v1/ingest/google-drive" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
-        const result = importGoogleDriveFile({
+        const result = await importGoogleDriveFile({
           fileId: body.fileId,
           fileName: body.fileName,
           buyerId: body.buyerId || "sme_google_drive",

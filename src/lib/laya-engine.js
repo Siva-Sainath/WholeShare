@@ -29,19 +29,8 @@ export async function getLayaEngine(options = {}) {
 }
 
 export async function evaluateDecision(state, questions, options = {}) {
-  try {
-    const laya = await getLayaEngine(options);
-    return await laya.systemOne(state, questions);
-  } catch (err) {
-    if (options.failClosed) {
-      throw err;
-    }
-    return {
-      fallback: true,
-      error: err.message,
-      answers: {}
-    };
-  }
+  const laya = await getLayaEngine(options);
+  return await laya.systemOne(state, questions);
 }
 
 export async function routeIntent(userPrompt) {
@@ -64,15 +53,6 @@ export async function routeIntent(userPrompt) {
   };
 
   const res = await evaluateDecision(userPrompt, questions);
-  if (res.fallback) {
-    return {
-      intent: "coalition_negotiation",
-      confidence: 0.5,
-      requiresLlm: true,
-      fallback: true
-    };
-  }
-
   const intentAnswer = res.answers?.intent;
   const requiresLlmAnswer = res.answers?.requires_llm;
 
@@ -80,8 +60,7 @@ export async function routeIntent(userPrompt) {
     intent: intentAnswer?.choice || "coalition_negotiation",
     confidence: intentAnswer?.confidence ?? 0.8,
     requiresLlm: (requiresLlmAnswer?.noul ?? 0.5) > 0.45,
-    probabilities: intentAnswer?.probabilities || {},
-    fallback: false
+    probabilities: intentAnswer?.probabilities || {}
   };
 }
 
@@ -123,15 +102,7 @@ export async function verifyDealProposal(proposal) {
     }
   };
 
-  const res = await evaluateDecision(state, questions);
-  if (res.fallback) {
-    return {
-      fairDistribution: true,
-      invariantsConsistent: true,
-      verified: true,
-      fallback: true
-    };
-  }
+  const res = await evaluateDecision(state, questions, { failClosed: true });
 
   const fair = (res.answers?.fair_distribution?.noul ?? 1.0) >= 0.5;
   const consistent = (res.answers?.invariants_consistent?.noul ?? 1.0) >= 0.5;

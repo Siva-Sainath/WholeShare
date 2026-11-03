@@ -1,6 +1,7 @@
 import pg from "pg";
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
+import { DEFAULT_OPENROUTER_MODEL } from "./model-client.js";
 
 const { Pool } = pg;
 
@@ -26,8 +27,9 @@ function appendToJournal(entry) {
     ensureDirectory(dirname(JOURNAL_FILE));
     const line = JSON.stringify({ ...entry, loggedAt: new Date().toISOString() }) + "\n";
     appendFileSync(JOURNAL_FILE, line, "utf-8");
-  } catch {
-    // Fail-safe journal logging
+  } catch (err) {
+    console.error(`[CRITICAL] Durable journal append failed: ${err.message}`);
+    throw err;
   }
 }
 
@@ -36,7 +38,8 @@ function readSessionFile(sessionId) {
     const filePath = resolve(SESSIONS_DIR, `${sessionId}.json`);
     if (!existsSync(filePath)) return null;
     return JSON.parse(readFileSync(filePath, "utf-8"));
-  } catch {
+  } catch (err) {
+    console.warn(`Warning: Failed to read session file for ${sessionId}: ${err.message}`);
     return null;
   }
 }
@@ -46,8 +49,9 @@ function writeSessionFile(sessionId, data) {
     ensureDirectory(SESSIONS_DIR);
     const filePath = resolve(SESSIONS_DIR, `${sessionId}.json`);
     writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
-  } catch {
-    // Fail-safe file writing
+  } catch (err) {
+    console.error(`[CRITICAL] Session file write failed for ${sessionId}: ${err.message}`);
+    throw err;
   }
 }
 
@@ -84,7 +88,7 @@ export async function appendAuditEvent(client, coalitionId, eventType, payload) 
 
 export async function createAgentSession({
   id,
-  model = "qwen3.5:9b",
+  model = DEFAULT_OPENROUTER_MODEL,
   prompt,
   status = "RUNNING",
   metadata = {}
@@ -113,7 +117,8 @@ export async function createAgentSession({
       [id, model, status, prompt]
     );
     return res.rows[0];
-  } catch {
+  } catch (err) {
+    console.warn(`[DB NOTICE] Session ${id} persisted to durable JSON files. Postgres insert bypassed: ${err.message}`);
     return sessionRecord;
   }
 }
@@ -146,7 +151,8 @@ export async function updateAgentSessionStatus(id, status, metadata = {}) {
       [id, status, metadata.finalMessage || null, metadata.totalDurationMs || null]
     );
     return res.rows[0] || existing;
-  } catch {
+  } catch (err) {
+    console.warn(`[DB NOTICE] Session ${id} status updated in durable JSON files. Postgres update bypassed: ${err.message}`);
     return existing;
   }
 }
@@ -204,7 +210,8 @@ export async function saveAgentStep({
       ]
     );
     return res.rows[0];
-  } catch {
+  } catch (err) {
+    console.warn(`[DB NOTICE] Step ${stepIndex} for session ${sessionId} persisted to durable JSON files. Postgres insert bypassed: ${err.message}`);
     return stepRecord;
   }
 }
@@ -221,8 +228,8 @@ export async function loadSessionTrajectory(sessionId) {
       session.steps = stepsRes.rows;
       return session;
     }
-  } catch {
-    // Database fallback
+  } catch (err) {
+    console.warn(`[DB NOTICE] Trajectory for session ${sessionId} falling back to durable JSON files: ${err.message}`);
   }
 
   return readSessionFile(sessionId);
@@ -252,7 +259,8 @@ export async function recordDisputeEvent({
       [disputeId, orderId, smeId, coalitionId, status, reason, resolutionOutcome]
     );
     return res.rows[0];
-  } catch {
+  } catch (err) {
+    console.warn(`[DB NOTICE] Dispute record ${disputeId} journaled. Postgres insert bypassed: ${err.message}`);
     return { disputeId, orderId, status, resolutionOutcome };
   }
 }
@@ -264,7 +272,8 @@ export async function getDisputeRecord(disputeId) {
       [disputeId]
     );
     return res.rows[0] || null;
-  } catch {
+  } catch (err) {
+    console.warn(`[DB NOTICE] Failed to query dispute record ${disputeId}: ${err.message}`);
     return null;
   }
 }

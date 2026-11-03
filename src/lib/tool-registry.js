@@ -18,6 +18,21 @@ import {
   queryProcurementBaseline,
   importGoogleDriveFile
 } from "./ingestion-pipeline.js";
+import {
+  discoverWholesaleTiers,
+  executeCustomBrowserTask,
+  researchWebFact,
+  createBrowserSession,
+  executePlaywright,
+  captureScreenshot,
+  deleteBrowserSession,
+  KernelConfigurationError,
+  KernelApiError
+} from "./kernel-bridge.js";
+import {
+  evaluateSupplierCredibility,
+  verifyExternalAgentClaim
+} from "./kernel-credibility.js";
 import { existsSync, readFileSync } from "node:fs";
 
 
@@ -37,6 +52,176 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
           }
         },
         required: ["sku"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "discover_wholesale_supplier_tiers",
+      description: "Kernel.sh Cloud Browser tool. Dispatches a stealth headless browser to live B2B distributor portals to scrape volume pricing tiers, extract MOQ brackets, and capture cryptographic screenshot proofs.",
+      parameters: {
+        type: "object",
+        properties: {
+          sku: {
+            type: "string",
+            description: "Product SKU to discover, such as organic-flour-50lb"
+          },
+          vendorUrl: {
+            type: "string",
+            description: "Optional supplier portal or catalog URL to navigate and extract"
+          },
+          category: {
+            type: "string",
+            description: "Optional commodity category, such as bakery, packaging, or coffee"
+          }
+        },
+        required: ["sku"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "kernel_scrape_wholesale_tiers",
+      description: "Alias for discover_wholesale_supplier_tiers. Uses Kernel.sh cloud browser to scrape live wholesale supplier tier pricing.",
+      parameters: {
+        type: "object",
+        properties: {
+          sku: {
+            type: "string",
+            description: "Target wholesale SKU"
+          },
+          vendorUrl: {
+            type: "string",
+            description: "Supplier URL"
+          }
+        },
+        required: ["sku"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "kernel_execute_browser_task",
+      description: "Kernel.sh Cloud Browser Playwright execution. Executes a custom Playwright automation script inside an isolated cloud Chromium instance with stealth mode, and optionally captures a cryptographic screenshot proof.",
+      parameters: {
+        type: "object",
+        properties: {
+          targetUrl: {
+            type: "string",
+            description: "The target website URL to navigate and automate"
+          },
+          script: {
+            type: "string",
+            description: "Playwright JavaScript code to evaluate in the page context. Use 'return' to output data."
+          },
+          captureProof: {
+            type: "boolean",
+            description: "Whether to capture a full-page PNG screenshot proof with SHA-256 digest (default: true)"
+          }
+        },
+        required: ["targetUrl", "script"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "kernel_research_web_fact",
+      description: "Generalized Kernel.sh cloud browser research tool. Deploys an isolated headless browser on standard CPU to research real-time external facts: supplier catalog pricing and stock, regulatory filings and corporate status, real-time forex exchange rates, sanctions checks, and technical specifications.",
+      parameters: {
+        type: "object",
+        properties: {
+          intent: {
+            type: "string",
+            description: "Research domain category: 'SUPPLIER_CATALOG', 'REGULATORY_KYC', 'FOREX_RATES', 'BACKGROUND_COMPLIANCE', 'SPEC_VERIFICATION', or 'GENERAL_RESEARCH'",
+            enum: [
+              "SUPPLIER_CATALOG",
+              "REGULATORY_KYC",
+              "FOREX_RATES",
+              "BACKGROUND_COMPLIANCE",
+              "SPEC_VERIFICATION",
+              "GENERAL_RESEARCH"
+            ]
+          },
+          targetUrl: {
+            type: "string",
+            description: "The official external URL to inspect (supplier portal, government registry, forex tracker, or agency database)"
+          },
+          query: {
+            type: "string",
+            description: "The specific fact, pricing tier, entity status, or conversion rate to verify"
+          },
+          script: {
+            type: "string",
+            description: "Optional custom Playwright JavaScript snippet. If omitted, the browser executes semantic DOM traversal."
+          },
+          captureProof: {
+            type: "boolean",
+            description: "Whether to capture a full-page PNG screenshot proof with SHA-256 digest (default: true)"
+          }
+        },
+        required: ["targetUrl", "query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "verify_supplier_credibility",
+      description: "Perform comprehensive security and credibility vetting on a prospective supplier portal via Kernel cloud browser: checks SSL encryption, domain trust and age, physical business presence and address, contact endpoints, refund/return terms, and scans for wire/gift card scam patterns.",
+      parameters: {
+        type: "object",
+        properties: {
+          targetUrl: {
+            type: "string",
+            description: "The supplier website or store URL to audit"
+          },
+          claimedPricing: {
+            type: "string",
+            description: "Optional claimed wholesale pricing to verify against live catalog"
+          },
+          captureProof: {
+            type: "boolean",
+            description: "Whether to capture full-page screenshot proof with SHA-256 digest"
+          }
+        },
+        required: ["targetUrl"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "verify_external_agent_proposal",
+      description: "Verify an external SME agent's deal proposal and hyperlinked supplier catalog: audits the remote portal via Kernel cloud browser, scrapes live prices, compares claimed unit price against authentic supplier catalog, detects pricing understatements or inflation, and determines escrow safety.",
+      parameters: {
+        type: "object",
+        properties: {
+          agentId: {
+            type: "string",
+            description: "Identifier of the external agent or counterparty proposing the deal"
+          },
+          targetUrl: {
+            type: "string",
+            description: "The hyperlinked supplier URL cited in the agent's proposal"
+          },
+          claimedProduct: {
+            type: "string",
+            description: "Product or commodity name claimed in the proposal"
+          },
+          claimedUnitPriceCents: {
+            type: "integer",
+            description: "The unit price in integer cents claimed by the external agent"
+          },
+          captureProof: {
+            type: "boolean",
+            description: "Whether to capture full-page screenshot proof with SHA-256 digest"
+          }
+        },
+        required: ["targetUrl", "claimedUnitPriceCents"]
       }
     }
   },
@@ -783,10 +968,56 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case "import_google_drive_document": {
-      return importGoogleDriveFile({
+      return await importGoogleDriveFile({
         fileId: args.fileId,
         fileName: args.fileName,
-        buyerId: args.buyerId
+        buyerId: args.buyerId,
+        accessToken: args.accessToken
+      });
+    }
+
+    case "discover_wholesale_supplier_tiers":
+    case "kernel_scrape_wholesale_tiers": {
+      return await discoverWholesaleTiers({
+        sku: args.sku,
+        vendorUrl: args.vendorUrl,
+        category: args.category
+      });
+    }
+
+    case "kernel_execute_browser_task": {
+      return await executeCustomBrowserTask({
+        targetUrl: args.targetUrl,
+        script: args.script,
+        captureProof: args.captureProof !== false
+      });
+    }
+
+    case "kernel_research_web_fact": {
+      return await researchWebFact({
+        intent: args.intent || "GENERAL_RESEARCH",
+        targetUrl: args.targetUrl,
+        query: args.query,
+        script: args.script,
+        captureProof: args.captureProof !== false
+      });
+    }
+
+    case "verify_supplier_credibility": {
+      return await evaluateSupplierCredibility({
+        targetUrl: args.targetUrl,
+        claimedPricing: args.claimedPricing,
+        captureProof: args.captureProof !== false
+      });
+    }
+
+    case "verify_external_agent_proposal": {
+      return await verifyExternalAgentClaim({
+        agentId: args.agentId,
+        targetUrl: args.targetUrl,
+        claimedProduct: args.claimedProduct,
+        claimedUnitPriceCents: args.claimedUnitPriceCents,
+        captureProof: args.captureProof !== false
       });
     }
 
@@ -801,5 +1032,72 @@ export async function executeTool(toolName, args = {}) {
       error: err.message
     };
   }
+}
+
+export function extractFirstJson(str) {
+  if (!str || typeof str !== "string") return null;
+  const firstBrace = str.indexOf("{");
+  if (firstBrace === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = firstBrace; i < str.length; i++) {
+    const char = str[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (char === "\\") {
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (!inString) {
+      if (char === "{") {
+        depth++;
+      } else if (char === "}") {
+        depth--;
+        if (depth === 0) {
+          const jsonSub = str.substring(firstBrace, i + 1);
+          try {
+            return JSON.parse(jsonSub);
+          } catch (_) {
+            const cleaned = jsonSub.replace(/,\s*([\]}])/g, "$1");
+            try {
+              return JSON.parse(cleaned);
+            } catch {
+              return null;
+            }
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+export function parseToolCallsFromContent(content) {
+  if (!content || typeof content !== "string") return [];
+  const clean = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  const parsed = extractFirstJson(clean) || extractFirstJson(content);
+  if (!parsed || typeof parsed !== "object") return [];
+
+  const name = parsed.name || parsed.tool || parsed.action;
+  if (!name || typeof name !== "string") return [];
+
+  const args = parsed.arguments || parsed.args || parsed.parameters || {};
+  return [{
+    id: `call_${Date.now()}`,
+    type: "function",
+    function: {
+      name,
+      arguments: typeof args === "string" ? args : JSON.stringify(args)
+    }
+  }];
 }
 

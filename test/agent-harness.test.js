@@ -4,11 +4,17 @@ import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../src/lib/tool-regis
 import { WholeshareAgentHarness } from "../src/lib/agent-harness.js";
 import { actionDispatcher } from "../src/lib/web-actions.js";
 
-test("WHOLESHARE_TOOL_DECLARATIONS registers 22 distinct tools with JSON schemas", () => {
-  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 22);
+test("WHOLESHARE_TOOL_DECLARATIONS registers 28 distinct tools with JSON schemas", () => {
+  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 28);
   const toolNames = WHOLESHARE_TOOL_DECLARATIONS.map(t => t.function.name);
 
   assert.ok(toolNames.includes("discover_wholesale_catalog"));
+  assert.ok(toolNames.includes("discover_wholesale_supplier_tiers"));
+  assert.ok(toolNames.includes("kernel_scrape_wholesale_tiers"));
+  assert.ok(toolNames.includes("kernel_execute_browser_task"));
+  assert.ok(toolNames.includes("kernel_research_web_fact"));
+  assert.ok(toolNames.includes("verify_supplier_credibility"));
+  assert.ok(toolNames.includes("verify_external_agent_proposal"));
   assert.ok(toolNames.includes("spawn_sme_mandate"));
   assert.ok(toolNames.includes("join_syndicate"));
   assert.ok(toolNames.includes("run_coalition_negotiation"));
@@ -95,18 +101,21 @@ test("executeTool handles register_shipment_tracking with real PayPal sandbox or
   }
 });
 
-test("WholeshareAgentHarness executes deterministic plan on fallback", async () => {
+test("WholeshareAgentHarness fails fast on unrecoverable model failure without fallback", async () => {
   const harness = new WholeshareAgentHarness();
-  const plan = await harness.executeDeterministicPlan("Run full flour coalition autopilot");
+  harness.callModelWithTools = async () => {
+    throw new Error("Simulated model connection failure");
+  };
 
-  assert.ok(plan.steps.length >= 3);
-  assert.equal(plan.steps[0].toolCall.name, "spawn_sme_mandate");
-  assert.equal(plan.steps[1].toolCall.name, "run_coalition_negotiation");
-  assert.equal(plan.steps[2].toolCall.name, "authorize_paypal_escrow");
-  assert.ok(plan.finalMessage.includes("PayPal Orders v2"));
+  await assert.rejects(
+    async () => {
+      await harness.runSession({ prompt: "Autonomous deal cycle" });
+    },
+    /Agent execution failed at model level/
+  );
 });
 
-test("WholeshareAgentHarness runs full session with broadcast telemetry", async () => {
+test("WholeshareAgentHarness runs full session with broadcast telemetry", { timeout: 180000 }, async () => {
   actionDispatcher.resetState();
   const harness = new WholeshareAgentHarness();
 

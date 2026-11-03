@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { execSync } from "node:child_process";
+import { storageDriver } from "./storage-driver.js";
 
 const MEMORY_BASE_DIR = resolve(process.cwd(), "data/memory");
 const ENTITIES_DIR = resolve(MEMORY_BASE_DIR, "entities");
@@ -260,7 +261,7 @@ export class InstinctFileSystem {
       body
     );
 
-    writeFileSync(filePath, content, "utf-8");
+    storageDriver.writeAtomic(filePath, content);
     return { id, filePath, content };
   }
 

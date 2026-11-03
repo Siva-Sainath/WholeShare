@@ -23,27 +23,46 @@ export class InstinctDreamingEngine {
         const existing = this.fs.readEntity(smeId);
         const facts = existing ? existing.body.split("\n").filter(l => l.startsWith("- ")).map(l => l.slice(2)) : [];
 
-        facts.push(`Onboarded with ACP Token [[${toolResult.tokenId}]] on ${new Date().toISOString().slice(0, 10)}.`);
-        facts.push(`Max authorized spend ceiling: ${toolResult.maxAuthorizedCents} cents.`);
+        const tokenFact = `Onboarded with ACP Token [[${toolResult.tokenId}]] on ${new Date().toISOString().slice(0, 10)}.`;
+        const spendFact = `Max authorized spend ceiling: ${toolResult.maxAuthorizedCents} cents.`;
+        if (!facts.includes(tokenFact)) facts.push(tokenFact);
+        if (!facts.includes(spendFact)) facts.push(spendFact);
+
+        const existingAliases = Array.isArray(existing?.frontmatter?.aliases) ? existing.frontmatter.aliases : [];
+        const mergedAliases = Array.from(new Set([
+          ...existingAliases,
+          smeId,
+          toolArgs.name || "buyer",
+          "sme",
+          "procurement"
+        ].filter(Boolean)));
 
         this.fs.writeEntity(
           smeId,
           "organization",
-          [smeId, toolArgs.name || "buyer", "sme", "procurement"],
+          mergedAliases,
           toolArgs.name || smeId,
           facts
         );
-        updates.push({ entity: smeId, action: "SPAWNED_OR_UPDATED" });
+        if (!updates.some(u => u.entity === smeId && u.action === "SPAWNED_OR_UPDATED")) {
+          updates.push({ entity: smeId, action: "SPAWNED_OR_UPDATED" });
+        }
       }
 
       if (toolName === "authorize_paypal_escrow" && toolResult.coalitionId) {
         const cid = toolResult.coalitionId;
-        const facts = [
+        const existing = this.fs.readEntity(cid);
+        const facts = existing ? existing.body.split("\n").filter(l => l.startsWith("- ")).map(l => l.slice(2)) : [];
+
+        const escrowFacts = [
           `Escrow locked via Orders v2 soft authorizations on ${new Date().toISOString().slice(0, 10)}.`,
           `Total locked escrow: ${toolResult.totalEscrowCents} integer cents.`,
           `Participating members: ${toolResult.membersCount} verified buyers.`,
           "Status advanced to: LOCKED."
         ];
+        for (const fact of escrowFacts) {
+          if (!facts.includes(fact)) facts.push(fact);
+        }
 
         this.fs.writeEntity(
           cid,
@@ -52,15 +71,23 @@ export class InstinctDreamingEngine {
           `Group Escrow Coalition (${cid})`,
           facts
         );
-        updates.push({ entity: cid, action: "ESCROW_LOCKED" });
+        if (!updates.some(u => u.entity === cid && u.action === "ESCROW_LOCKED")) {
+          updates.push({ entity: cid, action: "ESCROW_LOCKED" });
+        }
       }
 
       if (toolName === "register_shipment_tracking" && toolResult.orderId) {
         const cid = "shipment_tracking_log";
-        const facts = [
+        const existing = this.fs.readEntity(cid);
+        const facts = existing ? existing.body.split("\n").filter(l => l.startsWith("- ")).map(l => l.slice(2)) : [];
+
+        const trackFacts = [
           `Carrier ${toolResult.carrier} tracking number ${toolResult.trackingNumber} registered for order ${toolResult.orderId}.`,
           `Fulfillment status: ${toolResult.statusLabel || "SHIPPED"} on ${new Date().toISOString().slice(0, 10)}.`
         ];
+        for (const fact of trackFacts) {
+          if (!facts.includes(fact)) facts.push(fact);
+        }
 
         this.fs.writeEntity(
           cid,
@@ -69,7 +96,9 @@ export class InstinctDreamingEngine {
           `Fulfillment Tracking Record`,
           facts
         );
-        updates.push({ entity: cid, action: "TRACKING_LOGGED" });
+        if (!updates.some(u => u.entity === cid && u.action === "TRACKING_LOGGED")) {
+          updates.push({ entity: cid, action: "TRACKING_LOGGED" });
+        }
       }
     }
 

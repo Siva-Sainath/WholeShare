@@ -329,8 +329,51 @@ export async function generateInvoiceWithQr({
 
   const invoiceData = await invoiceRes.json();
   const invoiceId = invoiceData.id || invoiceData.href?.split("/").pop();
+  const cleanIdToken = invoiceId.replace(/^INV2-/, "").replace(/-/g, "");
 
-  let qrCodeUrl = `https://www.sandbox.paypal.com/invoice/p/#${invoiceId}`;
+  let payerViewUrl = `https://www.sandbox.paypal.com/invoice/p/#${cleanIdToken}`;
+  let status = "DRAFT";
+
+  try {
+    const sendRes = await executePayPalRequest(
+      `/v2/invoicing/invoices/${invoiceId}/send`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          send_to_recipient: true
+        })
+      },
+      timeoutMs
+    );
+    if (sendRes.ok) {
+      status = "SENT";
+      try {
+        const detailsRes = await executePayPalRequest(
+          `/v2/invoicing/invoices/${invoiceId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          },
+          timeoutMs
+        );
+        if (detailsRes.ok) {
+          const detailData = await detailsRes.json();
+          if (detailData.detail?.metadata?.recipient_view_url) {
+            payerViewUrl = detailData.detail.metadata.recipient_view_url;
+          }
+        }
+      } catch (_detailsErr) {}
+    }
+  } catch (sendErr) {
+    console.error(`Warning: PayPal invoice send call failed: ${sendErr.message}`);
+  }
+
+  let qrCodeUrl = payerViewUrl;
   try {
     const qrRes = await executePayPalRequest(
       `/v2/invoicing/invoices/${invoiceId}/generate-qr-code`,
@@ -343,12 +386,13 @@ export async function generateInvoiceWithQr({
       },
       timeoutMs
     );
-    const qrData = await qrRes.json().catch(() => null);
-    if (qrData && qrData.image) {
-      qrCodeUrl = `data:image/png;base64,${qrData.image}`;
+    const qrText = await qrRes.text();
+    const base64Match = qrText.match(/(?:text\/plain\s+)([A-Za-z0-9+/=]+)/);
+    if (base64Match && base64Match[1]) {
+      qrCodeUrl = `data:image/png;base64,${base64Match[1].trim()}`;
     }
-  } catch {
-    // If QR code generation fails, fall back to interactive sandbox URL
+  } catch (qrErr) {
+    console.error(`Warning: PayPal invoice QR code generation failed: ${qrErr.message}`);
   }
 
   return {
@@ -357,7 +401,8 @@ export async function generateInvoiceWithQr({
     recipientEmail,
     totalCents,
     qrCodeUrl,
-    status: invoiceData.status || "DRAFT",
+    payerViewUrl,
+    status,
     liveMode: true
   };
 }

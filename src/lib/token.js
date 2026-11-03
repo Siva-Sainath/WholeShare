@@ -1,9 +1,10 @@
 import crypto from "node:crypto";
+import { getRequiredHmacSecret } from "./env.js";
 
-const DEFAULT_SECRET = process.env.WHOSHARE_TOKEN_SECRET || "wholeshare-dev-insecure-secret-key-32b";
 const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24;
 
-export function createSharedPaymentToken(mandate, secret = DEFAULT_SECRET, ttlMs = DEFAULT_TTL_MS) {
+export function createSharedPaymentToken(mandate, secret = null, ttlMs = DEFAULT_TTL_MS) {
+  const activeSecret = secret || getRequiredHmacSecret();
   const {
     buyerId,
     sku,
@@ -30,7 +31,7 @@ export function createSharedPaymentToken(mandate, secret = DEFAULT_SECRET, ttlMs
   ].join("|");
 
   const hmacSignature = crypto
-    .createHmac("sha256", secret)
+    .createHmac("sha256", activeSecret)
     .update(payload)
     .digest("hex");
 
@@ -46,10 +47,12 @@ export function createSharedPaymentToken(mandate, secret = DEFAULT_SECRET, ttlMs
   };
 }
 
-export function verifySharedPaymentToken(token, secret = DEFAULT_SECRET) {
+export function verifySharedPaymentToken(token, secret = null) {
   if (!token || typeof token !== "object") {
     return false;
   }
+
+  const activeSecret = secret || getRequiredHmacSecret();
 
   const {
     tokenId,
@@ -81,7 +84,7 @@ export function verifySharedPaymentToken(token, secret = DEFAULT_SECRET) {
   ].join("|");
 
   const expectedSignature = crypto
-    .createHmac("sha256", secret)
+    .createHmac("sha256", activeSecret)
     .update(payload)
     .digest("hex");
 

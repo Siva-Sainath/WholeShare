@@ -4,14 +4,14 @@ import { WholeshareDurableHarness } from "../src/lib/durable-harness.js";
 import { loadSessionTrajectory, createAgentSession } from "../src/lib/db.js";
 import { actionDispatcher } from "../src/lib/web-actions.js";
 
-test("WholeshareDurableHarness initializes and starts a durable session", async () => {
+test("WholeshareDurableHarness initializes and starts a durable session", { timeout: 300000 }, async () => {
   actionDispatcher.resetState();
   const harness = new WholeshareDurableHarness();
 
   const sessionId = `test_sess_${Date.now()}`;
 
   const result = await harness.startSession({
-    prompt: "Coordinate flour coalition and lock escrow",
+    prompt: "Discover wholesale flour catalog for SKU flour-organic-white",
     sessionId
   });
 
@@ -28,7 +28,7 @@ test("WholeshareDurableHarness initializes and starts a durable session", async 
   assert.ok(trajectory.steps.length > 0);
 });
 
-test("WholeshareDurableHarness rehydrates and resumes an interrupted session", async () => {
+test("WholeshareDurableHarness rehydrates and resumes an interrupted session", { timeout: 300000 }, async () => {
   actionDispatcher.resetState();
   const harness = new WholeshareDurableHarness();
   const sessionId = `test_resume_${Date.now()}`;
@@ -49,7 +49,7 @@ test("WholeshareDurableHarness rehydrates and resumes an interrupted session", a
   assert.equal(trajectory.status, "COMPLETED");
 });
 
-test("WholeshareDurableHarness resumes session when human step-up is approved", async () => {
+test("WholeshareDurableHarness resumes session when human step-up is approved", { timeout: 300000 }, async () => {
   actionDispatcher.resetState();
   const harness = new WholeshareDurableHarness();
   const sessionId = `test_step_up_${Date.now()}`;
