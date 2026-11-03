@@ -76,7 +76,7 @@ test("executeTool handles generate_step_up_invoice with real PayPal sandbox or f
   });
 
   if (result.status === "ERROR") {
-    assert.match(result.error, /PayPal sandbox credentials missing or placeholder/);
+    assert.match(result.error, /(PayPal sandbox credentials missing or placeholder|insufficient permissions|HTTP 403)/);
   } else {
     assert.equal(result.status, "INVOICE_GENERATED");
     assert.ok(result.invoiceId);

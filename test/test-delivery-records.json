@@ -1,0 +1,15 @@
+[
+  {
+    "id": "del_clan-austin-organic-flour-01_buyer-sweet-treats",
+    "clanId": "clan-austin-organic-flour-01",
+    "memberId": "buyer-sweet-treats",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-10-26T10:00:00.000Z",
+    "buyerDeliveredAt": "2026-10-28T10:00:00.000Z",
+    "inspectionWindowEndsAt": "2026-10-30T10:00:00.000Z",
+    "source": "auto_confirmed",
+    "conditionNotes": "Auto-confirmed: buyer silence for 48 hours following supplier delivery confirmation.",
+    "createdAt": "2026-11-03T07:47:33.343Z"
+  }
+]
