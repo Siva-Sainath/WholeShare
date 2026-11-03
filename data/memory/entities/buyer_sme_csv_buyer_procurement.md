@@ -2,7 +2,7 @@
 id: "buyer_sme_csv_buyer_procurement"
 type: "organization"
 aliases: ["sme_csv_buyer", "procurement-profile", "organic-flour-50lb"]
-updatedAt: "2026-11-03T07:44:50.048Z"
+updatedAt: "2026-11-03T07:47:37.639Z"
 ---
 
 # Procurement Profile: sme_csv_buyer (buyer_sme_csv_buyer_procurement)
@@ -14,4 +14,4 @@ updatedAt: "2026-11-03T07:44:50.048Z"
 - Total invoice expenditure is 1140515 integer cents.
 - Approved spec protein threshold is 12.7 percent.
 - Organic certification requirement is true.
-- Updated at 2026-11-03T07:44:50.048Z.
+- Updated at 2026-11-03T07:47:37.639Z.
