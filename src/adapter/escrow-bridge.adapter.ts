@@ -194,7 +194,7 @@ export class EscrowBridgeAdapter {
 
       const maxAutoAuthorizeUsd = member.maxSpendCents
         ? member.maxSpendCents / 100
-        : Math.max(orderAmountUsd, 10000);
+        : Math.min(5000, Math.max(orderAmountUsd, 1000));
 
       const stepUpThresholdUsd = member.stepUpThresholdCents
         ? member.stepUpThresholdCents / 100
@@ -215,7 +215,6 @@ export class EscrowBridgeAdapter {
           qrCodeUrl = qrResult.paymentUrl || `https://sandbox.paypal.com/invoice/p/#${qrResult.invoiceId}`;
           member.invoiceQrUrl = qrCodeUrl;
         } catch {
-          // Fallback for offline tests
           member.invoiceQrUrl = `https://sandbox.paypal.com/invoice/qr/INV2-${coalition.id}-${member.smeId}.png`;
           qrCodeUrl = member.invoiceQrUrl;
         }
@@ -299,18 +298,15 @@ export class EscrowBridgeAdapter {
       );
     }
 
-    // Check 100% member authorization invariant
-    const missingAuth = members.filter(
-      (m) => !m.authorizationId && m.status !== "AUTHORIZED" && m.status !== "CAPTURED"
-    );
+    // Enforce 100% member authorization invariant
+    const missingAuth = members.filter((m) => !m.authorizationId);
     if (missingAuth.length > 0) {
       throw new EscrowBridgeError(
         "UNAUTHORIZED_MEMBERS_EXIST",
-        `${missingAuth.length} member(s) lack valid authorization: ${missingAuth.map((m) => m.smeId).join(", ")}`
+        `${missingAuth.length} member(s) lack valid authorizationId: ${missingAuth.map((m) => m.smeId).join(", ")}`
       );
     }
 
-    // Map discount tiers
     const mappedTiers: PricingTier[] = (options.tiers || []).map((t) => {
       let unitPrice = 0;
       if (typeof t.unitPriceUsd === "number") {
@@ -336,15 +332,22 @@ export class EscrowBridgeAdapter {
       });
     }
 
-    // Build FinalBatchCaptureOptions for Developer 2's PayPalMoneyGateway
-    const batchMembers = members.map((m) => ({
-      memberId: m.smeId,
-      authorizationId: m.authorizationId || `AUTH-${m.smeId}-${Date.now()}`,
-      status: m.status || "AUTHORIZED",
-      quantity: m.pledgedUnits,
-      unitPrice: coalition.unitPriceCents / 100,
-      orderAmount: (m.authorizedCents || m.pledgedUnits * coalition.unitPriceCents) / 100,
-    }));
+    const batchMembers = members.map((m) => {
+      if (!m.authorizationId) {
+        throw new EscrowBridgeError(
+          "UNAUTHORIZED_MEMBERS_EXIST",
+          `Member ${m.smeId} lacks valid authorizationId`
+        );
+      }
+      return {
+        memberId: m.smeId,
+        authorizationId: m.authorizationId,
+        status: m.status || "AUTHORIZED",
+        quantity: m.pledgedUnits,
+        unitPrice: coalition.unitPriceCents / 100,
+        orderAmount: (m.authorizedCents || m.pledgedUnits * coalition.unitPriceCents) / 100,
+      };
+    });
 
     const batchOptions: FinalBatchCaptureOptions = {
       clanState: {
@@ -435,7 +438,7 @@ export class EscrowBridgeAdapter {
             member.smeId
           );
 
-          member.status = "REFUNDED";
+          member.status = "VOIDED";
           voids.push({
             smeId: member.smeId,
             authorizationId: authId,
@@ -452,7 +455,7 @@ export class EscrowBridgeAdapter {
       }
     }
 
-    coalition.status = "SETTLED";
+    coalition.status = "CANCELLED";
 
     return {
       coalitionId: coalition.id,

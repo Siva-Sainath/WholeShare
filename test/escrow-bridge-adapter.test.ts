@@ -269,7 +269,7 @@ describe("EscrowBridgeAdapter Seam Invariant Tests", () => {
     }
   });
 
-  it("voidCoalitionEscrow voids active member holds and transitions to SETTLED", async () => {
+  it("voidCoalitionEscrow voids active member holds and transitions to CANCELLED", async () => {
     const adapter = new EscrowBridgeAdapter(new PayPalMoneyGateway(config, dummyStorage));
     const coalition: BridgeCoalition = {
       id: "coalition_void_test",
@@ -305,8 +305,8 @@ describe("EscrowBridgeAdapter Seam Invariant Tests", () => {
     try {
       const result = await adapter.voidCoalitionEscrow(coalition, "Threshold not reached.");
       assert.strictEqual(result.voidedMembersCount, 1);
-      assert.strictEqual(result.coalition.status, "SETTLED");
-      assert.strictEqual(result.coalition.members[0].status, "REFUNDED");
+      assert.strictEqual(result.coalition.status, "CANCELLED");
+      assert.strictEqual(result.coalition.members[0].status, "VOIDED");
     } finally {
       adapter.getGateway().voidAuthorization = origVoid;
     }
