@@ -37,12 +37,14 @@ import { DeliveryAdapter } from "../adapter/delivery.adapter.ts";
 import { ClaimsAdapter } from "../adapter/claims.adapter.ts";
 import { SettlementAdapter } from "../adapter/settlement.adapter.ts";
 import { PayPalMoneyGateway } from "../gateway/PayPalMoneyGateway.ts";
+import { getClanGovernanceAdapter } from "../adapter/clan-governance.adapter.ts";
 import { existsSync, readFileSync } from "node:fs";
 
 const deliveryAdapter = new DeliveryAdapter();
 const claimsAdapter = new ClaimsAdapter();
 const settlementAdapter = new SettlementAdapter();
 const payPalMoneyGateway = new PayPalMoneyGateway();
+const clanGovernanceAdapter = getClanGovernanceAdapter();
 
 
 
@@ -805,6 +807,87 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_governance_proposal",
+      description: "Clan Governance. Submits a democratic rule proposal for a buying clan to customize operating parameters (inspection clock, silence window, defect evidence, step-up threshold, or discount tier).",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Coalition or clan identifier" },
+          proposerSmeId: { type: "string", description: "SME proposing the rule change" },
+          ruleType: {
+            type: "string",
+            enum: [
+              "INSPECTION_WINDOW_HOURS",
+              "SILENCE_AUTO_CONFIRM_HOURS",
+              "DAMAGE_EVIDENCE_REQUIREMENT",
+              "STEP_UP_THRESHOLD_USD",
+              "VOTING_WEIGHT_STRATEGY",
+              "DISPUTE_ESCALATION_WINDOW_HOURS",
+              "MIN_DISCOUNT_PERCENT"
+            ],
+            description: "Governance rule to modify"
+          },
+          proposedValue: {
+            description: "Target value (e.g. 24 or 72 for hours, PHOTO_AND_VIDEO for evidence, 2500 for step-up USD)"
+          },
+          rationale: { type: "string", description: "Explanation of why this rule benefits the clan" },
+          votingDurationHours: { type: "integer", description: "Voting window duration in hours (default 24)" }
+        },
+        required: ["coalitionId", "proposerSmeId", "ruleType", "proposedValue"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "cast_clan_vote",
+      description: "Clan Governance. Casts an affirmative or negative vote on an open governance proposal with single-vote invariant enforcement.",
+      parameters: {
+        type: "object",
+        properties: {
+          proposalId: { type: "string", description: "Governance proposal identifier" },
+          coalitionId: { type: "string", description: "Coalition or clan identifier" },
+          smeId: { type: "string", description: "SME voter identifier" },
+          choice: { type: "string", enum: ["AFFIRMATIVE", "NEGATIVE"], description: "Vote choice" },
+          signature: { type: "string", description: "Optional ACP token signature" }
+        },
+        required: ["proposalId", "coalitionId", "smeId", "choice"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "tally_and_enact_proposal",
+      description: "Clan Governance. Tallies cast votes against quorum (>50%) and supermajority (>=66%) thresholds, enacting the new rule into the clan constitution if approved.",
+      parameters: {
+        type: "object",
+        properties: {
+          proposalId: { type: "string", description: "Governance proposal identifier" },
+          coalitionId: { type: "string", description: "Coalition or clan identifier" },
+          forceEarly: { type: "boolean", description: "Evaluate tally before deadline if supermajority is already attained" }
+        },
+        required: ["proposalId", "coalitionId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_clan_constitution",
+      description: "Clan Governance. Retrieves the active democratic constitution, operating rules, and past proposals for a coalition.",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Coalition identifier" }
+        },
+        required: ["coalitionId"]
+      }
+    }
   }
 ];
 
@@ -1264,6 +1347,91 @@ export async function executeTool(toolName, args = {}) {
           }
         ],
         answer: args.userQuestion ? `Regarding your question ('${args.userQuestion}'): under Section 5.2 and Section 7.4, your working capital remains protected under soft hold until two-party delivery confirmation and 48-hour inspection elapse.` : "Document analyzed. All clauses conform to Wholeshare FinTech policy invariants."
+      };
+    }
+
+    case "create_governance_proposal": {
+      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const members = coalition ? (coalition.members || []).map((m) => ({
+        smeId: m.smeId || m.id,
+        name: m.name,
+        pledgedUnits: m.pledgedUnits || 1
+      })) : [];
+
+      const proposal = clanGovernanceAdapter.proposeRuleChange({
+        coalitionId: args.coalitionId,
+        proposerSmeId: args.proposerSmeId,
+        ruleType: args.ruleType,
+        proposedValue: args.proposedValue,
+        rationale: args.rationale,
+        votingDurationHours: args.votingDurationHours,
+        members
+      });
+
+      actionDispatcher.broadcast("GOVERNANCE_PROPOSAL_CREATED", { proposal });
+      return { status: "SUCCESS", proposal };
+    }
+
+    case "cast_clan_vote": {
+      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const members = coalition ? (coalition.members || []).map((m) => ({
+        smeId: m.smeId || m.id,
+        name: m.name,
+        pledgedUnits: m.pledgedUnits || 1
+      })) : [];
+
+      const vote = clanGovernanceAdapter.castVote({
+        proposalId: args.proposalId,
+        coalitionId: args.coalitionId,
+        smeId: args.smeId,
+        choice: args.choice,
+        signature: args.signature,
+        members
+      });
+
+      actionDispatcher.broadcast("CLAN_VOTE_CAST", { vote });
+      return { status: "SUCCESS", vote };
+    }
+
+    case "tally_and_enact_proposal": {
+      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const members = coalition ? (coalition.members || []).map((m) => ({
+        smeId: m.smeId || m.id,
+        name: m.name,
+        pledgedUnits: m.pledgedUnits || 1
+      })) : [];
+
+      const result = clanGovernanceAdapter.tallyAndEnact({
+        proposalId: args.proposalId,
+        members,
+        forceEarly: Boolean(args.forceEarly)
+      });
+
+      if (result.proposal.status === "ENACTED") {
+        actionDispatcher.broadcast("GOVERNANCE_RULE_ENACTED", {
+          proposal: result.proposal,
+          constitution: result.enactedConstitution
+        });
+      } else if (result.proposal.status === "REJECTED") {
+        actionDispatcher.broadcast("GOVERNANCE_PROPOSAL_REJECTED", {
+          proposal: result.proposal,
+          tally: result.tally
+        });
+      }
+
+      return {
+        status: "SUCCESS",
+        ...result
+      };
+    }
+
+    case "get_clan_constitution": {
+      const constitution = clanGovernanceAdapter.getConstitution(args.coalitionId);
+      const proposals = clanGovernanceAdapter.listProposals(args.coalitionId);
+      return {
+        status: "SUCCESS",
+        constitution,
+        proposals
       };
     }
 

@@ -4,7 +4,7 @@ import { resolve, extname } from "node:path";
 import { actionDispatcher } from "../lib/web-actions.js";
 import { createOrderAuthorization, authorizeOrderHold } from "../lib/paypal-bridge.js";
 import { durableHarness } from "../lib/durable-harness.js";
-import { WHOLESHARE_TOOL_DECLARATIONS } from "../lib/tool-registry.js";
+import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../lib/tool-registry.js";
 import { loadAllFeatures } from "../lib/feature-map.js";
 import { agentRateLimiter, apiRateLimiter } from "../lib/rate-limiter.js";
 import { recordDisputeEvent } from "../lib/db.js";
@@ -206,6 +206,17 @@ export function createWebServer() {
       return;
     }
 
+    if (pathname === "/api/v1/agent/action" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool(body.tool, body.args || {});
+        sendJson(res, 200, result);
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
     if (pathname === "/api/v1/agent/chat" && req.method === "POST") {
       const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
       const rateCheck = agentRateLimiter.isAllowed(clientIp);
@@ -384,6 +395,62 @@ export function createWebServer() {
       const docs = listIngestedDocuments(buyerId);
       const baseline = buyerId ? queryProcurementBaseline(buyerId) : null;
       sendJson(res, 200, { count: docs.length, documents: docs, baseline });
+      return;
+    }
+
+    if (pathname === "/api/v1/governance/propose" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("create_governance_proposal", body);
+        if (result.status === "ERROR" || result.error) {
+          sendJson(res, 400, result);
+        } else {
+          sendJson(res, 201, result);
+        }
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/governance/vote" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("cast_clan_vote", body);
+        if (result.status === "ERROR" || result.error) {
+          sendJson(res, 400, result);
+        } else {
+          sendJson(res, 200, result);
+        }
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/governance/tally" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("tally_and_enact_proposal", body);
+        if (result.status === "ERROR" || result.error) {
+          sendJson(res, 400, result);
+        } else {
+          sendJson(res, 200, result);
+        }
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/governance/constitution" && req.method === "GET") {
+      try {
+        const coalitionId = url.searchParams.get("coalitionId") || "coalition_flour_01";
+        const result = await executeTool("get_clan_constitution", { coalitionId });
+        sendJson(res, 200, result);
+      } catch (err) {
+        sendJson(res, 500, { error: err.message });
+      }
       return;
     }
 

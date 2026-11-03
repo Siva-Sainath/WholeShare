@@ -7,6 +7,7 @@ import {
   type SupplierClaimResponse,
 } from "../storage/claims.storage.ts";
 import { DeliveryStorage, getDeliveryStorage } from "../storage/delivery.storage.ts";
+import { getClanGovernanceStorage } from "../storage/clan-governance.storage.ts";
 
 export class InspectionWindowExpiredError extends Error {
   readonly clanId: string;
@@ -142,6 +143,20 @@ export class ClaimsAdapter {
           clanId,
           memberId,
           deliveryRecord.inspectionWindowEndsAt
+        );
+      }
+    }
+
+    // Verify clan evidence standards if configured
+    const constitution = getClanGovernanceStorage().getConstitution(clanId);
+    if (constitution?.rules?.DAMAGE_EVIDENCE_REQUIREMENT === "PHOTO_AND_VIDEO") {
+      const photoList = params.evidence?.photoUrls || [];
+      const hasVideo =
+        photoList.some((u: string) => /video|\.mp4|\.mov/i.test(u)) ||
+        /video|\.mp4|\.mov/i.test(params.evidence?.description || "");
+      if (!hasVideo) {
+        throw new Error(
+          `[ClanEvidenceStandard]: Clan '${clanId}' constitution requires photo and video evidence for damage claims.`
         );
       }
     }

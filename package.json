@@ -9,7 +9,7 @@
     "build": "node --check src/web/server.js src/lib/policy.ts",
     "dev": "node src/web/server.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
-    "test:unit": "node --experimental-strip-types --test test/money-math.test.ts test/gateway-spending-limits.test.ts test/gateway-complete-authorization.test.ts test/webhook-verification.test.ts test/idempotency-batch-capture.test.ts test/delivery-confirmation.test.ts test/claims-damage-flow.test.ts test/dispute-supplier-approval.test.ts test/late-dispute.test.ts test/supplier-payout.test.ts test/reconciliation-worker.test.ts test/renewal-lifecycle.test.ts test/escrow-bridge-adapter.test.ts",
+    "test:unit": "node --experimental-strip-types --test test/money-math.test.ts test/gateway-spending-limits.test.ts test/gateway-complete-authorization.test.ts test/webhook-verification.test.ts test/idempotency-batch-capture.test.ts test/delivery-confirmation.test.ts test/claims-damage-flow.test.ts test/dispute-supplier-approval.test.ts test/late-dispute.test.ts test/supplier-payout.test.ts test/reconciliation-worker.test.ts test/renewal-lifecycle.test.ts test/escrow-bridge-adapter.test.ts test/clan-governance.test.ts",
     "check:mocks": "node scripts/check-no-mocks.mjs",
     "doctor": "node .cursor/skills/verify-syndicate/control-syndicate.mjs doctor",
     "seed": "node .cursor/skills/verify-syndicate/control-syndicate.mjs seed-demo --reset",

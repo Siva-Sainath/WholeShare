@@ -42,6 +42,7 @@ ENV/
 # Scratch & Diagnostics
 scripts/scratch/
 scratch/
+.scratch/
 .tempmediaStorage/
 .cache/
 coverage/

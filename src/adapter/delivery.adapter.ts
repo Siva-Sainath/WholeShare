@@ -4,6 +4,7 @@ import {
   type DeliveryRecord,
   type DeliverySource,
 } from "../storage/delivery.storage.ts";
+import { getClanGovernanceStorage } from "../storage/clan-governance.storage.ts";
 
 export class DeliveryConfirmationError extends Error {
   readonly code:
@@ -131,10 +132,15 @@ export class DeliveryAdapter {
       record.carrierName = params.carrierName;
     }
 
+    const constitution = getClanGovernanceStorage().getConstitution(clanId);
+    const windowDurationMs =
+      (constitution?.rules?.INSPECTION_WINDOW_HOURS || 48) * 60 * 60 * 1000;
+
     // Recompute inspection countdown
     record.inspectionWindowEndsAt = this.computeInspectionWindow(
       record.supplierDeliveredAt,
-      record.buyerDeliveredAt
+      record.buyerDeliveredAt,
+      windowDurationMs
     );
 
     this.storage.upsert(record);
@@ -142,12 +148,14 @@ export class DeliveryAdapter {
   }
 
   /**
-   * Computes inspectionWindowEndsAt as 48 hours after the later of both confirmations.
+   * Computes inspectionWindowEndsAt after the later of both confirmations.
+   * Uses clan constitution inspection window duration (default: 48 hours).
    * Returns null if either confirmation is still pending.
    */
   public computeInspectionWindow(
     supplierDeliveredAt: string | null,
-    buyerDeliveredAt: string | null
+    buyerDeliveredAt: string | null,
+    windowDurationMs: number = FORTY_EIGHT_HOURS_MS
   ): string | null {
     if (!supplierDeliveredAt || !buyerDeliveredAt) {
       return null;
@@ -157,14 +165,14 @@ export class DeliveryAdapter {
     const buyerMs = new Date(buyerDeliveredAt).getTime();
     const laterMs = Math.max(supplierMs, buyerMs);
 
-    return new Date(laterMs + FORTY_EIGHT_HOURS_MS).toISOString();
+    return new Date(laterMs + windowDurationMs).toISOString();
   }
 
   /**
-   * Evaluates the ADR-0011 2-day auto-confirmation rule:
-   * If the buyer remains silent for 2 days (48 hours) after the supplier confirmation,
-   * delivery counts as confirmed 2 days after the supplier confirmation,
-   * and the 48-hour inspection countdown begins then (window ends at supplierDeliveredAt + 96 hours).
+   * Evaluates the auto-confirmation rule:
+   * If the buyer remains silent following the supplier confirmation,
+   * delivery counts as confirmed after the clan's silence window,
+   * and the inspection countdown begins then.
    */
   public evaluateAutoConfirmation(
     clanId: string,
@@ -176,18 +184,24 @@ export class DeliveryAdapter {
       return record;
     }
 
+    const constitution = getClanGovernanceStorage().getConstitution(clanId);
+    const silenceMs =
+      (constitution?.rules?.SILENCE_AUTO_CONFIRM_HOURS || 48) * 60 * 60 * 1000;
+    const windowDurationMs =
+      (constitution?.rules?.INSPECTION_WINDOW_HOURS || 48) * 60 * 60 * 1000;
+
     const supplierMs = new Date(record.supplierDeliveredAt).getTime();
-    const autoConfirmThresholdMs = supplierMs + TWO_DAYS_MS;
+    const autoConfirmThresholdMs = supplierMs + silenceMs;
 
     if (asOfDate.getTime() >= autoConfirmThresholdMs) {
       const autoConfirmedDate = new Date(autoConfirmThresholdMs);
       record.buyerDeliveredAt = autoConfirmedDate.toISOString();
       record.source = "auto_confirmed";
       record.inspectionWindowEndsAt = new Date(
-        autoConfirmThresholdMs + FORTY_EIGHT_HOURS_MS
+        autoConfirmThresholdMs + windowDurationMs
       ).toISOString();
       if (!record.conditionNotes) {
-        record.conditionNotes = "Auto-confirmed: buyer silence for 48 hours following supplier delivery confirmation.";
+        record.conditionNotes = `Auto-confirmed: buyer silence for ${silenceMs / (3600 * 1000)} hours following supplier delivery confirmation.`;
       }
       this.storage.upsert(record);
     }
