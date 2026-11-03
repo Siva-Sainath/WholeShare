@@ -312,14 +312,14 @@ async function main() {
   });
   const tamperedBuyerToken = { ...legitToken, buyerId: "sme_malicious_attacker" };
   const verifBuyer = verifySharedPaymentToken(tamperedBuyerToken);
-  const blocked3 = !verifBuyer.valid;
+  const blocked3 = verifBuyer === false;
   console.log(`[${blocked3 ? "PASS" : "FAIL"}] Vector 3: ACP token altered buyer identity rejected.`);
   gauntletResults.push({ vector: 3, attack: "ACP Token Altered Buyer Identity", blocked: blocked3 });
 
   // Attack 4: Tampered ACP Token Inflated Limit
   const tamperedLimitToken = { ...legitToken, maxAuthorizedCents: 99999999 };
   const verifLimit = verifySharedPaymentToken(tamperedLimitToken);
-  const blocked4 = !verifLimit.valid;
+  const blocked4 = verifLimit === false;
   console.log(`[${blocked4 ? "PASS" : "FAIL"}] Vector 4: ACP token inflated spend limit rejected.`);
   gauntletResults.push({ vector: 4, attack: "ACP Token Inflated Spend Limit", blocked: blocked4 });
 

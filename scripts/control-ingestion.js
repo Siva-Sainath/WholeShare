@@ -11,6 +11,7 @@ import {
   curateProcurementDataset
 } from "../src/lib/ingestion-pipeline.js";
 import { instinctFs } from "../src/lib/instinct-fs.js";
+import { storageDriver } from "../src/lib/storage-driver.js";
 
 import { readdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 
@@ -19,10 +20,19 @@ const DEFAULT_SECRET = process.env.WHOLESHARE_GATEWAY_SECRET || "wholeshare_loca
 async function runDoctor() {
   console.log("=== Wholeshare Ingestion Pipeline Doctor ===");
   const memoryEntities = existsSync(instinctFs.entitiesDir) ? readdirSync(instinctFs.entitiesDir) : [];
+  const storageDiag = storageDriver.getDiagnostics();
   const report = {
     runtime: {
       node: process.version,
       platform: process.platform
+    },
+    storage: {
+      driver: storageDiag.driver,
+      rootDir: storageDiag.rootDir,
+      lakeDir: storageDiag.lakeDir,
+      memoryDir: storageDiag.memoryDir,
+      isJuiceFs: storageDiag.isJuiceFs,
+      atomicRenameSupported: storageDiag.atomicRenameSupported
     },
     ingestion: {
       memoryEntitiesIndexed: memoryEntities.length,

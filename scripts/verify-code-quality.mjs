@@ -23,7 +23,9 @@ const IGNORE_PATTERNS = [
   '.git',
   'SYNDICATE_SPEC.html',
   'SYNDICATE_SPEC.md',
-  'verify-code-quality.mjs'
+  'verify-code-quality.mjs',
+  'poteto-mode',
+  'statechart'
 ];
 
 function collectFiles(dirPath, fileList = []) {
@@ -63,6 +65,20 @@ function verifyTypeScriptAndJavaScript(filePath, content) {
 
     if (NARRATING_COMMENT_REGEX.test(line)) {
       violations.push(`Line ${lineNum}: Narrating comment slop detected.`);
+    }
+
+    if (filePath.startsWith('src/')) {
+      const simulationChecks = [
+        { regex: /(?:function\s+|const\s+|let\s+|var\s+|^\s*)(?:generateDeterministic|deriveFallback|getMock|createMock|fakePayload|mockResponse)\s*[(:=]/i, desc: 'Prohibited fallback/mock function definition' },
+        { regex: /MOCK_SANDBOX_TOKEN|sandbox_mock_token|fake_paypal_response/, desc: 'Prohibited mock token or simulated payload literal' },
+        { regex: /catch\s*\([^)]*\)\s*\{\s*return\s*\{/, desc: 'Prohibited catch-and-return fallback pattern (must fail fast or rethrow)' }
+      ];
+
+      for (const check of simulationChecks) {
+        if (check.regex.test(line)) {
+          violations.push(`Line ${lineNum}: ${check.desc} detected: "${line.trim()}". Zero-Simulation Standard strictly enforced.`);
+        }
+      }
     }
   }
 
