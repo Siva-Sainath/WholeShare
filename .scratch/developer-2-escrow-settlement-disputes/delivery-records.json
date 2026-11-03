@@ -63,5 +63,31 @@
     "source": "buyer",
     "conditionNotes": null,
     "createdAt": "2026-10-30T17:43:25.656Z"
+  },
+  {
+    "id": "del_coalition_del_1793724664150_sme_baker_01",
+    "clanId": "coalition_del_1793724664150",
+    "memberId": "sme_baker_01",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-11-03T16:51:04.150Z",
+    "buyerDeliveredAt": null,
+    "inspectionWindowEndsAt": null,
+    "source": "supplier",
+    "conditionNotes": null,
+    "createdAt": "2026-11-03T16:51:04.151Z"
+  },
+  {
+    "id": "del_coalition_flour_01_sme_artisan_baker",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_artisan_baker",
+    "trackingNumber": "1Z9999999999999999",
+    "carrierName": "UPS",
+    "supplierDeliveredAt": "2026-11-03T17:03:38.341Z",
+    "buyerDeliveredAt": "2026-11-03T17:03:44.391Z",
+    "inspectionWindowEndsAt": "2026-11-05T17:03:44.391Z",
+    "source": "buyer",
+    "conditionNotes": null,
+    "createdAt": "2026-11-03T17:03:38.341Z"
   }
 ]

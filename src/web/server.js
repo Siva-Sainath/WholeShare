@@ -8,6 +8,7 @@ import { WHOLESHARE_TOOL_DECLARATIONS } from "../lib/tool-registry.js";
 import { loadAllFeatures } from "../lib/feature-map.js";
 import { agentRateLimiter, apiRateLimiter } from "../lib/rate-limiter.js";
 import { recordDisputeEvent } from "../lib/db.js";
+import { PayPalWebhookHandler } from "../gateway/paypal-webhook.handler.ts";
 import {
   ingestDocument,
   importGoogleDriveFile,
@@ -30,7 +31,7 @@ const MIME_TYPES = {
   ".csv": "text/csv; charset=utf-8"
 };
 
-function readJsonBody(req) {
+function readRawBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", chunk => {
@@ -41,14 +42,15 @@ function readJsonBody(req) {
       }
     });
     req.on("end", () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
-        reject(err);
-      }
+      resolve(body);
     });
     req.on("error", reject);
   });
+}
+
+async function readJsonBody(req) {
+  const raw = await readRawBody(req);
+  return raw ? JSON.parse(raw) : {};
 }
 
 function sendJson(res, statusCode, data) {
@@ -57,6 +59,7 @@ function sendJson(res, statusCode, data) {
 }
 
 export function createWebServer() {
+  const webhookHandler = new PayPalWebhookHandler();
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     const pathname = url.pathname;
@@ -235,7 +238,20 @@ export function createWebServer() {
 
     if (pathname === "/api/v1/paypal/webhook" && req.method === "POST") {
       try {
-        const body = await readJsonBody(req);
+        const rawBody = await readRawBody(req);
+        let body;
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          body = {};
+        }
+
+        // If PayPal cryptographic transmission signature header is present, verify with PayPalWebhookHandler
+        const hasPayPalSig = req.headers["paypal-transmission-sig"] || req.headers["PAYPAL-TRANSMISSION-SIG"];
+        if (hasPayPalSig) {
+          await webhookHandler.handleWebhook(req.headers, rawBody);
+        }
+
         const eventType = body.event_type;
         const resource = body.resource || {};
         const disputeId = resource.dispute_id || resource.id || `DISPUTE_${Date.now()}`;
@@ -243,25 +259,41 @@ export function createWebServer() {
         const reason = resource.reason || "BUYER_COMPLAINT";
         const status = resource.status || (eventType === "CUSTOMER.DISPUTE.RESOLVED" ? "RESOLVED" : "UNDER_REVIEW");
 
-        await recordDisputeEvent({
-          disputeId,
-          orderId,
-          status,
-          reason,
-          resolutionOutcome: resource.dispute_outcome?.outcome_code || null
-        });
-
-        if (eventType === "CUSTOMER.DISPUTE.CREATED") {
-          actionDispatcher.broadcast("ESCROW_DISPUTED", {
+        if (eventType === "CUSTOMER.DISPUTE.CREATED" || eventType === "CUSTOMER.DISPUTE.RESOLVED") {
+          await recordDisputeEvent({
             disputeId,
             orderId,
+            status,
             reason,
-            status: "FROZEN_DISPUTED",
+            resolutionOutcome: resource.dispute_outcome?.outcome_code || null
+          });
+
+          if (eventType === "CUSTOMER.DISPUTE.CREATED") {
+            actionDispatcher.broadcast("ESCROW_DISPUTED", {
+              disputeId,
+              orderId,
+              reason,
+              status: "FROZEN_DISPUTED",
+              timestamp: new Date().toISOString()
+            });
+          }
+        } else if (eventType === "PAYMENT.CAPTURE.COMPLETED") {
+          actionDispatcher.broadcast("ESCROW_CAPTURED", {
+            captureId: resource.id,
+            amount: resource.amount,
+            status: "CAPTURED",
+            timestamp: new Date().toISOString()
+          });
+        } else if (eventType === "PAYMENT.AUTHORIZATION.CREATED") {
+          actionDispatcher.broadcast("ESCROW_AUTHORIZED", {
+            authorizationId: resource.id,
+            amount: resource.amount,
+            status: "AUTHORIZED",
             timestamp: new Date().toISOString()
           });
         }
 
-        sendJson(res, 200, { received: true, disputeId, status });
+        sendJson(res, 200, { received: true, disputeId, status, eventType });
       } catch (err) {
         sendJson(res, 400, { error: err.message });
       }

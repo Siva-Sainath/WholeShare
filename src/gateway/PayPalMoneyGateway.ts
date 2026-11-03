@@ -1534,15 +1534,9 @@ export class PayPalMoneyGateway {
       // Invoicing API error or missing profile in sandbox
     }
 
-    if (!qrCodeBase64) {
-      // Provide valid Base64 SVG payment QR payload for high-value orders
-      const svgPayload = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="white"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#003087">PayPal QR Step-Up: $${params.orderAmount.toFixed(2)}</text></svg>`;
-      qrCodeBase64 = Buffer.from(svgPayload).toString("base64");
-    }
-
     return {
       invoiceId,
-      qrCodeBase64,
+      qrCodeBase64: qrCodeBase64 || null,
       paymentUrl,
     };
   }

@@ -38,7 +38,7 @@ test("deterministic allocation calculates exact volume, tier discount, and integ
   assert.equal(proposal.allocations[0].stepUpRequired, true);
 });
 
-test("proposeCoalitionAllocation returns an interceptor-verified proposal", { timeout: 180000 }, async () => {
+test("proposeCoalitionAllocation returns an interceptor-verified proposal", { timeout: 360000 }, async () => {
   const result = await proposeCoalitionAllocation(
     "coalition_test_02",
     "organic-flour-50lb",

@@ -100,5 +100,61 @@
     "reducedSupplierPayout": 648,
     "createdAt": "2026-10-30T17:43:25.660Z",
     "updatedAt": "2026-10-30T17:43:25.664Z"
+  },
+  {
+    "claimId": "claim-1793724664152-jt8clj",
+    "clanId": "coalition_claim_1793724664152",
+    "memberId": "sme_baker_01",
+    "orderId": "ORD-999",
+    "captureId": "CAP-999",
+    "damagedUnits": 5,
+    "unitPrice": 20,
+    "orderValue": 200,
+    "claimedAmount": 100,
+    "evidence": {
+      "photoUrls": [
+        "https://example.com/sacks.jpg"
+      ],
+      "description": "Torn sacks of flour"
+    },
+    "status": "BUYER_APPROVED",
+    "buyerApprovedAt": "2026-11-03T16:51:04.152Z",
+    "supplierResponse": null,
+    "agreedRefundAmount": null,
+    "refundId": null,
+    "refundTransaction": null,
+    "reducedSupplierPayout": null,
+    "createdAt": "2026-11-03T16:51:04.152Z",
+    "updatedAt": "2026-11-03T16:51:04.152Z"
+  },
+  {
+    "claimId": "claim-1793725431900-5vewg9",
+    "clanId": "coalition_flour_01",
+    "memberId": "sme_artisan_baker",
+    "orderId": "4ED8234717547805K",
+    "captureId": "CAP_883192",
+    "damagedUnits": 5,
+    "unitPrice": 72,
+    "orderValue": 14400,
+    "claimedAmount": 360,
+    "evidence": {
+      "photoUrls": [
+        "https://example.com/evidence/sack1.jpg"
+      ],
+      "description": "5 sacks punctured during pallet offloading"
+    },
+    "status": "SETTLED",
+    "buyerApprovedAt": "2026-11-03T17:03:51.900Z",
+    "supplierResponse": {
+      "action": "ACCEPT",
+      "notes": "Agreed, credit issued for 5 sacks.",
+      "respondedAt": "2026-11-03T17:04:25.566Z"
+    },
+    "agreedRefundAmount": 360,
+    "refundId": null,
+    "refundTransaction": null,
+    "reducedSupplierPayout": 14040,
+    "createdAt": "2026-11-03T17:03:51.900Z",
+    "updatedAt": "2026-11-03T17:04:25.566Z"
   }
 ]

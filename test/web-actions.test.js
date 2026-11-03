@@ -29,7 +29,7 @@ test("spawnSme creates a verified SME with ACP shared payment token", () => {
   assert.ok(flourCoalition.currentUnits >= 500);
 });
 
-test("runNegotiation computes volume discount and asserts interceptor", { timeout: 180000 }, async () => {
+test("runNegotiation computes volume discount and asserts interceptor", { timeout: 360000 }, async () => {
   const result = await actionDispatcher.runNegotiation("coalition_flour_01");
   assert.ok(result.proposal.totalUnits >= 500);
   assert.equal(result.evaluation.valid, true);

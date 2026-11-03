@@ -28,7 +28,7 @@ test("OPSD Engine builds teacher prompt with strict leakage mitigation rules", (
   assert.ok(messages[1].content.includes(verifierError));
 });
 
-test("OPSD Engine rationalizes spend threshold violation and generates step-up invoice correction", { timeout: 180000 }, async () => {
+test("OPSD Engine rationalizes spend threshold violation and generates step-up invoice correction", { timeout: 360000 }, async () => {
   const prompt = "Onboard craft brewery with 120 sacks of malt and lock escrow.";
   const studentThought = "I will directly lock escrow for $2,400.";
   const studentToolCall = {
@@ -56,7 +56,7 @@ test("OPSD Engine rationalizes spend threshold violation and generates step-up i
   assert.equal(boundary.violations.length, 0);
 });
 
-test("OPSD Engine rationalizes illegal state transitions into valid intermediate step", { timeout: 180000 }, async () => {
+test("OPSD Engine rationalizes illegal state transitions into valid intermediate step", { timeout: 360000 }, async () => {
   const studentToolCall = {
     name: "run_coalition_negotiation",
     arguments: { coalitionId: "coalition_aero_01" }

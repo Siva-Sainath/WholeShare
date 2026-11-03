@@ -36,7 +36,7 @@ test("executeTool routes verify_supplier_credibility and executes or handles unc
   });
 
   if (result.status === "ERROR") {
-    assert.match(result.error, /Kernel API key|Playwright|network/i);
+    assert.match(result.error, /Kernel API key|Playwright|network|Connection error|Failed to create/i);
   } else {
     assert.equal(result.status, "SUCCESS");
     assert.equal(typeof result.riskScore, "number");

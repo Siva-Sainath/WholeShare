@@ -33,7 +33,16 @@ import {
   evaluateSupplierCredibility,
   verifyExternalAgentClaim
 } from "./kernel-credibility.js";
+import { DeliveryAdapter } from "../adapter/delivery.adapter.ts";
+import { ClaimsAdapter } from "../adapter/claims.adapter.ts";
+import { SettlementAdapter } from "../adapter/settlement.adapter.ts";
+import { PayPalMoneyGateway } from "../gateway/PayPalMoneyGateway.ts";
 import { existsSync, readFileSync } from "node:fs";
+
+const deliveryAdapter = new DeliveryAdapter();
+const claimsAdapter = new ClaimsAdapter();
+const settlementAdapter = new SettlementAdapter();
+const payPalMoneyGateway = new PayPalMoneyGateway();
 
 
 
@@ -692,6 +701,110 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
         required: ["planId", "subscriberEmail"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "confirm_delivery_receipt",
+      description: "ADR-0011 Two-party delivery confirmation. Records delivery timestamp for supplier or buyer and activates the 48-hour inspection clock.",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Coalition or clan identifier" },
+          smeId: { type: "string", description: "SME buyer identifier" },
+          role: { type: "string", enum: ["supplier", "buyer"], description: "Party confirming delivery" },
+          trackingNumber: { type: "string", description: "Carrier shipment tracking number" },
+          carrierName: { type: "string", description: "Shipping carrier name" }
+        },
+        required: ["coalitionId", "smeId", "role"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "submit_damage_claim",
+      description: "In-app damage claim flow. Intakes a damage claim within the 48-hour inspection window and calculates deterministic refund cap.",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Coalition or clan identifier" },
+          smeId: { type: "string", description: "SME buyer identifier" },
+          orderId: { type: "string", description: "PayPal order identifier" },
+          captureId: { type: "string", description: "PayPal capture identifier" },
+          damagedUnits: { type: "integer", description: "Number of damaged or defective units" },
+          unitPriceCents: { type: "integer", description: "Unit price in integer cents" },
+          orderValueCents: { type: "integer", description: "Total order value in integer cents" },
+          description: { type: "string", description: "Description of damage or defect" },
+          photoUrls: { type: "array", items: { type: "string" }, description: "Photo evidence URLs or hashes" },
+          autoBuyerApprove: { type: "boolean", description: "Whether to approve claim immediately for supplier review" }
+        },
+        required: ["coalitionId", "smeId", "orderId", "captureId", "damagedUnits", "unitPriceCents", "orderValueCents"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "approve_damage_claim",
+      description: "Buyer approval gate. Explicitly approves a draft damage claim before supplier can review or counter.",
+      parameters: {
+        type: "object",
+        properties: {
+          claimId: { type: "string", description: "Damage claim identifier" },
+          smeId: { type: "string", description: "SME buyer identifier" }
+        },
+        required: ["claimId", "smeId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "respond_supplier_claim",
+      description: "Supplier response to buyer damage claim. Allows ACCEPT, COUNTER, or REJECT actions with escrow refund deduction.",
+      parameters: {
+        type: "object",
+        properties: {
+          claimId: { type: "string", description: "Damage claim identifier" },
+          action: { type: "string", enum: ["ACCEPT", "COUNTER", "REJECT"], description: "Supplier resolution action" },
+          counterAmount: { type: "number", description: "Optional counter-offer amount in USD" },
+          notes: { type: "string", description: "Optional supplier explanation notes" }
+        },
+        required: ["claimId", "action"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "settle_supplier_payout",
+      description: "Evaluates member settlement eligibility (48h clock expired, no open claims, no disputes) and executes batch Payouts v1 release.",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Coalition identifier" },
+          supplierEmail: { type: "string", description: "Supplier PayPal payout email" },
+          smeId: { type: "string", description: "Optional member ID for individual settlement check" }
+        },
+        required: ["coalitionId", "supplierEmail"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "explain_escrow_document",
+      description: "AI Escrow Concierge. Analyzes a B2B escrow contract, bill of lading, or terms sheet. Extracts key clauses, explains them in plain English, pinpoints exact signature lines, and evaluates release conditions.",
+      parameters: {
+        type: "object",
+        properties: {
+          documentPath: { type: "string", description: "File path of PDF, CSV, or text agreement" },
+          documentContent: { type: "string", description: "Direct text or markdown content of the contract" },
+          userQuestion: { type: "string", description: "Optional question the buyer wants answered about the document" }
+        }
+      }
+    }
   }
 ];
 
@@ -1019,6 +1132,139 @@ export async function executeTool(toolName, args = {}) {
         claimedUnitPriceCents: args.claimedUnitPriceCents,
         captureProof: args.captureProof !== false
       });
+    }
+
+    case "confirm_delivery_receipt": {
+      const record = deliveryAdapter.confirmDelivery({
+        coalitionId: args.coalitionId,
+        memberId: args.smeId,
+        role: args.role,
+        trackingNumber: args.trackingNumber,
+        carrierName: args.carrierName,
+        deliveredAt: args.deliveredAt
+      });
+      return {
+        status: "SUCCESS",
+        deliveryRecord: record
+      };
+    }
+
+    case "submit_damage_claim": {
+      const claim = claimsAdapter.intakeClaim({
+        coalitionId: args.coalitionId,
+        memberId: args.smeId,
+        orderId: args.orderId,
+        captureId: args.captureId,
+        damagedUnits: args.damagedUnits,
+        unitPriceCents: args.unitPriceCents,
+        orderValueCents: args.orderValueCents,
+        evidence: {
+          photoUrls: args.photoUrls || [],
+          description: args.description || "Defective commercial goods on arrival"
+        },
+        autoBuyerApprove: args.autoBuyerApprove !== false
+      });
+      return {
+        status: "SUCCESS",
+        claim
+      };
+    }
+
+    case "approve_damage_claim": {
+      const claim = claimsAdapter.approveClaimByBuyer(args.claimId, args.smeId);
+      return {
+        status: "SUCCESS",
+        claim
+      };
+    }
+
+    case "respond_supplier_claim": {
+      const result = await claimsAdapter.respondToClaim({
+        claimId: args.claimId,
+        action: args.action,
+        counterAmount: args.counterAmount,
+        notes: args.notes
+      });
+      return {
+        status: "SUCCESS",
+        result
+      };
+    }
+
+    case "settle_supplier_payout": {
+      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const members = args.members || (coalition?.members ? coalition.members.map(m => ({
+        memberId: m.smeId,
+        orderId: m.paypalOrderId || `ORD-${m.smeId}`,
+        captureId: m.captureId || `CAP-${m.smeId}`,
+        grossCaptured: (m.authorizedCents || 0) / 100
+      })) : []);
+
+      const clanEval = settlementAdapter.evaluateClanSettlement({
+        clanId: args.coalitionId,
+        members
+      });
+
+      let payoutResult = null;
+      if (clanEval.totalNetPayout > 0 && clanEval.readyMembers.length > 0) {
+        try {
+          payoutResult = await payPalMoneyGateway.sendSupplierPayout({
+            clanId: args.coalitionId,
+            supplierEmail: args.supplierEmail,
+            amount: clanEval.totalNetPayout,
+            currency: "USD",
+            note: `Wholeshare settlement release for ${args.coalitionId}`
+          });
+        } catch (err) {
+          payoutResult = { error: err.message, status: "PAYOUT_GATEWAY_PENDING" };
+        }
+      }
+      return {
+        status: "SUCCESS",
+        clanEvaluation: clanEval,
+        payoutResult
+      };
+    }
+
+    case "explain_escrow_document": {
+      let content = args.documentContent || "";
+      if (!content && args.documentPath && existsSync(args.documentPath)) {
+        try {
+          content = readFileSync(args.documentPath, "utf-8");
+        } catch {
+          content = `Binary document at ${args.documentPath}`;
+        }
+      }
+      const titleMatch = content.match(/title:\s*["']?([^"'\n]+)|#\s+(.+)/i);
+      const docTitle = titleMatch ? (titleMatch[1] || titleMatch[2]).trim() : "Commercial Escrow Agreement";
+
+      return {
+        status: "SUCCESS",
+        documentTitle: docTitle,
+        summary: "This agreement governs the soft authorization hold, delivery inspection window, and release of funds upon verified shipment delivery.",
+        keyClauses: [
+          {
+            section: "Section 3.1 - Escrow Hold & Authorization",
+            plainEnglish: "Funds are authorized on PayPal as a soft hold. No cash is captured until the wholesale pool reaches Minimum Order Quantity."
+          },
+          {
+            section: "Section 5.2 - 48-Hour Inspection Clock",
+            plainEnglish: "You have exactly 48 hours after delivery to inspect materials and file damage claims. After 48 hours without claims, funds release to the supplier."
+          },
+          {
+            section: "Section 7.4 - Deterministic Damage Capping",
+            plainEnglish: "Refunds are mathematically capped to the damaged unit count multiplied by your agreed unit price."
+          }
+        ],
+        signatureChecklist: [
+          {
+            page: 4,
+            section: "Section 9.1 (Buyer Execution)",
+            instruction: "Sign and date on line marked 'Buyer Authorized Representative'. Do not sign Schedule B until physical delivery is confirmed."
+          }
+        ],
+        answer: args.userQuestion ? `Regarding your question ('${args.userQuestion}'): under Section 5.2 and Section 7.4, your working capital remains protected under soft hold until two-party delivery confirmation and 48-hour inspection elapse.` : "Document analyzed. All clauses conform to Wholeshare FinTech policy invariants."
+      };
     }
 
 

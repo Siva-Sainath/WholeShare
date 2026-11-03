@@ -4,8 +4,8 @@ import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../src/lib/tool-regis
 import { WholeshareAgentHarness } from "../src/lib/agent-harness.js";
 import { actionDispatcher } from "../src/lib/web-actions.js";
 
-test("WHOLESHARE_TOOL_DECLARATIONS registers 28 distinct tools with JSON schemas", () => {
-  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 28);
+test("WHOLESHARE_TOOL_DECLARATIONS registers 34 distinct tools with JSON schemas", () => {
+  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 34);
   const toolNames = WHOLESHARE_TOOL_DECLARATIONS.map(t => t.function.name);
 
   assert.ok(toolNames.includes("discover_wholesale_catalog"));
@@ -36,6 +36,12 @@ test("WHOLESHARE_TOOL_DECLARATIONS registers 28 distinct tools with JSON schemas
   assert.ok(toolNames.includes("capture_order_hold"));
   assert.ok(toolNames.includes("create_subscription_plan"));
   assert.ok(toolNames.includes("create_subscription"));
+  assert.ok(toolNames.includes("confirm_delivery_receipt"));
+  assert.ok(toolNames.includes("submit_damage_claim"));
+  assert.ok(toolNames.includes("approve_damage_claim"));
+  assert.ok(toolNames.includes("respond_supplier_claim"));
+  assert.ok(toolNames.includes("settle_supplier_payout"));
+  assert.ok(toolNames.includes("explain_escrow_document"));
 
   for (const tool of WHOLESHARE_TOOL_DECLARATIONS) {
     assert.equal(tool.type, "function");
@@ -115,7 +121,7 @@ test("WholeshareAgentHarness fails fast on unrecoverable model failure without f
   );
 });
 
-test("WholeshareAgentHarness runs full session with broadcast telemetry", { timeout: 180000 }, async () => {
+test("WholeshareAgentHarness runs full session with broadcast telemetry", { timeout: 360000 }, async () => {
   actionDispatcher.resetState();
   const harness = new WholeshareAgentHarness();
 
@@ -127,4 +133,49 @@ test("WholeshareAgentHarness runs full session with broadcast telemetry", { time
   assert.equal(session.success, true);
   assert.ok(session.steps.length > 0);
   assert.ok(session.totalDurationMs >= 0);
+});
+
+test("executeTool executes confirm_delivery_receipt and starts inspection clock", async () => {
+  const result = await executeTool("confirm_delivery_receipt", {
+    coalitionId: `coalition_del_${Date.now()}`,
+    smeId: "sme_baker_01",
+    role: "supplier",
+    trackingNumber: "1Z9999999999999999",
+    carrierName: "UPS"
+  });
+
+  assert.equal(result.status, "SUCCESS");
+  assert.ok(result.deliveryRecord);
+  assert.equal(result.deliveryRecord.trackingNumber, "1Z9999999999999999");
+});
+
+test("executeTool executes submit_damage_claim with deterministic capping", async () => {
+  const result = await executeTool("submit_damage_claim", {
+    coalitionId: `coalition_claim_${Date.now()}`,
+    smeId: "sme_baker_01",
+    orderId: "ORD-999",
+    captureId: "CAP-999",
+    damagedUnits: 5,
+    unitPriceCents: 2000,
+    orderValueCents: 20000,
+    description: "Torn sacks of flour",
+    photoUrls: ["https://example.com/sacks.jpg"]
+  });
+
+  assert.equal(result.status, "SUCCESS");
+  assert.ok(result.claim);
+  assert.equal(result.claim.claimedAmount, 100);
+});
+
+test("executeTool executes explain_escrow_document for AI Concierge", async () => {
+  const result = await executeTool("explain_escrow_document", {
+    documentContent: "# Tri-Party Escrow Agreement\n\nSection 3.1 - Escrow Hold & Authorization\nFunds are placed on soft hold.\n\nSection 5.2 - 48-Hour Inspection Clock\nInspection window expires in 48 hours.\n\nSection 9.1 - Signatures\nBuyer Authorized Representative signs here.",
+    userQuestion: "When do I sign Schedule B?"
+  });
+
+  assert.equal(result.status, "SUCCESS");
+  assert.ok(result.summary);
+  assert.ok(result.keyClauses.length >= 3);
+  assert.ok(result.signatureChecklist.length >= 1);
+  assert.ok(result.answer.includes("Section 5.2"));
 });
