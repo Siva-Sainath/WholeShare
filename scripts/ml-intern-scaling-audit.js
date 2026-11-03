@@ -26,7 +26,7 @@ const NOTEBOOK_CONFIGS = [
   },
   {
     name: "02_qwen_system2_sft_reasoning.ipynb",
-    model: "Qwen 2.5 7B / 9B",
+    model: "Qwen 3.5 9B",
     approach: "QLoRA 4-bit (NF4, r=16, alpha=32)",
     datasetSize: 15000,
     batchSize: 4,
@@ -38,7 +38,7 @@ const NOTEBOOK_CONFIGS = [
   },
   {
     name: "03_qwen_system2_grpo_rlvr.ipynb",
-    model: "Qwen 2.5 7B / 9B Policy + Frozen Ref",
+    model: "Qwen 3.5 9B Policy + Frozen Ref",
     approach: "GRPO (Group Size G=4, Beta=0.04)",
     datasetSize: 2000,
     batchSize: 2,
@@ -49,7 +49,7 @@ const NOTEBOOK_CONFIGS = [
   },
   {
     name: "04_qwen_deal_failure_and_coalition_rl.ipynb",
-    model: "Qwen 2.5 7B / 9B with Invariant Kernel",
+    model: "Qwen 3.5 9B with Invariant Kernel",
     approach: "GRPO Multi-Reward RLVR (G=4)",
     datasetSize: 2500,
     batchSize: 2,
