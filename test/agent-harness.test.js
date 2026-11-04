@@ -4,8 +4,8 @@ import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../src/lib/tool-regis
 import { WholeshareAgentHarness } from "../src/lib/agent-harness.js";
 import { actionDispatcher } from "../src/lib/web-actions.js";
 
-test("WHOLESHARE_TOOL_DECLARATIONS registers 38 distinct tools with JSON schemas", () => {
-  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 38);
+test("WHOLESHARE_TOOL_DECLARATIONS registers 45 distinct tools with JSON schemas", () => {
+  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 45);
   const toolNames = WHOLESHARE_TOOL_DECLARATIONS.map(t => t.function.name);
 
   assert.ok(toolNames.includes("discover_wholesale_catalog"));
@@ -46,6 +46,13 @@ test("WHOLESHARE_TOOL_DECLARATIONS registers 38 distinct tools with JSON schemas
   assert.ok(toolNames.includes("cast_clan_vote"));
   assert.ok(toolNames.includes("tally_and_enact_proposal"));
   assert.ok(toolNames.includes("get_clan_constitution"));
+  assert.ok(toolNames.includes("create_custom_clan_with_constitution"));
+  assert.ok(toolNames.includes("evaluate_clan_voluntary_exit"));
+  assert.ok(toolNames.includes("leave_clan"));
+  assert.ok(toolNames.includes("issue_paypal_debt_invoice"));
+  assert.ok(toolNames.includes("settle_member_debt"));
+  assert.ok(toolNames.includes("check_buyer_liquidity_and_ar"));
+  assert.ok(toolNames.includes("paypal_execute_toolkit_action"));
 
   for (const tool of WHOLESHARE_TOOL_DECLARATIONS) {
     assert.equal(tool.type, "function");

@@ -454,6 +454,92 @@ export function createWebServer() {
       return;
     }
 
+    if (pathname === "/api/v1/clan/create" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("create_custom_clan_with_constitution", body);
+        if (result.status === "ERROR" || result.error) {
+          sendJson(res, 400, result);
+        } else {
+          sendJson(res, 201, result);
+        }
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/clan/exit/evaluate" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("evaluate_clan_voluntary_exit", body);
+        sendJson(res, 200, result);
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/clan/leave" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("leave_clan", body);
+        if (result.status === "ERROR" || result.error) {
+          sendJson(res, 400, result);
+        } else {
+          sendJson(res, 200, result);
+        }
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/clan/debt/invoice" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("issue_paypal_debt_invoice", body);
+        sendJson(res, 201, result);
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/clan/debt/settle" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("settle_member_debt", body);
+        sendJson(res, 200, result);
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/buyer/liquidity" && req.method === "GET") {
+      try {
+        const buyerId = url.searchParams.get("buyerId") || url.searchParams.get("smeId") || "sme_austin_01";
+        const autoRemind = url.searchParams.get("autoRemind") === "true";
+        const result = await executeTool("check_buyer_liquidity_and_ar", { buyerId, autoRemindOverdue: autoRemind });
+        sendJson(res, 200, result);
+      } catch (err) {
+        sendJson(res, 500, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/paypal/toolkit" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const result = await executeTool("paypal_execute_toolkit_action", body);
+        sendJson(res, 200, result);
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
     // Static Asset Serving
     let filePath = pathname === "/" ? resolve(PUBLIC_DIR, "index.html") : resolve(PUBLIC_DIR, pathname.slice(1));
     if (!filePath.startsWith(PUBLIC_DIR)) {

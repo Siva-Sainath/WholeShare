@@ -38,6 +38,9 @@ import { ClaimsAdapter } from "../adapter/claims.adapter.ts";
 import { SettlementAdapter } from "../adapter/settlement.adapter.ts";
 import { PayPalMoneyGateway } from "../gateway/PayPalMoneyGateway.ts";
 import { getClanGovernanceAdapter } from "../adapter/clan-governance.adapter.ts";
+import { executePayPalToolkitAction, getPayPalToolkitToolNames } from "./paypal-toolkit-bridge.js";
+import { runAccountsReceivableLiquidityCheck } from "./agent-toolkit.ts";
+import { getRepaymentStorage } from "../storage/repayment.storage.ts";
 import { existsSync, readFileSync } from "node:fs";
 
 const deliveryAdapter = new DeliveryAdapter();
@@ -888,6 +891,167 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
         required: ["coalitionId"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_custom_clan_with_constitution",
+      description: "Qwen Clan Formation Concierge tool. Synthesizes a custom Clan Charter for any commodity (coffee, packaging, flour, tiles) based on founder data links, catalog tiers, and operating rules. Establishes the voting laws (1-member-1-vote, volume-weighted, capital-weighted, or founder veto), founder veto rules, and meta-governance procedures for unforeseen issues.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanName: { type: "string", description: "Name of the new purchasing clan" },
+          founderSmeId: { type: "string", description: "SME business ID of the founder creating the clan" },
+          sku: { type: "string", description: "Target wholesale SKU" },
+          skuName: { type: "string", description: "Product display name" },
+          targetUnits: { type: "integer", description: "Target MOQ unit threshold" },
+          basePriceUsd: { type: "number", description: "Base single-unit retail/wholesale price in USD" },
+          tiers: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                tier: { type: "integer" },
+                minUnits: { type: "integer" },
+                priceCents: { type: "integer" },
+                discountPct: { type: "number" }
+              }
+            },
+            description: "Volume pricing tiers"
+          },
+          votingWeightStrategy: {
+            type: "string",
+            enum: ["ONE_MEMBER_ONE_VOTE", "VOLUME_WEIGHTED", "CAPITAL_WEIGHTED", "FOUNDER_VETO"],
+            description: "Democratic voting structure chosen by founder"
+          },
+          inspectionWindowHours: { type: "integer", description: "Custom inspection window duration (12 to 168 hours)" },
+          silenceAutoConfirmHours: { type: "integer", description: "Buyer silence auto-confirm period (24 to 168 hours)" },
+          damageEvidenceRequirement: {
+            type: "string",
+            enum: ["PHOTO_ONLY", "PHOTO_AND_VIDEO", "THIRD_PARTY_INSPECTION"],
+            description: "Evidence policy required for damage claims"
+          },
+          stepUpThresholdUsd: { type: "number", description: "KYC step-up threshold between $500 and $5,000" },
+          founderVetoRules: {
+            type: "array",
+            items: { type: "string" },
+            description: "Rule types that require founder veto approval before amendment"
+          },
+          metaGovernanceProcedure: {
+            type: "string",
+            enum: ["DEMOCRATIC_SUPERMAJORITY", "FOUNDER_ARBITRATION", "EXPEDIENT_TRIAGE"],
+            description: "Procedure rule governing how the clan must decide on unforeseen issues"
+          },
+          dataSources: {
+            type: "array",
+            items: { type: "object" },
+            description: "Supplier URLs, invoice links, or verified catalog sources"
+          }
+        },
+        required: ["clanName", "founderSmeId", "sku", "targetUnits", "basePriceUsd"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "evaluate_clan_voluntary_exit",
+      description: "Clan Exit Audit tool. Evaluates whether an SME can leave a clan immediately (if in FORMING) or if their Orders v2 soft hold must remain locked in escrow to complete batch fulfillment. Audits outstanding debts.",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Clan identifier" },
+          smeId: { type: "string", description: "SME business ID" }
+        },
+        required: ["coalitionId", "smeId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "leave_clan",
+      description: "Voluntary Clan Withdrawal tool. If the clan is FORMING, exits cleanly and adjusts remaining target units. If the clan is LOCKED or FULFILLING, queues withdrawal post-settlement while preserving the locked escrow soft hold to protect co-purchasers. Any unpaid debts remain permanently bound to the business.",
+      parameters: {
+        type: "object",
+        properties: {
+          coalitionId: { type: "string", description: "Clan identifier" },
+          smeId: { type: "string", description: "SME business ID" },
+          reason: { type: "string", description: "Optional explanation for withdrawal" }
+        },
+        required: ["coalitionId", "smeId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "issue_paypal_debt_invoice",
+      description: "PayPal Invoicing v2 Debt Enforcement tool. Issues an official PayPal Invoice v2 with scannable QR code to bill an SME for uncollected debt, late dispute clawbacks, or broken exit liabilities. Persists an immutable MemberDebtLiability record in storage.",
+      parameters: {
+        type: "object",
+        properties: {
+          smeId: { type: "string", description: "Debtor SME identifier" },
+          smeEmail: { type: "string", description: "Debtor PayPal billing email" },
+          clanId: { type: "string", description: "Clan identifier where liability originated" },
+          amountCents: { type: "integer", description: "Debt amount in integer cents" },
+          reason: { type: "string", description: "Legal basis for debt (clawback, broken allocation, fee)" },
+          note: { type: "string", description: "Explanation note on PayPal invoice" }
+        },
+        required: ["smeId", "smeEmail", "clanId", "amountCents", "reason"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "settle_member_debt",
+      description: "PayPal Debt Settlement tool. Discharges an outstanding MemberDebtLiability once paid via PayPal invoice or direct funds transfer, restoring the SME's ability to join and form purchasing clans.",
+      parameters: {
+        type: "object",
+        properties: {
+          debtId: { type: "string", description: "Debt identifier to settle" },
+          paypalCaptureId: { type: "string", description: "Optional PayPal capture or payment reference" }
+        },
+        required: ["debtId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_buyer_liquidity_and_ar",
+      description: "PayPal Invoicing v2 Liquidity & AR Pre-Flight tool. Queries PayPal Invoicing v2 (list_invoices) to verify cash-flow liquidity and optionally dispatches automatic payment reminders (send_invoice_reminder) for overdue receivables before committing capital.",
+      parameters: {
+        type: "object",
+        properties: {
+          buyerId: { type: "string", description: "Buyer SME identifier" },
+          autoRemindOverdue: { type: "boolean", description: "Whether to dispatch payment reminders for overdue invoices" }
+        },
+        required: ["buyerId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "paypal_execute_toolkit_action",
+      description: "Official PayPal Agent Toolkit execution gateway. Dispatches any of the 47 native @paypal/agent-toolkit tools (create_invoice, send_invoice_reminder, create_order, get_order, pay_order, create_shipment_tracking, get_dispute, list_disputes, create_subscription_plan, etc.) against PayPal Sandbox with strict policy sandwich interception.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            description: "The name of the PayPal Agent Toolkit tool to execute (e.g. list_invoices, send_invoice_reminder, list_disputes, get_dispute, create_order, pay_order, get_merchant_insights)"
+          },
+          parameters: {
+            type: "object",
+            description: "Arguments to pass directly to the PayPal Agent Toolkit tool"
+          }
+        },
+        required: ["action", "parameters"]
+      }
+    }
   }
 ];
 
@@ -1435,9 +1599,155 @@ export async function executeTool(toolName, args = {}) {
       };
     }
 
+    case "create_custom_clan_with_constitution": {
+      const clanName = args.clanName || args.name || "Custom Clan";
+      const sku = args.sku || (args.commodity ? args.commodity.toLowerCase().replace(/[^a-z0-9]/g, "-") : "custom-sku");
+      const skuName = args.skuName || args.commodity || clanName;
+      const targetUnits = args.targetUnits || args.moq || 500;
+      const basePriceUsd = args.basePriceUsd || (args.basePriceCents ? args.basePriceCents / 100 : 10);
+      const constIn = args.constitution || {};
+      const result = actionDispatcher.createCustomClan({
+        clanId: args.clanId,
+        clanName,
+        founderSmeId: args.founderSmeId,
+        sku,
+        skuName,
+        targetUnits,
+        basePriceUsd,
+        tiers: args.tiers || args.pricingTiers,
+        constitution: {
+          INSPECTION_WINDOW_HOURS: constIn.INSPECTION_WINDOW_HOURS || args.inspectionWindowHours || 48,
+          SILENCE_AUTO_CONFIRM_HOURS: constIn.SILENCE_AUTO_CONFIRM_HOURS || args.silenceAutoConfirmHours || 48,
+          DAMAGE_EVIDENCE_REQUIREMENT: constIn.DAMAGE_EVIDENCE_REQUIREMENT || args.damageEvidenceRequirement || "PHOTO_ONLY",
+          STEP_UP_THRESHOLD_USD: constIn.STEP_UP_THRESHOLD_USD || args.stepUpThresholdUsd || 1000,
+          VOTING_WEIGHT_STRATEGY: constIn.VOTING_WEIGHT_STRATEGY || args.votingWeightStrategy || "ONE_MEMBER_ONE_VOTE",
+          DISPUTE_ESCALATION_WINDOW_HOURS: constIn.DISPUTE_ESCALATION_WINDOW_HOURS || args.disputeEscalationWindowHours || 48,
+          MIN_DISCOUNT_PERCENT: constIn.MIN_DISCOUNT_PERCENT || args.minDiscountPercent || 20,
+          META_GOVERNANCE_PROCEDURE: constIn.META_GOVERNANCE_PROCEDURE || args.metaGovernanceProcedure || "DEMOCRATIC_SUPERMAJORITY"
+        },
+        founderVetoRules: args.founderVetoRules,
+        metaGovernancePolicy: args.metaGovernancePolicy || {
+          defaultQuorum: 0.5,
+          supermajorityThreshold: 0.66,
+          procedureForUnforeseenIssues: constIn.META_GOVERNANCE_PROCEDURE || args.metaGovernanceProcedure || "DEMOCRATIC_SUPERMAJORITY",
+          unforeseenVotingDurationHours: 24
+        },
+        dataSources: args.dataSources
+      });
+      return {
+        status: "SUCCESS",
+        coalition: result.coalition,
+        constitution: result.constitution
+      };
+    }
 
-    default:
+    case "evaluate_clan_voluntary_exit": {
+      const evaluation = actionDispatcher.evaluateMemberExit({
+        coalitionId: args.coalitionId,
+        smeId: args.smeId
+      });
+      return {
+        status: "SUCCESS",
+        evaluation
+      };
+    }
+
+    case "leave_clan": {
+      const exitResult = actionDispatcher.leaveCoalition({
+        coalitionId: args.coalitionId,
+        smeId: args.smeId,
+        reason: args.reason
+      });
+      return {
+        status: "SUCCESS",
+        ...exitResult
+      };
+    }
+
+    case "issue_paypal_debt_invoice": {
+      const repaymentStorage = getRepaymentStorage();
+      let invoiceResult = null;
+      try {
+        invoiceResult = await generateInvoiceWithQr({
+          recipientEmail: args.smeEmail,
+          amountCents: args.amountCents,
+          sku: `UNSETTLED_DEBT_${args.clanId}`,
+          note: args.note || `WholeShare Legal Debt Liability: ${args.reason} for clan ${args.clanId}`
+        });
+      } catch (err) {
+        invoiceResult = { invoiceId: `INV_DEBT_${Date.now()}`, qrCodeUrl: null, error: err.message };
+      }
+
+      const debtId = `debt_${args.smeId}_${Date.now()}`;
+      const debtRecord = {
+        debtId,
+        smeId: args.smeId,
+        clanId: args.clanId,
+        amountCents: args.amountCents,
+        reason: args.reason,
+        paypalInvoiceId: invoiceResult?.invoiceId || `INV_${Date.now()}`,
+        paypalInvoiceQrUrl: invoiceResult?.qrCodeUrl || null,
+        status: "OUTSTANDING",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      repaymentStorage.createMemberDebt(debtRecord);
+      actionDispatcher.broadcast("MEMBER_DEBT_INVOICE_ISSUED", { debtRecord });
+
+      return {
+        status: "SUCCESS",
+        debtRecord,
+        invoiceResult
+      };
+    }
+
+    case "settle_member_debt": {
+      const repaymentStorage = getRepaymentStorage();
+      const updated = repaymentStorage.settleMemberDebt(args.debtId);
+      if (!updated) {
+        return { status: "ERROR", error: `Debt record '${args.debtId}' not found.` };
+      }
+      actionDispatcher.broadcast("MEMBER_DEBT_SETTLED", { debt: updated });
+      return {
+        status: "SUCCESS",
+        debt: updated
+      };
+    }
+
+    case "check_buyer_liquidity_and_ar": {
+      const repaymentStorage = getRepaymentStorage();
+      const smeId = args.smeId || args.buyerId;
+      const outstandingDebtCents = smeId ? repaymentStorage.getOutstandingDebtTotalCents(smeId) : 0;
+      const liquidity = await runAccountsReceivableLiquidityCheck({
+        autoRemindOverdue: Boolean(args.autoRemindOverdue)
+      });
+      return {
+        status: "SUCCESS",
+        buyerId: smeId,
+        outstandingDebtCents,
+        liquidity
+      };
+    }
+
+    case "paypal_execute_toolkit_action": {
+      const action = args.action;
+      const params = args.parameters || {};
+      const result = await executePayPalToolkitAction(action, params);
+      return result;
+    }
+
+    default: {
+      try {
+        const toolkitToolNames = getPayPalToolkitToolNames();
+        if (toolkitToolNames.includes(toolName)) {
+          return await executePayPalToolkitAction(toolName, args);
+        }
+      } catch {
+        // Continue to unknown tool error
+      }
       return { error: `Unknown tool name: ${toolName}` };
+    }
     }
   } catch (err) {
     return {

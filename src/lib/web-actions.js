@@ -6,6 +6,9 @@ import { interceptNegotiationProposal } from "./interceptor.js";
 import { proposeCoalitionAllocation } from "./model-runner.js";
 import { transitionCoalitionState } from "./fsm.js";
 import { generateInvoiceWithQr } from "./paypal-bridge.js";
+import { getRepaymentStorage } from "../storage/repayment.storage.ts";
+import { getClanGovernanceAdapter } from "../adapter/clan-governance.adapter.ts";
+import { DEFAULT_CLAN_RULES, GovernanceError } from "../domain/clan-governance.ts";
 
 const catalogPath = resolve(process.cwd(), "data/processed/wholesale_catalog.json");
 const personasPath = resolve(process.cwd(), "data/processed/sme_personas.json");
@@ -185,15 +188,223 @@ class WholeshareActionDispatcher {
     return { sme, token };
   }
 
-  joinCoalition({ smeId, sku, units }) {
-    const sme = this.smes.get(smeId);
-    if (!sme) {
-      throw new Error(`SME ${smeId} not found.`);
+  createCustomClan({
+    clanId,
+    clanName,
+    founderSmeId,
+    sku,
+    skuName,
+    targetUnits,
+    basePriceUsd,
+    tiers,
+    constitution,
+    founderVetoRules,
+    metaGovernancePolicy,
+    dataSources
+  }) {
+    const repaymentStorage = getRepaymentStorage();
+    const outstandingDebt = repaymentStorage.getOutstandingDebtTotalCents(founderSmeId);
+    if (outstandingDebt > 0) {
+      throw new GovernanceError(
+        "OUTSTANDING_DEBT_BLOCK",
+        `Founder ${founderSmeId} has outstanding debts of $${(outstandingDebt / 100).toFixed(2)}. Unsettled liabilities must be resolved via PayPal before creating new clans.`
+      );
     }
 
-    let coalition = Array.from(this.coalitions.values()).find(
-      c => c.sku === sku && ["FORMING", "THRESHOLD_MET"].includes(c.status)
-    );
+    const newClanId = clanId || `clan_${(sku || "custom").replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
+    const baseCents = basePriceUsd ? Math.round(basePriceUsd * 100) : 1000;
+    const moqTarget = targetUnits || tiers?.[1]?.minUnits || 500;
+
+    const mergedRules = {
+      ...DEFAULT_CLAN_RULES,
+      ...(constitution || {})
+    };
+
+    const charter = {
+      clanId: newClanId,
+      clanName: clanName || `Syndicate for ${skuName || sku}`,
+      founderSmeId,
+      sku: sku || "custom-commodity",
+      skuName: skuName || clanName || sku,
+      targetUnits: moqTarget,
+      basePriceCents: baseCents,
+      tiers: tiers || [
+        { tier: 1, minUnits: 100, priceCents: baseCents, discountPct: 0 },
+        { tier: 2, minUnits: moqTarget, priceCents: Math.round(baseCents * 0.72), discountPct: 28 }
+      ],
+      constitution: mergedRules,
+      founderVetoRules: founderVetoRules || ["MIN_DISCOUNT_PERCENT"],
+      metaGovernancePolicy: metaGovernancePolicy || {
+        defaultQuorum: 0.5,
+        supermajorityThreshold: 0.66,
+        procedureForUnforeseenIssues: "DEMOCRATIC_SUPERMAJORITY",
+        unforeseenVotingDurationHours: 24
+      },
+      dataSources: dataSources || [],
+      createdAt: new Date().toISOString()
+    };
+
+    const governanceAdapter = getClanGovernanceAdapter();
+    const enactedConstitution = governanceAdapter.createCustomCharter(charter);
+
+    const coalition = {
+      id: newClanId,
+      clanName: charter.clanName,
+      founderSmeId,
+      sku: charter.sku,
+      skuName: charter.skuName,
+      targetUnits: charter.targetUnits,
+      currentUnits: 0,
+      unitPriceCents: charter.basePriceCents,
+      discountTierPct: 0,
+      tiers: charter.tiers,
+      status: "FORMING",
+      members: [],
+      constitution: enactedConstitution.rules,
+      founderVetoRules: charter.founderVetoRules,
+      metaGovernancePolicy: charter.metaGovernancePolicy,
+      dataSources: charter.dataSources,
+      createdAt: charter.createdAt,
+      updatedAt: charter.createdAt
+    };
+
+    this.coalitions.set(newClanId, coalition);
+
+    if (!this.catalog.has(charter.sku)) {
+      this.catalog.set(charter.sku, {
+        sku: charter.sku,
+        name: charter.skuName,
+        basePriceUsd: baseCents / 100,
+        tiers: charter.tiers.map(t => ({
+          tier: t.tier,
+          minUnits: t.minUnits,
+          priceUsd: t.priceCents / 100,
+          discountPct: t.discountPct
+        }))
+      });
+    }
+
+    this.broadcast("CLAN_CREATED", { coalition, constitution: enactedConstitution });
+    return { coalition, constitution: enactedConstitution };
+  }
+
+  evaluateMemberExit({ coalitionId, smeId }) {
+    const coalition = this.coalitions.get(coalitionId);
+    if (!coalition) {
+      throw new Error(`Coalition '${coalitionId}' not found.`);
+    }
+
+    const member = coalition.members.find(m => m.smeId === smeId);
+    if (!member) {
+      throw new Error(`Member '${smeId}' is not part of coalition '${coalitionId}'.`);
+    }
+
+    const repaymentStorage = getRepaymentStorage();
+    const debtCents = repaymentStorage.getOutstandingDebtTotalCents(smeId);
+    const isForming = coalition.status === "FORMING";
+    const lockedCents = isForming ? 0 : (member.authorizedCents || 0);
+
+    return {
+      smeId,
+      coalitionId,
+      canExitImmediately: isForming,
+      exitStatus: isForming ? "EXITED_CLEAN" : "EXIT_QUEUED_POST_SETTLEMENT",
+      lockedEscrowCents: lockedCents,
+      unsettledDebtCents: debtCents,
+      message: isForming
+        ? "Member can exit cleanly. No escrow soft holds are active."
+        : "Coalition is locked in fulfillment. Escrow soft hold must remain locked until supplier batch completes."
+    };
+  }
+
+  leaveCoalition({ coalitionId, smeId, reason }) {
+    const coalition = this.coalitions.get(coalitionId);
+    if (!coalition) {
+      throw new Error(`Coalition '${coalitionId}' not found.`);
+    }
+
+    const memberIndex = coalition.members.findIndex(m => m.smeId === smeId);
+    if (memberIndex === -1) {
+      throw new Error(`Member '${smeId}' is not part of coalition '${coalitionId}'.`);
+    }
+
+    const member = coalition.members[memberIndex];
+    const repaymentStorage = getRepaymentStorage();
+    const debtCents = repaymentStorage.getOutstandingDebtTotalCents(smeId);
+
+    if (coalition.status === "FORMING") {
+      coalition.members.splice(memberIndex, 1);
+      coalition.currentUnits = coalition.members.reduce((sum, m) => sum + m.pledgedUnits, 0);
+
+      this.broadcast("MEMBER_LEFT_CLAN", {
+        coalitionId,
+        smeId,
+        remainingUnits: coalition.currentUnits,
+        unsettledDebtCents: debtCents,
+        reason: reason || "Voluntary withdrawal prior to escrow lock."
+      });
+
+      return {
+        status: "EXITED_CLEAN",
+        coalitionId,
+        smeId,
+        memberRemoved: true,
+        remainingUnits: coalition.currentUnits,
+        unsettledDebtCents: debtCents,
+        message: "Successfully withdrawn from clan. Note: any historical PayPal debt liabilities remain bound to your business."
+      };
+    }
+
+    member.status = "EXIT_QUEUED_POST_SETTLEMENT";
+    coalition.updatedAt = new Date().toISOString();
+
+    this.broadcast("MEMBER_EXIT_QUEUED", {
+      coalitionId,
+      smeId,
+      lockedEscrowCents: member.authorizedCents,
+      unsettledDebtCents: debtCents,
+      reason: reason || "Withdrawal requested during batch fulfillment."
+    });
+
+    return {
+      status: "EXIT_QUEUED_POST_SETTLEMENT",
+      coalitionId,
+      smeId,
+      memberRemoved: false,
+      lockedEscrowCents: member.authorizedCents,
+      unsettledDebtCents: debtCents,
+      message: "Exit recorded. Soft authorization hold remains locked to protect co-purchaser MOQ batch fulfillment. Payouts or refunds will settle per policy."
+    };
+  }
+
+  joinCoalition({ smeId, sku, units, coalitionId }) {
+    const repaymentStorage = getRepaymentStorage();
+    const outstandingDebt = repaymentStorage.getOutstandingDebtTotalCents(smeId);
+    if (outstandingDebt > 0) {
+      throw new GovernanceError(
+        "OUTSTANDING_DEBT_BLOCK",
+        `SME ${smeId} has outstanding debts of $${(outstandingDebt / 100).toFixed(2)}. Unsettled liabilities must be resolved via PayPal invoice before joining new clans.`
+      );
+    }
+
+    let sme = this.smes.get(smeId);
+    if (!sme) {
+      sme = {
+        id: smeId,
+        name: smeId,
+        maxAutoAuthorizeCents: 1000000,
+        stepUpThresholdCents: 100000,
+        status: "VERIFIED_KYB",
+        registeredAt: new Date().toISOString()
+      };
+      this.smes.set(smeId, sme);
+    }
+
+    let coalition = coalitionId
+      ? this.coalitions.get(coalitionId)
+      : Array.from(this.coalitions.values()).find(
+          c => c.sku === sku && ["FORMING", "THRESHOLD_MET"].includes(c.status)
+        );
 
     if (!coalition) {
       const catalogItem = this.catalog.get(sku);

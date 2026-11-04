@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { MemberDebtLiability } from "../domain/clan-governance.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,33 +26,44 @@ export interface SupplierRepaymentDebt {
 }
 
 export class RepaymentStorage {
-  private filePath: string;
+  private supplierFilePath: string;
+  private memberFilePath: string;
 
-  constructor(customFilePath?: string) {
-    this.filePath =
-      customFilePath ||
+  constructor(customSupplierPath?: string, customMemberPath?: string) {
+    this.supplierFilePath =
+      customSupplierPath ||
       path.join(
         ROOT_DIR,
         ".scratch",
         "developer-2-escrow-settlement-disputes",
         "supplier-debt-ledger.json"
       );
-    this.ensureFileExists();
+    this.memberFilePath =
+      customMemberPath ||
+      path.join(
+        ROOT_DIR,
+        ".scratch",
+        "developer-2-escrow-settlement-disputes",
+        "member-debt-ledger.json"
+      );
+    this.ensureFilesExist();
   }
 
-  private ensureFileExists(): void {
-    const dir = path.dirname(this.filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    if (!fs.existsSync(this.filePath)) {
-      fs.writeFileSync(this.filePath, JSON.stringify([], null, 2), "utf8");
+  private ensureFilesExist(): void {
+    for (const filePath of [this.supplierFilePath, this.memberFilePath]) {
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2), "utf8");
+      }
     }
   }
 
   public getAll(): SupplierRepaymentDebt[] {
     try {
-      const data = fs.readFileSync(this.filePath, "utf8");
+      const data = fs.readFileSync(this.supplierFilePath, "utf8");
       return JSON.parse(data) as SupplierRepaymentDebt[];
     } catch {
       return [];
@@ -59,7 +71,7 @@ export class RepaymentStorage {
   }
 
   private saveAll(records: SupplierRepaymentDebt[]): void {
-    fs.writeFileSync(this.filePath, JSON.stringify(records, null, 2), "utf8");
+    fs.writeFileSync(this.supplierFilePath, JSON.stringify(records, null, 2), "utf8");
   }
 
   public getById(id: string): SupplierRepaymentDebt | null {
@@ -96,8 +108,53 @@ export class RepaymentStorage {
     this.saveAll(records);
   }
 
+  // Member Debt Liability Storage
+  public getAllMemberDebts(): MemberDebtLiability[] {
+    try {
+      const data = fs.readFileSync(this.memberFilePath, "utf8");
+      return JSON.parse(data) as MemberDebtLiability[];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveAllMemberDebts(debts: MemberDebtLiability[]): void {
+    fs.writeFileSync(this.memberFilePath, JSON.stringify(debts, null, 2), "utf8");
+  }
+
+  public getMemberDebts(smeId?: string): MemberDebtLiability[] {
+    const debts = this.getAllMemberDebts();
+    if (!smeId) return debts;
+    return debts.filter((d) => d.smeId === smeId);
+  }
+
+  public getOutstandingDebtTotalCents(smeId: string): number {
+    const debts = this.getMemberDebts(smeId).filter((d) => d.status === "OUTSTANDING");
+    return debts.reduce((sum, d) => sum + d.amountCents, 0);
+  }
+
+  public createMemberDebt(debt: MemberDebtLiability): void {
+    const debts = this.getAllMemberDebts();
+    if (debts.some((d) => d.debtId === debt.debtId)) {
+      throw new Error(`Member debt with ID '${debt.debtId}' already exists.`);
+    }
+    debts.push(debt);
+    this.saveAllMemberDebts(debts);
+  }
+
+  public settleMemberDebt(debtId: string): MemberDebtLiability | null {
+    const debts = this.getAllMemberDebts();
+    const index = debts.findIndex((d) => d.debtId === debtId);
+    if (index === -1) return null;
+    debts[index].status = "SETTLED";
+    debts[index].updatedAt = new Date().toISOString();
+    this.saveAllMemberDebts(debts);
+    return debts[index];
+  }
+
   public clear(): void {
     this.saveAll([]);
+    this.saveAllMemberDebts([]);
   }
 }
 

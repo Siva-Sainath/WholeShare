@@ -4,7 +4,7 @@ import {
   type ClanVote,
   type VoteTally,
   type ClanConstitution,
-  type VotingWeightStrategy,
+  type CustomClanCharter,
   validateProposalBounds,
   GovernanceError
 } from "../domain/clan-governance.ts";
@@ -17,6 +17,7 @@ export interface CoalitionMemberBrief {
   smeId: string;
   name?: string;
   pledgedUnits?: number;
+  authorizedCents?: number;
 }
 
 export interface ProposeRuleChangeParams {
@@ -63,6 +64,25 @@ export class ClanGovernanceAdapter {
     return this.storage.listProposals(coalitionId);
   }
 
+  public createCustomCharter(charter: CustomClanCharter): ClanConstitution {
+    if (charter.constitution) {
+      for (const [ruleKey, ruleVal] of Object.entries(charter.constitution)) {
+        validateProposalBounds(ruleKey as GovernanceRuleType, ruleVal);
+      }
+    }
+
+    const constitution: ClanConstitution = {
+      coalitionId: charter.clanId,
+      version: 1,
+      rules: { ...charter.constitution },
+      founderSmeId: charter.founderSmeId,
+      founderVetoRules: charter.founderVetoRules || [],
+      metaGovernancePolicy: charter.metaGovernancePolicy,
+      updatedAt: new Date().toISOString()
+    };
+    return this.storage.saveConstitution(constitution);
+  }
+
   public proposeRuleChange(params: ProposeRuleChangeParams): GovernanceProposal {
     const {
       coalitionId,
@@ -89,12 +109,16 @@ export class ClanGovernanceAdapter {
     validateProposalBounds(ruleType, proposedValue);
 
     const currentConstitution = this.storage.getConstitution(coalitionId);
-    const previousValue = currentConstitution.rules[ruleType];
+    const previousValue = currentConstitution.rules[ruleType] ?? "NONE";
 
     const now = new Date();
     const votingDeadline = new Date(
       now.getTime() + votingDurationHours * 3600 * 1000
     ).toISOString();
+
+    const isVetoProtected =
+      currentConstitution.rules.VOTING_WEIGHT_STRATEGY === "FOUNDER_VETO" ||
+      Boolean(currentConstitution.founderVetoRules?.includes(ruleType));
 
     const proposal: GovernanceProposal = {
       id: `prop_${coalitionId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -109,7 +133,9 @@ export class ClanGovernanceAdapter {
       votingDeadline,
       quorumThreshold,
       majorityThreshold,
-      weightStrategy: currentConstitution.rules.VOTING_WEIGHT_STRATEGY
+      weightStrategy: currentConstitution.rules.VOTING_WEIGHT_STRATEGY,
+      requiresFounderVetoApproval: isVetoProtected,
+      founderApproved: false
     };
 
     return this.storage.saveProposal(proposal);
@@ -162,6 +188,8 @@ export class ClanGovernanceAdapter {
     let weight = 1;
     if (proposal.weightStrategy === "VOLUME_WEIGHTED") {
       weight = memberBrief?.pledgedUnits || 1;
+    } else if (proposal.weightStrategy === "CAPITAL_WEIGHTED") {
+      weight = Math.max(Math.round((memberBrief?.authorizedCents || 10000) / 100), 1);
     }
 
     const vote: ClanVote = {
@@ -175,6 +203,13 @@ export class ClanGovernanceAdapter {
     };
 
     this.storage.saveVote(vote);
+
+    const constitution = this.storage.getConstitution(coalitionId);
+    if (constitution.founderSmeId === smeId) {
+      proposal.founderApproved = choice === "AFFIRMATIVE";
+      this.storage.saveProposal(proposal);
+    }
+
     return vote;
   }
 
@@ -212,6 +247,11 @@ export class ClanGovernanceAdapter {
         (sum, m) => sum + (m.pledgedUnits || 1),
         0
       );
+    } else if (proposal.weightStrategy === "CAPITAL_WEIGHTED") {
+      totalEligibleWeight = members.reduce(
+        (sum, m) => sum + Math.max(Math.round((m.authorizedCents || 10000) / 100), 1),
+        0
+      );
     } else {
       totalEligibleWeight = members.length > 0 ? members.length : Math.max(votes.length, 1);
     }
@@ -223,10 +263,14 @@ export class ClanGovernanceAdapter {
 
     const quorumMet = participationRate >= proposal.quorumThreshold;
     const majorityMet = approvalRate >= proposal.majorityThreshold;
+    const founderVetoSatisfied =
+      !proposal.requiresFounderVetoApproval || Boolean(proposal.founderApproved);
 
     let reason = "Voting in progress";
     if (!quorumMet) {
       reason = `Quorum not met: ${(participationRate * 100).toFixed(1)}% participation < ${(proposal.quorumThreshold * 100).toFixed(0)}% required`;
+    } else if (!founderVetoSatisfied) {
+      reason = "Proposal rejected by founder veto";
     } else if (!majorityMet) {
       reason = `Supermajority not met: ${(approvalRate * 100).toFixed(1)}% approval < ${(proposal.majorityThreshold * 100).toFixed(0)}% required`;
     } else {
@@ -246,6 +290,7 @@ export class ClanGovernanceAdapter {
       approvalRate,
       quorumMet,
       majorityMet,
+      founderVetoSatisfied,
       reason
     };
   }
@@ -269,23 +314,36 @@ export class ClanGovernanceAdapter {
     const deadlineMs = new Date(proposal.votingDeadline).getTime();
     const isExpired = now.getTime() >= deadlineMs;
 
-    if (!forceEarly && !isExpired && (!tally.quorumMet || !tally.majorityMet)) {
+    if (!forceEarly && !isExpired && (!tally.quorumMet || !tally.majorityMet || !tally.founderVetoSatisfied)) {
       return { proposal, tally };
     }
 
-    if (tally.quorumMet && tally.majorityMet) {
+    if (tally.quorumMet && tally.majorityMet && tally.founderVetoSatisfied) {
       proposal.status = "ENACTED";
       proposal.enactedAt = now.toISOString();
       this.storage.saveProposal(proposal);
 
       const constitution = this.storage.getConstitution(proposal.coalitionId);
       const updatedRules = { ...constitution.rules };
-      (updatedRules as any)[proposal.ruleType] = proposal.proposedValue;
+      let metaGovernancePolicy = constitution.metaGovernancePolicy;
+      if (proposal.ruleType === "META_GOVERNANCE_PROCEDURE") {
+        if (metaGovernancePolicy) {
+          metaGovernancePolicy = {
+            ...metaGovernancePolicy,
+            procedureForUnforeseenIssues: proposal.proposedValue as any
+          };
+        }
+      } else {
+        (updatedRules as any)[proposal.ruleType] = proposal.proposedValue;
+      }
 
       const enactedConstitution: ClanConstitution = {
         coalitionId: proposal.coalitionId,
         version: constitution.version + 1,
         rules: updatedRules,
+        founderSmeId: constitution.founderSmeId,
+        founderVetoRules: constitution.founderVetoRules,
+        metaGovernancePolicy,
         updatedAt: now.toISOString()
       };
 
