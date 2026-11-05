@@ -100,6 +100,73 @@ export function createWebServer() {
       return;
     }
 
+    if (pathname === "/api/v1/clans" && req.method === "GET") {
+      const skuFilter = url.searchParams.get("sku");
+      const statusFilter = url.searchParams.get("status");
+      const categoryFilter = url.searchParams.get("category");
+      const minDiscount = parseFloat(url.searchParams.get("minDiscount") || "0");
+
+      let clans = Array.from(actionDispatcher.coalitions.values()).map(c => {
+        const catalogItem = actionDispatcher.catalog.get(c.sku);
+        const progressPct = c.targetUnits > 0 ? Math.min(100, Math.round((c.currentUnits / c.targetUnits) * 100)) : 0;
+        return {
+          id: c.id,
+          sku: c.sku,
+          skuName: c.skuName || catalogItem?.name || c.sku,
+          category: catalogItem?.category || "GENERAL",
+          status: c.status,
+          currentUnits: c.currentUnits,
+          targetUnits: c.targetUnits,
+          progressPct,
+          unitPriceCents: c.unitPriceCents,
+          discountTierPct: c.discountTierPct,
+          membersCount: c.members?.length || 0,
+          tiers: catalogItem?.tiers || [],
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt
+        };
+      });
+
+      if (skuFilter) {
+        clans = clans.filter(c => c.sku.toLowerCase().includes(skuFilter.toLowerCase()));
+      }
+      if (statusFilter) {
+        clans = clans.filter(c => c.status.toUpperCase() === statusFilter.toUpperCase());
+      }
+      if (categoryFilter) {
+        clans = clans.filter(c => c.category.toUpperCase().includes(categoryFilter.toUpperCase()));
+      }
+      if (minDiscount > 0) {
+        clans = clans.filter(c => c.discountTierPct >= minDiscount);
+      }
+
+      sendJson(res, 200, {
+        count: clans.length,
+        clans
+      });
+      return;
+    }
+
+    if (pathname.startsWith("/api/v1/clans/") && req.method === "GET") {
+      const clanId = pathname.substring("/api/v1/clans/".length);
+      const clan = actionDispatcher.coalitions.get(clanId);
+      if (!clan) {
+        sendJson(res, 404, { error: `Clan with ID '${clanId}' not found.` });
+        return;
+      }
+      const catalogItem = actionDispatcher.catalog.get(clan.sku);
+      const progressPct = clan.targetUnits > 0 ? Math.min(100, Math.round((clan.currentUnits / clan.targetUnits) * 100)) : 0;
+      sendJson(res, 200, {
+        clan: {
+          ...clan,
+          category: catalogItem?.category || "GENERAL",
+          progressPct,
+          tiers: catalogItem?.tiers || []
+        }
+      });
+      return;
+    }
+
     if (pathname === "/api/v1/sme/spawn" && req.method === "POST") {
       const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
       const rateCheck = apiRateLimiter.isAllowed(clientIp);
@@ -140,17 +207,22 @@ export function createWebServer() {
       try {
         const body = await readJsonBody(req);
         const coalitionId = body.coalitionId || "coalition_flour_01";
-        const coalition = actionDispatcher.authorizeEscrow(coalitionId);
+        const clan = actionDispatcher.coalitions.get(coalitionId);
+        if (!clan) {
+          sendJson(res, 404, { error: `Coalition '${coalitionId}' not found.` });
+          return;
+        }
 
-        // Execute Orders v2 soft holds
-        for (const m of coalition.members) {
+        const authorizations = {};
+        for (const m of clan.members) {
           const auth = await createOrderAuthorization({
             amountCents: m.authorizedCents,
             referenceId: m.smeId
           });
-          m.paypalOrderId = auth.orderId;
+          authorizations[m.smeId] = auth.orderId;
         }
 
+        const coalition = actionDispatcher.authorizeEscrow(coalitionId, authorizations);
         sendJson(res, 200, { status: "LOCKED", coalition });
       } catch (err) {
         sendJson(res, 400, { error: err.message });
@@ -172,15 +244,17 @@ export function createWebServer() {
 
         const neg = await actionDispatcher.runNegotiation("coalition_flour_01");
 
-        const coalition = actionDispatcher.authorizeEscrow("coalition_flour_01");
-
-        for (const m of coalition.members) {
+        const clan = actionDispatcher.coalitions.get("coalition_flour_01");
+        const authorizations = {};
+        for (const m of clan.members) {
           const auth = await createOrderAuthorization({
             amountCents: m.authorizedCents,
             referenceId: m.smeId
           });
-          m.paypalOrderId = auth.orderId;
+          authorizations[m.smeId] = auth.orderId;
         }
+
+        const coalition = actionDispatcher.authorizeEscrow("coalition_flour_01", authorizations);
 
         const totalEscrowCents = coalition.members.reduce((sum, m) => sum + m.authorizedCents, 0);
 

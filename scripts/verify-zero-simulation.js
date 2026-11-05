@@ -195,14 +195,17 @@ async function main() {
   // 7. Live Local Qwen MLX Tool Calling Execution Probe
   console.log("7. Verifying live local Qwen MLX native function calling...");
   const toolStart = Date.now();
+  const probeTools = WHOLESHARE_TOOL_DECLARATIONS.filter(t =>
+    ["inspect_commercial_inventory", "discover_wholesale_catalog", "authorize_escrow_hold"].includes(t.function?.name)
+  );
   const toolRes = await modelClient.callChat({
     messages: [
       { role: "system", content: "You are the Wholeshare autonomous procurement agent. When asked to inspect inventory, call the inspect_commercial_inventory tool." },
       { role: "user", content: "Inspect inventory for SKU-FLOUR-01 at warehouse WH-EAST-01." }
     ],
-    tools: WHOLESHARE_TOOL_DECLARATIONS,
+    tools: probeTools,
     temperature: 0.0,
-    maxTokens: 600
+    maxTokens: 300
   });
   const toolDurationMs = Date.now() - toolStart;
   const toolCalls = toolRes.message?.tool_calls || [];

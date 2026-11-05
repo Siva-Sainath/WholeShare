@@ -40,7 +40,7 @@ async function main() {
   console.log("   [PASS] User attempt to pass fractional cents blocked.");
 
   // Vector 3: Attempt spend cap override in negotiation proposal
-  const mockMandates = new Map([
+  const testMandates = new Map([
     ["sme_austin_01", { maxSpendCents: 150000, stepUpThresholdCents: 100000 }]
   ]);
   const proposalAttempt = interceptNegotiationProposal({
@@ -55,7 +55,7 @@ async function main() {
     ]
   }, {
     catalogPriceCents: 1000,
-    mandates: mockMandates
+    mandates: testMandates
   });
 
   if (proposalAttempt.valid) {

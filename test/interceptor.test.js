@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { interceptNegotiationProposal } from "../src/lib/interceptor.js";
 
-const mockContext = {
+const testContext = {
   catalogPriceCents: 1200,
   mandates: new Map([
     ["sme_austin_bakery", { maxSpendCents: 500000, stepUpThresholdCents: 100000 }],
@@ -27,7 +27,7 @@ const validProposal = {
 };
 
 test("passes valid proposal satisfying all 10 invariants", () => {
-  const result = interceptNegotiationProposal(validProposal, mockContext);
+  const result = interceptNegotiationProposal(validProposal, testContext);
   assert.equal(result.valid, true);
   assert.equal(result.invariantsPassed.length, 10);
   assert.equal(result.violations.length, 0);
@@ -38,7 +38,7 @@ test("rejects floating point amounts in proposal", () => {
     ...validProposal,
     unitPriceCents: 10.20
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("positive integers")));
 });
@@ -48,7 +48,7 @@ test("rejects direct CAPTURE intent during coalition formation", () => {
     ...validProposal,
     intent: "CAPTURE"
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("strictly be 'AUTHORIZE'")));
 });
@@ -58,7 +58,7 @@ test("rejects unit price exceeding catalog price", () => {
     ...validProposal,
     unitPriceCents: 1500
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("exceeds catalog price")));
 });
@@ -72,7 +72,7 @@ test("rejects volume allocation mismatch", () => {
       { buyerId: "sme_green_cafe", units: 350, amountCents: 357000, stepUpRequired: true }
     ]
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("does not equal total coalition units")));
 });
@@ -86,7 +86,7 @@ test("rejects financial arithmetic mismatch", () => {
       { buyerId: "sme_green_cafe", units: 350, amountCents: 300000, stepUpRequired: true }
     ]
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("does not balance total expected cents")));
 });
@@ -100,7 +100,7 @@ test("rejects duplicate buyer allocations in single coalition", () => {
       { buyerId: "sme_green_cafe", units: 350, amountCents: 357000, stepUpRequired: true }
     ]
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("Duplicate buyer allocations")));
 });
@@ -114,7 +114,7 @@ test("rejects allocation exceeding buyer spend cap", () => {
       { buyerId: "sme_green_cafe", units: 350, amountCents: 357000, stepUpRequired: true }
     ]
   };
-  const result = interceptNegotiationProposal(badProposal, mockContext);
+  const result = interceptNegotiationProposal(badProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("exceeds mandate cap")));
 });

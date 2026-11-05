@@ -8,7 +8,7 @@ const BANNED_PATTERNS = [
   { pattern: /['"](FAKE_|MOCK_ORDER|MOCK_AUTH|MOCK_CAPTURE|DUMMY_ORDER)/i, name: "Hard-coded fake PayPal ID" },
 ];
 
-const SCAN_DIRS = ["src", "scripts"];
+const SCAN_DIRS = ["src", "scripts", "test"];
 const EXTENSIONS = [".ts", ".js", ".mjs", ".cjs"];
 
 let violations = 0;

@@ -12,7 +12,8 @@ test("WholeshareDurableHarness initializes and starts a durable session", { time
 
   const result = await harness.startSession({
     prompt: "Discover wholesale flour catalog for SKU flour-organic-white",
-    sessionId
+    sessionId,
+    maxTurns: 2
   });
 
   assert.equal(result.sessionId, sessionId);
@@ -40,7 +41,7 @@ test("WholeshareDurableHarness rehydrates and resumes an interrupted session", {
     status: "SUSPENDED"
   });
 
-  const result = await harness.resumeSession(sessionId);
+  const result = await harness.resumeSession(sessionId, { maxTurns: 2 });
   assert.equal(result.sessionId, sessionId);
   assert.equal(result.success, true);
   assert.equal(result.status, "COMPLETED");
@@ -65,7 +66,7 @@ test("WholeshareDurableHarness resumes session when human step-up is approved", 
     }
   });
 
-  const result = await harness.resumeWithStepUpApproval(sessionId, "APPROVAL_TOKEN_9988");
+  const result = await harness.resumeWithStepUpApproval(sessionId, "APPROVAL_TOKEN_9988", { maxTurns: 2 });
   assert.equal(result.sessionId, sessionId);
   assert.equal(result.success, true);
   assert.equal(result.status, "COMPLETED");

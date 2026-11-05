@@ -118,7 +118,7 @@ def build_chatml_prompt(messages, tools=None, default_system=SYSTEM_PROMPT):
             has_system = True
             content = m.get("content", "")
             if tools:
-                tools_str = json.dumps(tools, indent=2)
+                tools_str = json.dumps(tools, separators=(',', ':'))
                 content += f"\n\nYou have access to the following tools:\n```json\n{tools_str}\n```\nTo invoke a tool, respond with a JSON object: {{\"name\": \"tool_name\", \"arguments\": {{...}}}} inside a ```json``` block."
             prompt_parts.append(f"<|im_start|>system\n{content}<|im_end|>\n")
             break
@@ -126,7 +126,7 @@ def build_chatml_prompt(messages, tools=None, default_system=SYSTEM_PROMPT):
     if not has_system:
         content = default_system
         if tools:
-            tools_str = json.dumps(tools, indent=2)
+            tools_str = json.dumps(tools, separators=(',', ':'))
             content += f"\n\nYou have access to the following tools:\n```json\n{tools_str}\n```\nTo invoke a tool, respond with a JSON object: {{\"name\": \"tool_name\", \"arguments\": {{...}}}} inside a ```json``` block."
         prompt_parts.append(f"<|im_start|>system\n{content}<|im_end|>\n")
 
@@ -188,6 +188,9 @@ def run_prompt_string(model, tokenizer, prompt, max_tokens=1200):
 def start_server(model, tokenizer, port=8000):
     from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
     import urllib.parse
+    import threading
+
+    inference_lock = threading.Lock()
 
     class OpenAICompatHandler(BaseHTTPRequestHandler):
         def do_POST(self):
@@ -197,11 +200,12 @@ def start_server(model, tokenizer, port=8000):
                 try:
                     req = json.loads(body.decode("utf-8"))
                     messages = req.get("messages", [])
-                    max_tokens = req.get("max_tokens", 1200)
+                    max_tokens = req.get("max_tokens", 2500)
                     tools = req.get("tools")
 
                     full_prompt = build_chatml_prompt(messages, tools=tools)
-                    res = run_prompt_string(model, tokenizer, full_prompt, max_tokens=max_tokens)
+                    with inference_lock:
+                        res = run_prompt_string(model, tokenizer, full_prompt, max_tokens=max_tokens)
                     full_content = res["answer"]
                     if res["think"]:
                         full_content = f"<think>\n{res['think']}\n</think>\n\n{res['answer']}"
@@ -259,40 +263,63 @@ def start_server(model, tokenizer, port=8000):
                             "total_tokens": int(len(full_prompt.split()) * 2 + res["tokens_est"])
                         }
                     }
+                    resp_bytes = json.dumps(resp_data).encode("utf-8")
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(resp_bytes)))
+                    self.send_header("Connection", "close")
                     self.end_headers()
-                    self.wfile.write(json.dumps(resp_data).encode("utf-8"))
+                    self.wfile.write(resp_bytes)
+                    self.wfile.flush()
+                    self.close_connection = True
                 except (BrokenPipeError, ConnectionResetError):
                     return
                 except Exception as e:
                     try:
+                        err_bytes = json.dumps({"error": str(e)}).encode("utf-8")
                         self.send_response(500)
                         self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(err_bytes)))
+                        self.send_header("Connection", "close")
                         self.end_headers()
-                        self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+                        self.wfile.write(err_bytes)
+                        self.wfile.flush()
+                        self.close_connection = True
                     except Exception:
                         pass
             else:
                 try:
                     self.send_response(404)
+                    self.send_header("Content-Length", "0")
+                    self.send_header("Connection", "close")
                     self.end_headers()
+                    self.wfile.flush()
+                    self.close_connection = True
                 except Exception:
                     pass
 
         def do_GET(self):
             if self.path in ("/health", "/v1/models"):
                 try:
+                    resp_bytes = json.dumps({"status": "ok", "model": "wholeshare-qwen35-4b-opsd"}).encode("utf-8")
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(resp_bytes)))
+                    self.send_header("Connection", "close")
                     self.end_headers()
-                    self.wfile.write(json.dumps({"status": "ok", "model": "wholeshare-qwen35-4b-opsd"}).encode("utf-8"))
+                    self.wfile.write(resp_bytes)
+                    self.wfile.flush()
+                    self.close_connection = True
                 except Exception:
                     pass
             else:
                 try:
                     self.send_response(404)
+                    self.send_header("Content-Length", "0")
+                    self.send_header("Connection", "close")
                     self.end_headers()
+                    self.wfile.flush()
+                    self.close_connection = True
                 except Exception:
                     pass
 

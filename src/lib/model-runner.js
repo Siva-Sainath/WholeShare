@@ -67,7 +67,7 @@ Context:
 Rules:
 1. totalUnits must be exact sum of requestedUnits.
 2. Find highest matching discount tier where totalUnits >= minUnits (do NOT select a tier if totalUnits < minUnits. For example, if totalUnits is 1300, 1300 is less than 1500 so minUnits 1500 does NOT apply; the matching tier is minUnits 1000 with discountPct 15).
-3. Calculate unitPriceCents = Math.round(catalogPriceCents * (100 - discountPct) / 100).
+3. Calculate unitPriceCents = Math.round(catalogPriceCents * (100 - discountPct) / 100). For example, if catalogPriceCents is 1200 and discountPct is 15, unitPriceCents is Math.round(1200 * 85 / 100) = 1020 cents (NOT 900). If catalogPriceCents is 1000 and discountPct is 28, unitPriceCents is Math.round(1000 * 72 / 100) = 720 cents. Be careful to calculate exact integer cents.
 4. Each buyer amountCents = buyer.requestedUnits * unitPriceCents.
 5. MANDATORY STEP-UP RULE: For each buyer, if amountCents > buyer.stepUpThresholdCents, stepUpRequired MUST strictly be true.
 Check all buyers carefully:
@@ -102,7 +102,7 @@ Output JSON Format:
     const res = await modelClient.callJsonPrompt({
       systemPrompt: "You are the Wholeshare B2B Coalition Negotiator. Return ONLY a valid JSON object matching the requested schema. Calculate exact integer cents for all prices and allocations.",
       userPrompt: prompt,
-      maxTokens: 1200
+      maxTokens: 2500
     });
     proposal = res.data;
     executionSource = `${res.provider}:${res.model}`;
@@ -118,7 +118,7 @@ Output JSON Format:
   let currentProposal = proposal;
   let currentEvaluation = evaluation;
   let attempts = 0;
-  const MAX_REFLEXIVE_ATTEMPTS = 2;
+  const MAX_REFLEXIVE_ATTEMPTS = 3;
 
   while (!currentEvaluation.valid && attempts < MAX_REFLEXIVE_ATTEMPTS) {
     attempts++;
@@ -129,7 +129,7 @@ Please revise the proposal to strictly resolve every violation.
 Rules:
 1. totalUnits must be exact sum of requestedUnits (${buyers.reduce((sum, b) => sum + b.requestedUnits, 0)}).
 2. Find highest matching discount tier where totalUnits >= minUnits.
-3. Calculate unitPriceCents = Math.round(catalogPriceCents * (100 - discountPct) / 100).
+3. Calculate unitPriceCents = Math.round(catalogPriceCents * (100 - discountPct) / 100). For example, if catalogPriceCents is 1200 and discountPct is 15, unitPriceCents is Math.round(1200 * 85 / 100) = 1020 cents (NOT 900). If catalogPriceCents is 1000 and discountPct is 28, unitPriceCents is Math.round(1000 * 72 / 100) = 720 cents. Be careful to calculate exact integer cents.
 4. Each buyer amountCents = buyer.requestedUnits * unitPriceCents.
 5. MANDATORY STEP-UP RULE: If amountCents > buyer.stepUpThresholdCents, stepUpRequired MUST strictly be true.
 6. intent must strictly be "AUTHORIZE".
@@ -139,7 +139,7 @@ Rules:
       const retryRes = await modelClient.callJsonPrompt({
         systemPrompt: "You are the Wholeshare B2B Coalition Negotiator. Return ONLY a valid JSON object strictly complying with policy.",
         userPrompt: correctionPrompt,
-        maxTokens: 1200
+        maxTokens: 2500
       });
       currentProposal = retryRes.data;
       currentEvaluation = interceptNegotiationProposal(currentProposal, {

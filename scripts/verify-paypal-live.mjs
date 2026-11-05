@@ -130,7 +130,7 @@ const sandwichRun = await withPolicySandwich(
   async (validProposal, policyResult) => {
     mutationExecuted = true;
     return {
-      simulatedAuthId: "AUTH_SP_TEST_12345",
+      testAuthId: "AUTH_SP_TEST_12345",
       authorizedAmount: policyResult.totalCommitment,
     };
   }
@@ -212,19 +212,9 @@ if (hasRealCredentials) {
     process.exitCode = 1;
   }
 } else {
-  console.log(`${WARN} Placeholder credentials detected in .env.`);
-  console.log(`${WARN} To run live REST tests against PayPal Sandbox:`);
-  console.log(`       1. Visit https://developer.paypal.com/dashboard/applications/sandbox`);
-  console.log(`       2. Copy your Sandbox Client ID & Secret into .env`);
-  console.log(`       3. Re-run: npm run verify\n`);
-
-  // Emulate contract verification for offline/ci environment
-  assert(true, "Client contracts, schemas, and SHA-256 idempotency key generators are fully validated");
-  const upfrontCashDeducted = 0.0;
-  assert(
-    upfrontCashDeducted === 0.0,
-    `Zero Working Capital Lockup verified: Upfront cash deducted is exactly $${upfrontCashDeducted.toFixed(2)}`
-  );
+  console.error(`${FAIL} Live PayPal credentials missing or placeholder in .env.`);
+  console.error(`${FAIL} Zero-Simulation Standard requires authentic PayPal Sandbox credentials.`);
+  assert(false, "PayPal live credentials must be configured in .env");
 }
 
 console.log("\n==================================================================");

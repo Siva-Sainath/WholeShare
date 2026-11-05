@@ -6,7 +6,7 @@ import { verifyIngressSignature } from "../src/lib/gateway.js";
 import { createSharedPaymentToken, verifySharedPaymentToken } from "../src/lib/token.js";
 import { transitionCoalitionState, canTransition } from "../src/lib/fsm.js";
 
-const mockContext = {
+const testContext = {
   catalogPriceCents: 1000,
   mandates: new Map([
     ["sme_austin_01", { maxSpendCents: 150000, stepUpThresholdCents: 100000 }],
@@ -30,7 +30,7 @@ test("Gauntlet Vector 1: rejects floating cents in negotiation proposal", () => 
     ]
   };
 
-  const result = interceptNegotiationProposal(proposal, mockContext);
+  const result = interceptNegotiationProposal(proposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("positive integers")));
 });
@@ -78,7 +78,7 @@ test("Gauntlet Vector 5: rejects direct CAPTURE intent in coalition proposal", (
     ]
   };
 
-  const result = interceptNegotiationProposal(proposal, mockContext);
+  const result = interceptNegotiationProposal(proposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("strictly be 'AUTHORIZE'")));
 });
@@ -98,7 +98,7 @@ test("Gauntlet Vector 6: rejects unit price exceeding wholesale catalog base pri
     ]
   };
 
-  const result = interceptNegotiationProposal(proposal, mockContext);
+  const result = interceptNegotiationProposal(proposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("exceeds catalog price")));
 });
@@ -118,7 +118,7 @@ test("Gauntlet Vector 7: rejects member allocation exceeding buyer spend cap", (
     ]
   };
 
-  const result = interceptNegotiationProposal(proposal, mockContext);
+  const result = interceptNegotiationProposal(proposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("exceeds mandate cap")));
 });
@@ -138,7 +138,7 @@ test("Gauntlet Vector 8: flags buyer allocation exceeding step-up threshold with
     ]
   };
 
-  const result = interceptNegotiationProposal(proposal, mockContext);
+  const result = interceptNegotiationProposal(proposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("exceeds threshold without step-up flag")));
 });
@@ -248,7 +248,7 @@ test("Gauntlet Vector 15: enforces exact financial and unit conservation", () =>
     ]
   };
 
-  const result = interceptNegotiationProposal(unbalancedProposal, mockContext);
+  const result = interceptNegotiationProposal(unbalancedProposal, testContext);
   assert.equal(result.valid, false);
   assert.ok(result.violations.some(v => v.includes("does not equal total coalition units")));
   assert.ok(result.violations.some(v => v.includes("does not balance total expected cents")));

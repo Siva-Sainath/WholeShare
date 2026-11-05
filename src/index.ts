@@ -1,4 +1,4 @@
-export * from "./lib/policy.js";
+export * from "./lib/policy.ts";
 export * from "./lib/agent-toolkit.js";
 export * from "./gateway/PayPalMoneyGateway.ts";
 export * from "./gateway/paypal-webhook.handler.ts";

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { opsdEngine } from "../src/lib/opsd-engine.js";
-import { verifyFinancialPolicy, verifyToolBoundary } from "../src/lib/policy.js";
+import { verifyFinancialPolicy, verifyToolBoundary } from "../src/lib/policy.ts";
 
 test("OPSD Engine builds teacher prompt with strict leakage mitigation rules", () => {
   const prompt = "Onboard craft brewery with 120 sacks of malt and lock escrow.";

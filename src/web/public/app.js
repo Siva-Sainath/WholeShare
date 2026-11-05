@@ -1,643 +1,380 @@
-// Wholeshare Lightweight One-Shot Test Workbench Client
+// Wholeshare AI-First Autonomous Wholesale Client
+// Real PayPal Sandbox Integration & Qwen 3.5 Copilot
 
 let eventSource = null;
-let currentSessionStartTime = 0;
-let timerInterval = null;
+let currentCategoryFilter = "ALL";
+let cachedClans = [];
 
-function setPresetPrompt(text) {
-  const input = document.getElementById("oneShotPromptInput");
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatCurrency(cents) {
+  const val = (cents || 0) / 100;
+  return "$" + val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function appendUserMessage(text) {
+  const container = document.getElementById("chatHistory");
+  if (!container) return;
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble user";
+  bubble.innerHTML = escapeHtml(text);
+  container.appendChild(bubble);
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendAiPlaceholder() {
+  const container = document.getElementById("chatHistory");
+  if (!container) return null;
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble ai";
+  bubble.id = "activeAiBubble";
+  bubble.innerHTML = `
+    <div class="chat-thought" id="activeAiThought">Connecting to Qwen 3.5 reasoning harness...</div>
+    <div id="activeAiContent" style="color: var(--text-secondary); font-style: italic;">Processing request...</div>
+  `;
+  container.appendChild(bubble);
+  container.scrollTop = container.scrollHeight;
+  return bubble;
+}
+
+function updateAiThought(thought) {
+  const thoughtEl = document.getElementById("activeAiThought");
+  if (thoughtEl) {
+    thoughtEl.textContent = thought;
+    thoughtEl.style.display = "block";
+  }
+}
+
+function finalizeAiMessage(finalMessage) {
+  const thoughtEl = document.getElementById("activeAiThought");
+  const contentEl = document.getElementById("activeAiContent");
+  const activeBubble = document.getElementById("activeAiBubble");
+
+  if (contentEl) {
+    let formatted = escapeHtml(finalMessage);
+    formatted = formatted.replace(/\n\n/g, "<br><br>");
+    formatted = formatted.replace(/\n/g, "<br>");
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    formatted = formatted.replace(/`([^`]+)`/g, "<code style=\"color: var(--accent-cyan);\">$1</code>");
+    contentEl.style.fontStyle = "normal";
+    contentEl.style.color = "var(--text-primary)";
+    contentEl.innerHTML = formatted;
+  }
+
+  if (activeBubble) {
+    activeBubble.removeAttribute("id");
+  }
+  if (thoughtEl) {
+    thoughtEl.removeAttribute("id");
+  }
+  if (contentEl) {
+    contentEl.removeAttribute("id");
+  }
+
+  const container = document.getElementById("chatHistory");
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+async function handleChatSubmit(event) {
+  if (event && event.preventDefault) {
+    event.preventDefault();
+  }
+
+  const input = document.getElementById("chatInput");
+  const btn = document.getElementById("btnSendChat");
+  if (!input) return;
+
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  input.value = "";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Analyzing...";
+  }
+
+  appendUserMessage(prompt);
+  appendAiPlaceholder();
+
+  try {
+    const res = await fetch("/api/v1/agent/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Request failed with status " + res.status);
+    }
+
+    const reply = data.finalMessage || "Action executed successfully.";
+    finalizeAiMessage(reply);
+    await refreshClans();
+  } catch (err) {
+    finalizeAiMessage("Error executing agent action: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Send";
+    }
+  }
+}
+
+function sendPresetMessage(text) {
+  const input = document.getElementById("chatInput");
   if (input) {
     input.value = text;
   }
+  handleChatSubmit();
 }
 
-function appendTrajectoryStep(badgeType, text) {
-  const feed = document.getElementById("trajectoryFeed");
-  if (!feed) return;
-
-  const div = document.createElement("div");
-  div.className = "timeline-step";
-
-  let badgeClass = badgeType;
-  if (badgeType === "SUCCESS" || badgeType === "PASSED") badgeClass = "RESULT";
-  if (badgeType === "ERROR" || badgeType === "REJECTED") badgeClass = "THOUGHT";
-
-  div.innerHTML = `<span class="timeline-badge ${badgeClass}">${badgeType}</span><span>${text}</span>`;
-  feed.appendChild(div);
-  feed.scrollTop = feed.scrollHeight;
+function clearChat() {
+  const container = document.getElementById("chatHistory");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="chat-bubble ai">
+      <strong>Welcome to Wholeshare!</strong> I am your resident procurement copilot powered by Qwen 3.5.
+      <br><br>
+      I can help you discover wholesale pooling clans across <strong>5 industries</strong> (Bakeries, Coffee Roasters, Tile &amp; Flooring, Packaging, and Hardware), negotiate volume discounts, and lock soft authorization holds in PayPal Sandbox with zero upfront capital deducted.
+      <br><br>
+      How can I assist your business today?
+    </div>
+  `;
 }
 
-function updateCoalitionCard(coalition) {
-  if (!coalition) return;
-
-  const badge = document.getElementById("cardStatusBadge");
-  if (badge) {
-    badge.textContent = coalition.status;
-    badge.className = `card-status-badge ${coalition.status}`;
+function filterCategory(category, buttonElement) {
+  currentCategoryFilter = category;
+  const buttons = document.querySelectorAll(".cat-btn");
+  buttons.forEach(b => b.classList.remove("active"));
+  if (buttonElement) {
+    buttonElement.classList.add("active");
   }
-
-  const current = coalition.currentUnits || 0;
-  const target = coalition.targetUnits || 500;
-  const pct = Math.min(100, Math.round((current / target) * 100));
-
-  const unitsLabel = document.getElementById("unitsPledgedLabel");
-  if (unitsLabel) unitsLabel.textContent = `${current} / ${target} units pledged`;
-
-  const pctLabel = document.getElementById("pctPledgedLabel");
-  if (pctLabel) pctLabel.textContent = `${pct}%`;
-
-  const barFill = document.getElementById("progressBarFill");
-  if (barFill) barFill.style.width = `${pct}%`;
-
-  const t1 = document.getElementById("tier1Pill");
-  const t2 = document.getElementById("tier2Pill");
-  const t3 = document.getElementById("tier3Pill");
-  if (t1) t1.classList.toggle("active", current >= 100 && current < 500);
-  if (t2) t2.classList.toggle("active", current >= 500 && current < 1000);
-  if (t3) t3.classList.toggle("active", current >= 1000);
+  renderClansList();
 }
 
-function renderLedger(data) {
-  const tbody = document.getElementById("ledgerTableBody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  for (const row of data) {
-    const tr = document.createElement("tr");
-    tr.id = `row_${row.coalitionId}`;
-
-    const memberDetails = row.members.map(m => {
-      let badge = `<span class="badge-auth">${m.status}</span>`;
-      if (m.stepUpRequired && m.invoiceQrUrl) {
-        badge += ` <span class="badge-qr" onclick="openStepUpModal('${m.invoiceQrUrl}', '${m.authorizedUsd}')">QR Step-Up</span>`;
-      }
-      const orderRef = m.paypalOrderId ? ` (Order: ${m.paypalOrderId})` : "";
-      return `${m.name} (${m.pledgedUnits} units): $${m.authorizedUsd}${orderRef} ${badge}`;
-    }).join("<br>");
-
-    tr.innerHTML = `
-      <td style="font-family: monospace; font-weight: bold; color: var(--accent-cyan);">${row.coalitionId}</td>
-      <td>${row.skuName}</td>
-      <td><strong>${row.currentUnits}</strong> / ${row.targetUnits}</td>
-      <td>$${row.unitPriceUsd}</td>
-      <td style="font-weight: bold; color: #34d399;">$${row.totalEscrowUsd}</td>
-      <td>${row.discountTierPct}%</td>
-      <td><span class="card-status-badge ${row.status}">${row.status}</span></td>
-      <td style="font-size: 11px; line-height: 1.6;">${memberDetails}</td>
-    `;
-    tbody.appendChild(tr);
-
-    updateCoalitionCard(row);
-  }
-}
-
-async function fetchLedger() {
+async function fetchClanDetails(clanId) {
   try {
-    const res = await fetch("/api/v1/ledger");
+    const res = await fetch("/api/v1/clans/" + clanId);
+    if (!res.ok) return null;
     const data = await res.json();
-    renderLedger(data);
-  } catch (err) {
-    console.error("Failed to fetch ledger:", err);
+    return data.clan;
+  } catch {
+    return null;
   }
+}
+
+async function refreshClans() {
+  const listContainer = document.getElementById("clansList");
+  try {
+    const res = await fetch("/api/v1/clans");
+    if (!res.ok) throw new Error("Failed to fetch clans.");
+    const data = await res.json();
+    const clans = data.clans || [];
+
+    const detailedClans = await Promise.all(
+      clans.map(async (c) => {
+        const detail = await fetchClanDetails(c.id);
+        return detail || c;
+      })
+    );
+
+    cachedClans = detailedClans;
+    updateTelemetry(detailedClans);
+    renderClansList();
+  } catch (err) {
+    if (listContainer) {
+      listContainer.innerHTML = `
+        <div style="color: #f87171; font-size: 13px; text-align: center; padding: 30px;">
+          Error loading clans: ${escapeHtml(err.message)}
+        </div>
+      `;
+    }
+  }
+}
+
+function updateTelemetry(clans) {
+  const totalClansEl = document.getElementById("totalClansPill");
+  const totalEscrowEl = document.getElementById("escrowTotalPill");
+
+  if (totalClansEl) {
+    totalClansEl.textContent = `Clans: ${clans.length} Active`;
+  }
+
+  let totalCents = 0;
+  for (const clan of clans) {
+    if (Array.isArray(clan.members)) {
+      for (const m of clan.members) {
+        totalCents += m.authorizedCents || 0;
+      }
+    }
+  }
+
+  if (totalEscrowEl) {
+    totalEscrowEl.textContent = `Locked Escrow: ${formatCurrency(totalCents)}`;
+  }
+}
+
+function renderClansList() {
+  const container = document.getElementById("clansList");
+  if (!container) return;
+
+  let filtered = cachedClans;
+  if (currentCategoryFilter !== "ALL") {
+    filtered = cachedClans.filter(c => c.category === currentCategoryFilter);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 40px 0;">
+        No active clans found for category ${escapeHtml(currentCategoryFilter)}.
+      </div>
+    `;
+    return;
+  }
+
+  let html = "";
+  for (const clan of filtered) {
+    const progressPct = clan.targetUnits > 0
+      ? Math.min(100, Math.round((clan.currentUnits / clan.targetUnits) * 100))
+      : 0;
+
+    let tiersHtml = "";
+    if (Array.isArray(clan.tiers)) {
+      tiersHtml = clan.tiers.map(t => {
+        const isActive = clan.currentUnits >= t.minUnits;
+        const activeClass = isActive ? "tier-badge active-tier" : "tier-badge";
+        return `<span class="${activeClass}">Tier ${t.tier}: &gt;=${t.minUnits} units (-${t.discountPct}%)</span>`;
+      }).join(" ");
+    }
+
+    let membersHtml = "";
+    if (Array.isArray(clan.members) && clan.members.length > 0) {
+      membersHtml = clan.members.map(m => {
+        const orderPart = m.paypalOrderId
+          ? `<a class="paypal-link" href="https://www.sandbox.paypal.com/activity/payment/${escapeHtml(m.paypalOrderId)}" target="_blank" rel="noopener">PayPal: ${escapeHtml(m.paypalOrderId)}</a>`
+          : `<span style="color: var(--text-secondary);">Pending Auth</span>`;
+        return `
+          <div class="member-line">
+            <span><strong>${escapeHtml(m.name)}</strong> (${m.pledgedUnits} units): ${formatCurrency(m.authorizedCents)}</span>
+            <span>${orderPart}</span>
+          </div>
+        `;
+      }).join("");
+    } else {
+      membersHtml = `<div style="color: var(--text-secondary); font-style: italic;">No members joined yet.</div>`;
+    }
+
+    html += `
+      <div class="clan-card-v2" id="clan_${escapeHtml(clan.id)}">
+        <div class="clan-top-row">
+          <div>
+            <div class="clan-name">${escapeHtml(clan.skuName || clan.sku)}</div>
+            <div class="clan-meta">ID: <code>${escapeHtml(clan.id)}</code> | Category: <strong>${escapeHtml(clan.category)}</strong></div>
+          </div>
+          <span class="status-badge ${escapeHtml(clan.status)}">${escapeHtml(clan.status)}</span>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+            <span>Progress: <strong>${clan.currentUnits}</strong> / ${clan.targetUnits} units</span>
+            <span>Current Discount: <strong style="color: #34d399;">${clan.discountTierPct}% OFF</strong></span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-fill" style="width: ${progressPct}%;"></div>
+          </div>
+        </div>
+
+        <div class="clan-tiers">
+          ${tiersHtml}
+        </div>
+
+        <div class="members-tray">
+          <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">
+            Participating SMEs (${clan.members ? clan.members.length : 0})
+          </div>
+          ${membersHtml}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button class="btn-step" onclick="quickPledgePrompt('${escapeHtml(clan.id)}', '${escapeHtml(clan.sku)}')" style="padding: 6px 14px; font-size: 11.5px;">
+            Pledge into Clan via Copilot
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function quickPledgePrompt(clanId, sku) {
+  const text = `Join clan ${clanId} for SKU ${sku} with 50 units.`;
+  sendPresetMessage(text);
 }
 
 function initSse() {
   eventSource = new EventSource("/api/v1/events");
 
   eventSource.addEventListener("CONNECTED", () => {
-    appendTrajectoryStep("SSE", "Connected to live event stream.");
-  });
-
-  eventSource.addEventListener("AGENT_SESSION_STARTED", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("SESSION", `Session ${data.payload.sessionId.substring(0, 16)} started.`);
-    const statusPill = document.getElementById("copilotStatusPill");
-    if (statusPill) statusPill.textContent = "Agent Working...";
+    // Live connection established
   });
 
   eventSource.addEventListener("AGENT_THOUGHT", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("THOUGHT", data.payload.thought);
+    try {
+      const data = JSON.parse(e.data);
+      if (data.payload && data.payload.thought) {
+        updateAiThought(data.payload.thought);
+      }
+    } catch {
+      // Ignored
+    }
   });
 
   eventSource.addEventListener("AGENT_TOOL_CALL", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("TOOL", `Invoking ${data.payload.toolName}(${JSON.stringify(data.payload.args)})`);
-  });
-
-  eventSource.addEventListener("AGENT_TOOL_RESULT", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("RESULT", `${data.payload.toolName} output: ${JSON.stringify(data.payload.result)}`);
-    fetchLedger();
-  });
-
-  eventSource.addEventListener("AGENT_REFLEXIVE_RETRY", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("RETRY", `Interceptor violation: ${JSON.stringify(data.payload.violations)}. Adjusting...`);
-  });
-
-  eventSource.addEventListener("AGENT_FALLBACK", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("FALLBACK", `Model fallback: ${data.payload.reason}`);
-  });
-
-  eventSource.addEventListener("AGENT_SESSION_COMPLETED", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("SUCCESS", `Session done in ${data.payload.totalDurationMs}ms: ${data.payload.finalMessage}`);
-    const statusPill = document.getElementById("copilotStatusPill");
-    if (statusPill) statusPill.textContent = "Harness Ready";
-    fetchLedger();
-  });
-
-  eventSource.addEventListener("ESCROW_LOCKED", (e) => {
-    const data = JSON.parse(e.data);
-    appendTrajectoryStep("PAYPAL", `Escrow locked! $${(data.payload.totalEscrowCents / 100).toFixed(2)} placed in PayPal Orders v2 soft holds.`);
-    fetchLedger();
-  });
-}
-
-function handleOneShotSubmit(e) {
-  if (e && e.preventDefault) e.preventDefault();
-
-  const input = document.getElementById("oneShotPromptInput");
-  const prompt = input ? input.value.trim() : "";
-  if (!prompt) return;
-
-  const btn = document.getElementById("btnRunOneShot");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Executing with Qwen 3.5 4B...";
-    btn.style.opacity = "0.7";
-  }
-
-  currentSessionStartTime = Date.now();
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const elapsedSec = ((Date.now() - currentSessionStartTime) / 1000).toFixed(1);
-    const label = document.getElementById("executionTimerLabel");
-    if (label) label.textContent = `Running: ${elapsedSec}s`;
-  }, 200);
-
-  appendTrajectoryStep("INPUT", prompt);
-
-  fetch("/api/v1/agent/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt })
-  })
-    .then(res => res.json())
-    .then(result => {
-      appendTrajectoryStep("DONE", result.finalMessage || "Deal cycle executed successfully.");
-      fetchLedger();
-    })
-    .catch(err => {
-      appendTrajectoryStep("ERROR", `Execution failed: ${err.message}`);
-    })
-    .finally(() => {
-      if (timerInterval) clearInterval(timerInterval);
-      const totalSec = ((Date.now() - currentSessionStartTime) / 1000).toFixed(1);
-      const label = document.getElementById("executionTimerLabel");
-      if (label) label.textContent = `Completed in ${totalSec}s`;
-
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "Execute One-Shot Test";
-        btn.style.opacity = "1";
-      }
-    });
-}
-
-async function resetPlatformState() {
-  appendTrajectoryStep("SYSTEM", "Resetting platform state to base demonstration values...");
-  try {
-    await fetch("/api/v1/sme/spawn", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: "sme_austin_01",
-        name: "Austin Artisan Bakery",
-        sku: "organic-flour-50lb",
-        pledgedUnits: 150,
-        maxAutoAuthorizeUsd: 1500,
-        stepUpThresholdUsd: 1000
-      })
-    });
-    await fetchLedger();
-    appendTrajectoryStep("SYSTEM", "Platform state reset successfully.");
-  } catch (err) {
-    appendTrajectoryStep("ERROR", `Reset failed: ${err.message}`);
-  }
-}
-
-function openStepUpModal(qrUrl, amountUsd) {
-  const modal = document.getElementById("stepUpModal");
-  const img = document.getElementById("modalQrImage");
-  const details = document.getElementById("modalInvoiceDetails");
-
-  if (img) img.src = qrUrl;
-  if (details) details.textContent = `$${amountUsd} USD Authorized`;
-  if (modal) modal.style.display = "flex";
-}
-
-function closeStepUpModal() {
-  const modal = document.getElementById("stepUpModal");
-  if (modal) modal.style.display = "none";
-}
-
-function approveSandboxStepUp() {
-  appendTrajectoryStep("KYC", "PayPal sandbox QR step-up invoice verified. Buyer mandate threshold confirmed.");
-  closeStepUpModal();
-  fetchLedger();
-}
-
-// --- Document & Picture Ingestion Trial Workbench Logic ---
-let activeUploadFile = null;
-let activeUploadPayload = null;
-
-function handleDragOver(e) {
-  e.preventDefault();
-  const dropZone = document.getElementById("dropZoneArea");
-  if (dropZone) dropZone.classList.add("dragover");
-}
-
-function handleDragLeave(e) {
-  e.preventDefault();
-  const dropZone = document.getElementById("dropZoneArea");
-  if (dropZone) dropZone.classList.remove("dragover");
-}
-
-function handleFileDrop(e) {
-  e.preventDefault();
-  const dropZone = document.getElementById("dropZoneArea");
-  if (dropZone) dropZone.classList.remove("dragover");
-  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-    processUploadedFile(e.dataTransfer.files[0]);
-  }
-}
-
-function handleFileSelected(e) {
-  if (e.target && e.target.files && e.target.files.length > 0) {
-    processUploadedFile(e.target.files[0]);
-  }
-}
-
-function processUploadedFile(file) {
-  activeUploadFile = file;
-  const previewCard = document.getElementById("previewCard");
-  const fileNameLabel = document.getElementById("previewFileName");
-  const fileSizeLabel = document.getElementById("previewFileSize");
-  const imgContainer = document.getElementById("imagePreviewContainer");
-  const imgEl = document.getElementById("previewImageElement");
-  const textContainer = document.getElementById("textPreviewContainer");
-
-  if (!previewCard || !fileNameLabel || !fileSizeLabel) return;
-
-  previewCard.style.display = "block";
-  fileNameLabel.textContent = file.name;
-  fileSizeLabel.textContent = `${Math.round(file.size / 1024)} KB`;
-
-  const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp)$/i.test(file.name);
-  const isExcel = /\.(xlsx|xls)$/i.test(file.name) || file.type.includes("spreadsheet") || file.type.includes("excel");
-  const isPdf = file.name.endsWith(".pdf") || file.type === "application/pdf";
-
-  if (isImage) {
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const dataUrl = evt.target.result;
-      if (imgEl) imgEl.src = dataUrl;
-      if (imgContainer) imgContainer.style.display = "block";
-      if (textContainer) textContainer.style.display = "none";
-      activeUploadPayload = {
-        fileName: file.name,
-        mimeType: file.type || "image/png",
-        content: dataUrl,
-        buyerId: "sme_artisan_trial"
-      };
-    };
-    reader.readAsDataURL(file);
-  } else if (isExcel) {
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const dataUrl = evt.target.result;
-      const commaIdx = dataUrl.indexOf(",");
-      const base64Content = dataUrl.slice(commaIdx + 1);
-      if (textContainer) {
-        textContainer.textContent = `[Excel Spreadsheet Workbook: ${file.name}]\nFormat: Office Open XML (.xlsx)\nSize: ${file.size} bytes\nReady for multi-sheet dynamic table extraction.`;
-        textContainer.style.display = "block";
-      }
-      if (imgContainer) imgContainer.style.display = "none";
-      activeUploadPayload = {
-        fileName: file.name,
-        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        base64Content,
-        buyerId: "sme_artisan_trial"
-      };
-    };
-    reader.readAsDataURL(file);
-  } else if (isPdf) {
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const dataUrl = evt.target.result;
-      const commaIdx = dataUrl.indexOf(",");
-      const base64Content = dataUrl.slice(commaIdx + 1);
-      if (textContainer) {
-        textContainer.textContent = `[PDF Document: ${file.name}]\nFormat: Adobe Portable Document Format (.pdf)\nSize: ${file.size} bytes\nReady for PyMuPDF vector text extraction and optical OCR fallback.`;
-        textContainer.style.display = "block";
-      }
-      if (imgContainer) imgContainer.style.display = "none";
-      activeUploadPayload = {
-        fileName: file.name,
-        mimeType: "application/pdf",
-        base64Content,
-        buyerId: "sme_artisan_trial"
-      };
-    };
-    reader.readAsDataURL(file);
-  } else {
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target.result;
-      if (textContainer) {
-        textContainer.textContent = text.slice(0, 1500);
-        textContainer.style.display = "block";
-      }
-      if (imgContainer) imgContainer.style.display = "none";
-      activeUploadPayload = {
-        fileName: file.name,
-        mimeType: file.name.endsWith(".csv") ? "text/csv" : "application/json",
-        content: text,
-        buyerId: "sme_artisan_trial"
-      };
-    };
-    reader.readAsText(file);
-  }
-}
-
-async function loadSampleDocument(type) {
-  const previewCard = document.getElementById("previewCard");
-  const fileNameLabel = document.getElementById("previewFileName");
-  const fileSizeLabel = document.getElementById("previewFileSize");
-  const imgContainer = document.getElementById("imagePreviewContainer");
-  const imgEl = document.getElementById("previewImageElement");
-  const textContainer = document.getElementById("textPreviewContainer");
-
-  if (type === "realistic-image") {
     try {
-      const res = await fetch("/realistic_sysco_commercial_invoice.png");
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const dataUrl = evt.target.result;
-        if (fileNameLabel) fileNameLabel.textContent = "realistic_sysco_commercial_invoice.png";
-        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
-        if (imgEl) imgEl.src = dataUrl;
-        if (imgContainer) imgContainer.style.display = "block";
-        if (textContainer) textContainer.style.display = "none";
-        if (previewCard) previewCard.style.display = "block";
-
-        activeUploadPayload = {
-          fileName: "realistic_sysco_commercial_invoice.png",
-          mimeType: "image/png",
-          content: dataUrl,
-          buyerId: "sme_artisan_trial"
-        };
-        await submitActiveIngestion();
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      alert("Failed to load sample image: " + err.message);
-    }
-  } else if (type === "xlsx") {
-    try {
-      const res = await fetch("/sysco_distributor_order.xlsx");
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const dataUrl = evt.target.result;
-        const commaIdx = dataUrl.indexOf(",");
-        const base64Content = dataUrl.slice(commaIdx + 1);
-        if (fileNameLabel) fileNameLabel.textContent = "sysco_distributor_order.xlsx";
-        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
-        if (textContainer) {
-          textContainer.textContent = `[Excel Workbook: sysco_distributor_order.xlsx]\nSheets: 'Invoice & PO', 'Quality Specs'\nStatus: Multi-column tabular manifest loaded with quantities and prices.`;
-          textContainer.style.display = "block";
-        }
-        if (imgContainer) imgContainer.style.display = "none";
-        if (previewCard) previewCard.style.display = "block";
-
-        activeUploadPayload = {
-          fileName: "sysco_distributor_order.xlsx",
-          mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          base64Content,
-          buyerId: "sme_artisan_trial"
-        };
-        await submitActiveIngestion();
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      alert("Failed to load sample XLSX: " + err.message);
-    }
-  } else if (type === "pdf") {
-    try {
-      const res = await fetch("/vector_digital_invoice.pdf");
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const dataUrl = evt.target.result;
-        const commaIdx = dataUrl.indexOf(",");
-        const base64Content = dataUrl.slice(commaIdx + 1);
-        if (fileNameLabel) fileNameLabel.textContent = "vector_digital_invoice.pdf";
-        if (fileSizeLabel) fileSizeLabel.textContent = `${Math.round(blob.size / 1024)} KB`;
-        if (textContainer) {
-          textContainer.textContent = `[PDF Document: vector_digital_invoice.pdf]\nEngine: PyMuPDF + Tesseract\nStatus: Digital invoice loaded with vendor header, line items, and totals.`;
-          textContainer.style.display = "block";
-        }
-        if (imgContainer) imgContainer.style.display = "none";
-        if (previewCard) previewCard.style.display = "block";
-
-        activeUploadPayload = {
-          fileName: "vector_digital_invoice.pdf",
-          mimeType: "application/pdf",
-          base64Content,
-          buyerId: "sme_artisan_trial"
-        };
-        await submitActiveIngestion();
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      alert("Failed to load sample PDF: " + err.message);
-    }
-  } else if (type === "csv") {
-    try {
-      const res = await fetch("/b2b_procurement_order.csv");
-      const text = await res.text();
-      if (fileNameLabel) fileNameLabel.textContent = "b2b_procurement_order.csv";
-      if (fileSizeLabel) fileSizeLabel.textContent = `${(text.length / 1024).toFixed(1)} KB`;
-      if (textContainer) {
-        textContainer.textContent = text;
-        textContainer.style.display = "block";
+      const data = JSON.parse(e.data);
+      if (data.payload) {
+        updateAiThought("Invoking tool " + data.payload.toolName + "...");
       }
-      if (imgContainer) imgContainer.style.display = "none";
-      if (previewCard) previewCard.style.display = "block";
-
-      activeUploadPayload = {
-        fileName: "b2b_procurement_order.csv",
-        mimeType: "text/csv",
-        content: text,
-        buyerId: "sme_artisan_trial"
-      };
-      await submitActiveIngestion();
-    } catch (err) {
-      alert("Failed to load sample CSV: " + err.message);
+    } catch {
+      // Ignored
     }
-  } else if (type === "json") {
-    const sample = {
-      vendorName: "Sysco Food Services",
-      invoiceNumber: `INV_SYS_${Date.now()}`,
-      invoiceDate: new Date().toISOString().slice(0, 10),
-      paymentTerms: "NET_30",
-      lineItems: [
-        {
-          description: "Organic Artisan Bread Flour 50lb Bag",
-          quantity: 200,
-          unitPriceCents: 2850,
-          proteinPct: 12.7,
-          organic: true
-        },
-        {
-          description: "Stone Ground Whole Wheat Flour 50lb",
-          quantity: 100,
-          unitPriceCents: 2600,
-          proteinPct: 13.0,
-          organic: true
-        }
-      ]
-    };
-    const content = JSON.stringify(sample, null, 2);
-    if (fileNameLabel) fileNameLabel.textContent = "sample_sysco_invoice.json";
-    if (fileSizeLabel) fileSizeLabel.textContent = "1.2 KB";
-    if (textContainer) {
-      textContainer.textContent = content;
-      textContainer.style.display = "block";
-    }
-    if (imgContainer) imgContainer.style.display = "none";
-    if (previewCard) previewCard.style.display = "block";
+  });
 
-    activeUploadPayload = {
-      fileName: "sample_sysco_invoice.json",
-      mimeType: "application/json",
-      content,
-      buyerId: "sme_artisan_trial"
-    };
-    await submitActiveIngestion();
-  }
+  eventSource.addEventListener("AGENT_TOOL_RESULT", () => {
+    refreshClans();
+  });
+
+  eventSource.addEventListener("ESCROW_LOCKED", () => {
+    refreshClans();
+  });
+
+  eventSource.addEventListener("COALITION_MEMBER_JOINED", () => {
+    refreshClans();
+  });
 }
 
-async function submitActiveIngestion() {
-  if (!activeUploadPayload) {
-    alert("Please select or drop a document or picture first.");
-    return;
-  }
-
-  const btn = document.getElementById("btnProcessIngest");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Extracting & Normalizing...";
-  }
-
-  try {
-    const res = await fetch("/api/v1/ingest/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(activeUploadPayload)
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Ingestion request failed.");
-    }
-
-    renderExtractionResults(data);
-    appendTrajectoryStep("INGEST", `Document ${data.fileName} processed via ${data.parsed.extractionMethod}. Total: $${(data.parsed.totalAmountCents / 100).toFixed(2)}. Instinct Memory baseline updated.`);
-  } catch (err) {
-    alert(`Ingestion error: ${err.message}`);
-    appendTrajectoryStep("ERROR", `Ingestion failed: ${err.message}`);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Process Document & Sync to Instinct Memory";
-    }
-  }
+// Backward compatibility helpers
+function appendTrajectoryStep(badgeType, text) {
+  updateAiThought(`[${badgeType}] ${text}`);
 }
 
-function renderExtractionResults(record) {
-  const emptyState = document.getElementById("extractionEmptyState");
-  const dataContainer = document.getElementById("extractionDataContainer");
-  const badge = document.getElementById("extractionMethodBadge");
-  const vendor = document.getElementById("resVendor");
-  const invoiceNum = document.getElementById("resInvoiceNum");
-  const terms = document.getElementById("resTerms");
-  const total = document.getElementById("resTotal");
-  const itemsBody = document.getElementById("resLineItemsBody");
-  const memoryId = document.getElementById("resMemoryEntityId");
-  const rawOcrBlock = document.getElementById("rawOcrBlock");
-  const rawOcrContent = document.getElementById("rawOcrContent");
-
-  if (emptyState) emptyState.style.display = "none";
-  if (dataContainer) dataContainer.style.display = "block";
-
-  if (badge) {
-    badge.textContent = record.parsed.extractionMethod;
-    badge.style.display = "inline-block";
-  }
-
-  if (vendor) vendor.textContent = record.parsed.vendorName;
-  if (invoiceNum) invoiceNum.textContent = record.parsed.invoiceNumber;
-  if (terms) terms.textContent = record.parsed.paymentTerms;
-  if (total) total.textContent = `$${(record.parsed.totalAmountCents / 100).toFixed(2)} (${record.parsed.totalAmountCents}¢)`;
-
-  if (itemsBody) {
-    itemsBody.innerHTML = "";
-    for (const item of record.parsed.lineItems) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${item.rawDescription}</td>
-        <td><code style="color: var(--accent-cyan);">${item.canonicalSku}</code></td>
-        <td>${item.quantity}</td>
-        <td>$${(item.unitPriceCents / 100).toFixed(2)}</td>
-        <td style="font-weight: 700; color: #34d399;">$${(item.totalCents / 100).toFixed(2)}</td>
-      `;
-      itemsBody.appendChild(tr);
-    }
-  }
-
-  if (memoryId && record.memorySync) {
-    memoryId.textContent = `${record.memorySync.entityId} (Updated ${new Date().toLocaleTimeString()})`;
-  }
-
-  if (record.parsed.rawOcrText) {
-    if (rawOcrBlock) rawOcrBlock.style.display = "block";
-    if (rawOcrContent) rawOcrContent.textContent = record.parsed.rawOcrText;
-  } else {
-    if (rawOcrBlock) rawOcrBlock.style.display = "none";
-  }
-}
-
-async function inspectBaselineMemory() {
-  try {
-    const res = await fetch("/api/v1/ingest/documents?buyerId=sme_artisan_trial");
-    const data = await res.json();
-    if (data.baseline) {
-      alert(`Instinct Memory Baseline for ${data.baseline.buyerId}:\n\nPrimary SKU: ${data.baseline.sku}\nHistorical Unit Price: $${(data.baseline.baselineUnitPriceCents / 100).toFixed(2)}\nMonthly Pledged Units: ${data.baseline.monthlyPledgedUnits}\nVendor: ${data.baseline.vendorName || "N/A"}\nFacts Count: ${data.baseline.facts.length}\n\nFacts:\n${data.baseline.facts.join("\n")}`);
-    } else {
-      alert("No baseline data found in Instinct Memory for this buyer yet.");
-    }
-  } catch (err) {
-    alert("Failed to query baseline: " + err.message);
-  }
+function fetchLedger() {
+  return refreshClans();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   initSse();
-  fetchLedger();
+  refreshClans();
 });

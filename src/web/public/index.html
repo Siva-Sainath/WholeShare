@@ -3,283 +3,369 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wholeshare: Lightweight Harness &amp; PayPal Sandbox Workbench</title>
+  <title>Wholeshare: Autonomous AI-First B2B Wholesale Escrow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/app.css">
+  <style>
+    /* Clean AI-First Layout Overrides */
+    .ai-main-container {
+      display: grid;
+      grid-template-columns: 46% 54%;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1720px;
+      margin: 0 auto;
+      width: 100%;
+      height: calc(100vh - 72px);
+    }
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .chat-history {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-bubble {
+      max-width: 88%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-bubble.ai {
+      align-self: flex-start;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+    }
+    .chat-thought {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.08);
+      border-left: 2px solid var(--accent-cyan);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 0 6px 6px 0;
+    }
+    .chat-input-area {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .preset-chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .chip {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .chip:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+    }
+    .clans-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+    .clans-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .category-filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.2);
+    }
+    .cat-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cat-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+    }
+    .clans-list {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .clan-card-v2 {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+    .clan-card-v2:hover {
+      border-color: var(--border-accent);
+    }
+    .clan-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .clan-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .clan-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-badge.LOCKED {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      color: #34d399;
+    }
+    .status-badge.FORMING {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid #f59e0b;
+      color: #fbbf24;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #06b6d4, #10b981);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .clan-tiers {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tier-badge {
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    .tier-badge.active-tier {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: #10b981;
+      color: #34d399;
+      font-weight: 600;
+    }
+    .members-tray {
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11.5px;
+    }
+    .member-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-secondary);
+    }
+    .paypal-link {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-size: 11px;
+    }
+    .paypal-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <!-- Header with Telemetry -->
+  <!-- Brand Bar -->
   <header class="top-bar">
     <div class="brand-section">
       <span class="brand-title">WHOLESHARE</span>
-      <span class="brand-badge">Harness &amp; PayPal Sandbox Workbench</span>
+      <span class="brand-badge">Autonomous B2B Wholesale Escrow</span>
     </div>
 
     <div class="security-telemetry">
-      <div class="telemetry-pill">Model: Qwen 3.5 4B</div>
-      <div class="telemetry-pill">PayPal Toolkit: 47 Tools</div>
-      <div class="telemetry-pill">Sandbox: ACTIVE</div>
-      <div class="telemetry-pill">Interceptor: 10 Invariants</div>
-      <div class="telemetry-pill" id="copilotStatusPill" style="color: #34d399;">Harness Ready</div>
+      <div class="telemetry-pill">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px;"></span>
+        Qwen 3.5 Engine: ONLINE
+      </div>
+      <div class="telemetry-pill">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; margin-right: 6px;"></span>
+        PayPal Sandbox: ACTIVE (Orders v2)
+      </div>
+      <div class="telemetry-pill" id="totalClansPill">Clans: 5 Active</div>
+      <div class="telemetry-pill" id="escrowTotalPill" style="color: #34d399; font-weight: 700;">Locked Escrow: $14,240.75</div>
     </div>
   </header>
 
-  <!-- One-Shot Workbench Grid -->
-  <main class="middle-grid" style="padding: 20px 24px; gap: 20px;">
-    <!-- Left Column: One-Shot Controls & Live State (45% Width) -->
-    <section class="panel" style="display: flex; flex-direction: column; gap: 16px;">
-      <div class="panel-header">
-        <span class="panel-title">One-Shot Harness Controller</span>
-        <span style="font-size: 11px; color: var(--text-secondary);">Direct Qwen 3.5 4B Tool Calling</span>
+  <!-- Clean AI-First Two-Column Container -->
+  <main class="ai-main-container">
+    <!-- Left Column: Conversational AI Copilot -->
+    <section class="chat-panel">
+      <div class="chat-header">
+        <div>
+          <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);">Qwen 3.5 Autonomous Copilot</span>
+          <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Conversational B2B Procurement &amp; Escrow Mediation</div>
+        </div>
+        <button class="btn-step" onclick="clearChat()" style="padding: 4px 10px; font-size: 11px;">Clear Chat</button>
       </div>
 
-      <!-- Quick Preset Chips -->
-      <div class="copilot-chips" style="padding: 0;">
-        <button class="copilot-chip" onclick="setPresetPrompt('Onboard new buyer Artisan Flour House (id: sme_artisan_01) with 200 units and $2,500 spend cap, join coalition_flour_01 to hit 500 unit MOQ, negotiate volume discount, and lock escrow in PayPal Orders v2 soft authorization holds.')">
-          1. Full Deal Cycle
-        </button>
-        <button class="copilot-chip" onclick="setPresetPrompt('Spawn buyer Austin Bakery with 300 units exceeding $1,500 budget cap to test interceptor.')">
-          2. Spend Cap Guardrail
-        </button>
-        <button class="copilot-chip" onclick="setPresetPrompt('Generate PayPal step-up KYC invoice with QR code for large volume allocation.')">
-          3. Step-Up QR Invoice
-        </button>
-        <button class="copilot-chip" onclick="setPresetPrompt('Register shipment tracking number 1Z9999999999 with carrier UPS for active escrow order.')">
-          4. Carrier Tracking
-        </button>
+      <div class="chat-history" id="chatHistory">
+        <!-- AI Welcome Message -->
+        <div class="chat-bubble ai">
+          <strong>Welcome to Wholeshare!</strong> I am your resident procurement copilot powered by Qwen 3.5.
+          <br><br>
+          I can help you discover wholesale pooling clans across <strong>5 industries</strong> (Bakeries, Coffee Roasters, Tile &amp; Flooring, Packaging, and Hardware), negotiate volume discounts, and lock soft authorization holds in PayPal Sandbox with zero upfront capital deducted.
+          <br><br>
+          How can I assist your business today?
+        </div>
       </div>
 
-      <!-- Prompt Input Form -->
-      <form class="copilot-form" onsubmit="handleOneShotSubmit(event)" style="padding: 0; display: flex; flex-direction: column; gap: 10px;">
-        <textarea id="oneShotPromptInput" class="copilot-input" rows="3" style="resize: vertical; font-size: 13px; line-height: 1.5;" placeholder="Enter instruction for Qwen 3.5 4B...">Onboard new buyer Artisan Flour House (id: sme_artisan_01) with 200 units and $2,500 spend cap, join coalition_flour_01 to hit 500 unit MOQ, negotiate volume discount, and lock escrow in PayPal Orders v2 soft authorization holds.</textarea>
-        <div style="display: flex; gap: 10px;">
-          <button id="btnRunOneShot" type="submit" class="btn-copilot-submit" style="flex: 1; justify-content: center; padding: 12px;">
-            Execute One-Shot Test
-          </button>
-          <button type="button" class="btn-step" onclick="resetPlatformState()">
-            Reset State
-          </button>
+      <div class="chat-input-area">
+        <!-- Quick Preset Chips -->
+        <div class="preset-chips">
+          <div class="chip" onclick="sendPresetMessage('Show all active wholesale clans across all 5 industries with current discounts.')">
+            🔍 Discover All Clans
+          </div>
+          <div class="chip" onclick="sendPresetMessage('Pledge 50 units into Specialty Coffee Roasters clan.')">
+            ☕ Join Coffee Clan
+          </div>
+          <div class="chip" onclick="sendPresetMessage('Explain how Orders v2 soft authorization holds protect my working capital.')">
+            🛡️ Escrow Soft Hold Explainer
+          </div>
+          <div class="chip" onclick="sendPresetMessage('Show active PayPal Sandbox order IDs for locked escrows.')">
+            💳 Audit PayPal Sandbox
+          </div>
         </div>
-      </form>
 
-      <!-- Active Coalition Status Card -->
-      <div class="coalition-card" style="margin-top: 10px;">
-        <div class="coalition-card-header">
-          <span class="card-sku-title">Organic Flour Coalition (coalition_flour_01)</span>
-          <span id="cardStatusBadge" class="card-status-badge FORMING">FORMING</span>
-        </div>
-        <div class="progress-container">
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary);">
-            <span id="unitsPledgedLabel">300 / 500 units pledged</span>
-            <span id="pctPledgedLabel">60%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="progressBarFill" class="progress-bar-fill" style="width: 60%;"></div>
-          </div>
-        </div>
-        <div class="tier-pills">
-          <div id="tier1Pill" class="tier-pill active">Tier 1: $10.00 (100 MOQ)</div>
-          <div id="tier2Pill" class="tier-pill">Tier 2: $7.20 (500 MOQ)</div>
-          <div id="tier3Pill" class="tier-pill">Tier 3: $5.80 (1,000 MOQ)</div>
-        </div>
+        <!-- Chat Input Form -->
+        <form onsubmit="handleChatSubmit(event)" style="display: flex; gap: 10px;">
+          <input
+            id="chatInput"
+            type="text"
+            class="copilot-input"
+            style="flex: 1; padding: 12px 16px; font-size: 13.5px; border-radius: 10px;"
+            placeholder="Type your procurement request or question..."
+            autocomplete="off"
+          />
+          <button id="btnSendChat" type="submit" class="btn-copilot-submit" style="padding: 12px 20px; font-size: 13px;">
+            Send
+          </button>
+        </form>
       </div>
     </section>
 
-    <!-- Right Column: Live Model Trajectory & Telemetry (55% Width) -->
-    <section class="panel" style="display: flex; flex-direction: column; gap: 14px;">
-      <div class="panel-header">
-        <span class="panel-title">Model Trajectory &amp; PayPal Sandbox Telemetry</span>
-        <span id="executionTimerLabel" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">Idle</span>
+    <!-- Right Column: Live Active Clan Directory & Escrow Cards -->
+    <section class="clans-panel">
+      <div class="clans-header">
+        <div>
+          <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);">Active Group Purchasing Clans</span>
+          <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Live Multi-Party MOQ Aggregation &amp; Soft Escrow Holds</div>
+        </div>
+        <button class="btn-step" onclick="refreshClans()" style="padding: 4px 10px; font-size: 11px;">Refresh</button>
       </div>
 
-      <!-- Execution Timeline Log -->
-      <div id="trajectoryFeed" class="copilot-timeline" style="max-height: 440px; min-height: 380px; overflow-y: auto;">
-        <div class="timeline-step">
-          <span class="timeline-badge RESULT">READY</span>
-          <span>Lightweight harness online. 47 PayPal Agent Toolkit tools registered with sandbox credentials. Ready to execute one-shot instruction.</span>
+      <!-- Industry Category Filter Bar -->
+      <div class="category-filter-bar">
+        <button class="cat-btn active" onclick="filterCategory('ALL', this)">All (5)</button>
+        <button class="cat-btn" onclick="filterCategory('BAKERY_STAPLES', this)">Bakeries</button>
+        <button class="cat-btn" onclick="filterCategory('SPECIALTY_COFFEE', this)">Coffee</button>
+        <button class="cat-btn" onclick="filterCategory('TILE_AND_CERAMICS', this)">Ceramics</button>
+        <button class="cat-btn" onclick="filterCategory('INDUSTRIAL_PACKAGING', this)">Packaging</button>
+        <button class="cat-btn" onclick="filterCategory('MRO_HARDWARE', this)">Hardware</button>
+      </div>
+
+      <!-- Clan Cards List -->
+      <div class="clans-list" id="clansList">
+        <div style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 40px 0;">
+          Loading active clans from Wholeshare ledger...
         </div>
       </div>
     </section>
   </main>
-
-  <!-- B2B Business Document & Picture Ingestion Trial Workbench -->
-  <section class="ingestion-workbench-container" style="padding: 0 24px 24px;">
-    <div class="panel" style="display: flex; flex-direction: column; gap: 16px;">
-      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div>
-          <span class="panel-title" style="font-size: 15px; font-weight: 700;">Multi-Format Financial &amp; Commercial Document Ingestion</span>
-          <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-            Supports real-world B2B procurement data: Excel spreadsheets (.xlsx, .xls), complex CSVs, and multi-column commercial invoices with optical OCR into exact integer cents.
-          </p>
-        </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn-step" onclick="loadSampleDocument('realistic-image')" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">Real Commercial Invoice (PNG)</button>
-          <button type="button" class="btn-step" onclick="loadSampleDocument('xlsx')" style="border-color: #34d399; color: #34d399;">Distributor Order (XLSX)</button>
-          <button type="button" class="btn-step" onclick="loadSampleDocument('pdf')" style="border-color: #818cf8; color: #818cf8;">Digital Invoice (PDF)</button>
-          <button type="button" class="btn-step" onclick="loadSampleDocument('csv')">Procurement PO (CSV)</button>
-          <button type="button" class="btn-step" onclick="loadSampleDocument('json')">Standard JSON</button>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px;">
-        <!-- Left Column: Dropzone & File Input -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div id="dropZoneArea" class="dropzone-box"
-               ondragover="handleDragOver(event)"
-               ondragleave="handleDragLeave(event)"
-               ondrop="handleFileDrop(event)"
-               onclick="document.getElementById('ingestFileInput').click()">
-            <div style="font-size: 28px; color: var(--accent-cyan); margin-bottom: 8px;">📊 / 📄 / 🖼️</div>
-            <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">
-              Drag &amp; drop financial document or invoice here
-            </div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-              Accepts PDF, Excel (.xlsx, .xls), CSV, TSV, JSON, PNG, JPEG, WebP
-            </div>
-            <button type="button" class="btn-step" style="margin-top: 12px; align-self: center;" onclick="event.stopPropagation(); document.getElementById('ingestFileInput').click()">
-              Browse Local Files
-            </button>
-            <input type="file" id="ingestFileInput" accept=".xlsx,.xls,.csv,.tsv,.json,.png,.jpg,.jpeg,.webp,.pdf" onchange="handleFileSelected(event)" style="display: none;">
-          </div>
-
-          <!-- Document or Image Preview Box -->
-          <div id="previewCard" style="display: none; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span id="previewFileName" style="font-size: 12px; font-weight: 600; color: var(--accent-cyan);">filename.ext</span>
-              <span id="previewFileSize" style="font-size: 11px; color: var(--text-secondary);">0 KB</span>
-            </div>
-            <div id="imagePreviewContainer" style="display: none; text-align: center; margin-bottom: 8px;">
-              <img id="previewImageElement" src="" alt="Uploaded picture preview" style="max-height: 180px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border-accent);">
-            </div>
-            <pre id="textPreviewContainer" style="display: none; max-height: 140px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #cbd5e1; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;"></pre>
-            <button id="btnProcessIngest" class="btn-copilot-submit" style="width: 100%; margin-top: 8px; justify-content: center;" onclick="submitActiveIngestion()">
-              Process Document &amp; Sync to Instinct Memory
-            </button>
-          </div>
-        </div>
-
-        <!-- Right Column: Real-Time Extraction Results & Telemetry -->
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Extraction Results &amp; Instinct Memory Sync</span>
-            <span id="extractionMethodBadge" class="brand-badge" style="display: none;">METHOD</span>
-          </div>
-
-          <div id="extractionResultsCard" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; min-height: 240px; font-size: 12px;">
-            <div id="extractionEmptyState" style="text-align: center; color: var(--text-secondary); padding: 40px 0;">
-              No document or picture uploaded yet. Drop a file or click a sample button above to test extraction.
-            </div>
-
-            <div id="extractionDataContainer" style="display: none;">
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;">
-                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
-                  <span style="font-size: 10px; color: var(--text-secondary);">Vendor</span>
-                  <span id="resVendor" style="font-weight: 700; color: #fff;">-</span>
-                </div>
-                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
-                  <span style="font-size: 10px; color: var(--text-secondary);">Invoice #</span>
-                  <span id="resInvoiceNum" style="font-weight: 700; color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace;">-</span>
-                </div>
-                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
-                  <span style="font-size: 10px; color: var(--text-secondary);">Terms</span>
-                  <span id="resTerms" style="font-weight: 700; color: var(--accent-emerald);">-</span>
-                </div>
-                <div class="telemetry-pill" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px;">
-                  <span style="font-size: 10px; color: var(--text-secondary);">Total (Exact Cents)</span>
-                  <span id="resTotal" style="font-weight: 700; color: #34d399; font-family: 'JetBrains Mono', monospace;">-</span>
-                </div>
-              </div>
-
-              <!-- Line Items Table -->
-              <table class="custom-ledger-table" style="margin-bottom: 12px; font-size: 11px;">
-                <thead>
-                  <tr>
-                    <th>Item Description</th>
-                    <th>Canonical SKU</th>
-                    <th>Quantity</th>
-                    <th>Unit Price</th>
-                    <th>Line Total</th>
-                  </tr>
-                </thead>
-                <tbody id="resLineItemsBody"></tbody>
-              </table>
-
-              <!-- Instinct Memory Status -->
-              <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <div style="font-size: 11px; font-weight: 700; color: #34d399;">Instinct Memory Entity Synced</div>
-                  <div id="resMemoryEntityId" style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">buyer_..._procurement</div>
-                </div>
-                <button type="button" class="btn-step" style="padding: 4px 8px; font-size: 10px;" onclick="inspectBaselineMemory()">
-                  Inspect Baseline
-                </button>
-              </div>
-
-              <!-- Raw OCR View if picture -->
-              <div id="rawOcrBlock" style="display: none; margin-top: 10px;">
-                <details style="font-size: 11px; color: var(--text-secondary);">
-                  <summary style="cursor: pointer; color: var(--accent-cyan); font-weight: 600;">View Raw OCR Extracted Text</summary>
-                  <pre id="rawOcrContent" style="margin-top: 6px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; white-space: pre-wrap;"></pre>
-                </details>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- AG Grid Live Multiparty Escrow Ledger -->
-  <section class="ledger-container" style="padding: 0 24px 24px;">
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Live Multiparty Escrow Ledger (Orders v2 Soft Holds)</span>
-        <span id="ledgerLastUpdated" style="font-size: 11px; color: var(--text-secondary);">Real-Time Sync via SSE</span>
-      </div>
-
-      <div class="grid-wrapper">
-        <table class="custom-ledger-table">
-          <thead>
-            <tr>
-              <th>Coalition ID</th>
-              <th>Target SKU</th>
-              <th>Pledged Units</th>
-              <th>Unit Price</th>
-              <th>Total Escrow</th>
-              <th>Discount %</th>
-              <th>Status</th>
-              <th>Members &amp; PayPal Authorization IDs</th>
-            </tr>
-          </thead>
-          <tbody id="ledgerTableBody">
-            <!-- Populated via SSE/API -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- Step-Up KYC Invoice QR Modal -->
-  <div id="stepUpModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-card">
-      <div class="modal-header">
-        <span class="modal-title">PayPal Step-Up KYC Invoice</span>
-        <button class="modal-close-btn" onclick="closeStepUpModal()">&times;</button>
-      </div>
-      <p style="font-size: 12px; color: var(--text-secondary);">
-        Allocation exceeds buyer mandate threshold. Scan QR code in PayPal sandbox app to complete KYC authentication.
-      </p>
-      <div class="qr-image-wrapper">
-        <img id="modalQrImage" src="" alt="PayPal Invoice QR Code">
-      </div>
-      <div style="font-size: 13px; font-weight: 700; color: #34d399;" id="modalInvoiceDetails">$1,440.00 USD</div>
-      <button class="btn-step" style="width: 100%; justify-content: center; background: #06b6d4; color: #fff;" onclick="approveSandboxStepUp()">
-        Verify &amp; Confirm Sandbox Authorization
-      </button>
-    </div>
-  </div>
 
   <script src="/app.js"></script>
 </body>

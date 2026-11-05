@@ -47,7 +47,23 @@ class WholeshareActionDispatcher {
     this.eventLog = [];
     this.sseClients = new Set();
     this.listeners = new Set();
+    this.coalitionLocks = new Map();
     this.resetState();
+  }
+
+  async withLock(key, fn) {
+    while (this.coalitionLocks.has(key)) {
+      await this.coalitionLocks.get(key);
+    }
+    let resolveLock;
+    const lockPromise = new Promise(resolve => { resolveLock = resolve; });
+    this.coalitionLocks.set(key, lockPromise);
+    try {
+      return await fn();
+    } finally {
+      this.coalitionLocks.delete(key);
+      resolveLock();
+    }
   }
 
   resetState() {
@@ -377,86 +393,103 @@ class WholeshareActionDispatcher {
     };
   }
 
-  joinCoalition({ smeId, sku, units, coalitionId }) {
-    const repaymentStorage = getRepaymentStorage();
-    const outstandingDebt = repaymentStorage.getOutstandingDebtTotalCents(smeId);
-    if (outstandingDebt > 0) {
-      throw new GovernanceError(
-        "OUTSTANDING_DEBT_BLOCK",
-        `SME ${smeId} has outstanding debts of $${(outstandingDebt / 100).toFixed(2)}. Unsettled liabilities must be resolved via PayPal invoice before joining new clans.`
-      );
+  async joinCoalition(arg1, arg2, arg3) {
+    let smeId, sku, units, coalitionId;
+    if (typeof arg1 === "object" && arg1 !== null) {
+      ({ smeId, sku, units, coalitionId } = arg1);
+    } else if (typeof arg1 === "string" && typeof arg2 === "string") {
+      if (this.coalitions.has(arg1)) {
+        coalitionId = arg1;
+        smeId = arg2;
+        units = arg3;
+      } else {
+        smeId = arg1;
+        sku = arg2;
+        units = arg3;
+      }
     }
-
-    let sme = this.smes.get(smeId);
-    if (!sme) {
-      sme = {
-        id: smeId,
-        name: smeId,
-        maxAutoAuthorizeCents: 1000000,
-        stepUpThresholdCents: 100000,
-        status: "VERIFIED_KYB",
-        registeredAt: new Date().toISOString()
-      };
-      this.smes.set(smeId, sme);
-    }
-
-    let coalition = coalitionId
-      ? this.coalitions.get(coalitionId)
-      : Array.from(this.coalitions.values()).find(
-          c => c.sku === sku && ["FORMING", "THRESHOLD_MET"].includes(c.status)
+    const lockKey = coalitionId || sku || smeId || "coalition_lock";
+    return await this.withLock(lockKey, async () => {
+      const repaymentStorage = getRepaymentStorage();
+      const outstandingDebt = repaymentStorage.getOutstandingDebtTotalCents(smeId);
+      if (outstandingDebt > 0) {
+        throw new GovernanceError(
+          "OUTSTANDING_DEBT_BLOCK",
+          `SME ${smeId} has outstanding debts of $${(outstandingDebt / 100).toFixed(2)}. Unsettled liabilities must be resolved via PayPal invoice before joining new clans.`
         );
+      }
 
-    if (!coalition) {
-      const catalogItem = this.catalog.get(sku);
-      const newId = `coalition_${sku.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
-      coalition = {
-        id: newId,
-        sku,
-        skuName: catalogItem?.name || sku,
-        targetUnits: catalogItem?.tiers?.[1]?.minUnits || 500,
-        currentUnits: 0,
-        unitPriceCents: (catalogItem?.basePriceUsd || 10) * 100,
-        discountTierPct: 0,
-        status: "FORMING",
-        members: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      this.coalitions.set(newId, coalition);
-    }
+      let sme = this.smes.get(smeId);
+      if (!sme) {
+        sme = {
+          id: smeId,
+          name: smeId,
+          maxAutoAuthorizeCents: 1000000,
+          stepUpThresholdCents: 100000,
+          status: "VERIFIED_KYB",
+          registeredAt: new Date().toISOString()
+        };
+        this.smes.set(smeId, sme);
+      }
 
-    const existingMember = coalition.members.find(m => m.smeId === smeId);
-    if (existingMember) {
-      existingMember.pledgedUnits += units;
-      existingMember.authorizedCents = existingMember.pledgedUnits * coalition.unitPriceCents;
-    } else {
-      coalition.members.push({
-        smeId,
-        name: sme.name,
-        pledgedUnits: units,
-        authorizedCents: units * coalition.unitPriceCents,
-        status: "PLEDGED",
-        stepUpRequired: (units * coalition.unitPriceCents) > sme.stepUpThresholdCents,
-        paypalOrderId: null,
-        invoiceQrUrl: null
-      });
-    }
+      let coalition = coalitionId
+        ? this.coalitions.get(coalitionId)
+        : Array.from(this.coalitions.values()).find(
+            c => c.sku === sku && ["FORMING", "THRESHOLD_MET"].includes(c.status)
+          );
 
-    coalition.currentUnits = coalition.members.reduce((sum, m) => sum + m.pledgedUnits, 0);
+      if (!coalition) {
+        const catalogItem = this.catalog.get(sku);
+        const newId = coalitionId || `coalition_${sku.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
+        coalition = {
+          id: newId,
+          sku,
+          skuName: catalogItem?.name || sku,
+          targetUnits: catalogItem?.tiers?.[1]?.minUnits || 500,
+          currentUnits: 0,
+          unitPriceCents: (catalogItem?.basePriceUsd || 10) * 100,
+          discountTierPct: 0,
+          status: "FORMING",
+          members: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        this.coalitions.set(newId, coalition);
+      }
 
-    if (coalition.currentUnits >= coalition.targetUnits && coalition.status === "FORMING") {
-      const transition = transitionCoalitionState(coalition, "THRESHOLD_MET", {
-        currentUnits: coalition.currentUnits,
-        targetUnits: coalition.targetUnits
-      });
-      coalition = transition.coalition;
-      this.broadcast("COALITION_THRESHOLD_MET", { coalitionId: coalition.id, units: coalition.currentUnits });
-    }
+      const existingMember = coalition.members.find(m => m.smeId === smeId);
+      if (existingMember) {
+        existingMember.pledgedUnits += units;
+        existingMember.authorizedCents = existingMember.pledgedUnits * coalition.unitPriceCents;
+      } else {
+        coalition.members.push({
+          smeId,
+          name: sme.name,
+          pledgedUnits: units,
+          authorizedCents: units * coalition.unitPriceCents,
+          status: "PLEDGED",
+          stepUpRequired: (units * coalition.unitPriceCents) > sme.stepUpThresholdCents,
+          paypalOrderId: null,
+          invoiceQrUrl: null
+        });
+      }
 
-    this.coalitions.set(coalition.id, coalition);
-    this.broadcast("COALITION_UPDATED", { coalition });
+      coalition.currentUnits = coalition.members.reduce((sum, m) => sum + m.pledgedUnits, 0);
 
-    return coalition;
+      if (coalition.currentUnits >= coalition.targetUnits && coalition.status === "FORMING") {
+        const transition = transitionCoalitionState(coalition, "THRESHOLD_MET", {
+          currentUnits: coalition.currentUnits,
+          targetUnits: coalition.targetUnits
+        });
+        coalition = transition.coalition;
+        this.broadcast("COALITION_THRESHOLD_MET", { coalitionId: coalition.id, units: coalition.currentUnits });
+      }
+
+      this.coalitions.set(coalition.id, coalition);
+      this.broadcast("COALITION_UPDATED", { coalition });
+
+      return coalition;
+    });
   }
 
   async runNegotiation(coalitionId) {
@@ -554,15 +587,22 @@ class WholeshareActionDispatcher {
     return { coalition, proposal, evaluation, executionSource };
   }
 
-  authorizeEscrow(coalitionId) {
+  authorizeEscrow(coalitionId, authorizations = {}) {
     let coalition = this.coalitions.get(coalitionId);
     if (!coalition) {
       throw new Error(`Coalition ${coalitionId} not found.`);
     }
 
     for (const member of coalition.members) {
+      if (authorizations[member.smeId]) {
+        member.paypalOrderId = authorizations[member.smeId];
+      }
+      if (!member.paypalOrderId) {
+        throw new Error(
+          `Cannot authorize escrow for member '${member.smeId}' in coalition '${coalitionId}' without valid PayPal order authorization.`
+        );
+      }
       member.status = "AUTHORIZED";
-      member.paypalOrderId = `ORD-SANDBOX-AUTH-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     }
 
     if (coalition.status === "FORMING") {

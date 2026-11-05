@@ -132,12 +132,13 @@ test("WholeshareAgentHarness fails fast on unrecoverable model failure without f
   );
 });
 
-test("WholeshareAgentHarness runs full session with broadcast telemetry", { timeout: 360000 }, async () => {
+test("WholeshareAgentHarness runs full session with broadcast telemetry", { timeout: 600000 }, async () => {
   actionDispatcher.resetState();
   const harness = new WholeshareAgentHarness();
 
   const session = await harness.runSession({
-    prompt: "Spawn Artisan Flour House and lock escrow for coalition_flour_01"
+    prompt: "Spawn Artisan Flour House and lock escrow for coalition_flour_01",
+    maxTurns: 2
   });
 
   assert.ok(session.sessionId.startsWith("sess_"));

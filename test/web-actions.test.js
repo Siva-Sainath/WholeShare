@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { actionDispatcher } from "../src/lib/web-actions.js";
+import { createOrderAuthorization } from "../src/lib/paypal-bridge.js";
 
 test("actionDispatcher initializes with seeded SME personas and active coalition", () => {
   actionDispatcher.resetState();
@@ -36,8 +37,15 @@ test("runNegotiation computes volume discount and asserts interceptor", { timeou
   assert.equal(result.evaluation.invariantsPassed.length, 10);
 });
 
-test("authorizeEscrow locks member authorizations and transitions to LOCKED", () => {
-  const coalition = actionDispatcher.authorizeEscrow("coalition_flour_01");
+test("authorizeEscrow locks member authorizations and transitions to LOCKED", async () => {
+  const auth1 = await createOrderAuthorization({ amountCents: 150000, referenceId: "sme_austin_01" });
+  const auth2 = await createOrderAuthorization({ amountCents: 150000, referenceId: "sme_bean_02" });
+  const auth3 = await createOrderAuthorization({ amountCents: 200000, referenceId: "sme_artisan_flour" });
+  const coalition = actionDispatcher.authorizeEscrow("coalition_flour_01", {
+    sme_austin_01: auth1.orderId,
+    sme_bean_02: auth2.orderId,
+    sme_artisan_flour: auth3.orderId
+  });
   assert.equal(coalition.status, "LOCKED");
   assert.ok(coalition.members.every(m => m.status === "AUTHORIZED"));
   assert.ok(coalition.members.every(m => Boolean(m.paypalOrderId)));

@@ -1101,11 +1101,13 @@ export async function executeTool(toolName, args = {}) {
       };
     }
 
+    case "join_coalition":
     case "join_syndicate": {
-      const coalition = actionDispatcher.joinCoalition({
+      const coalition = await actionDispatcher.joinCoalition({
         smeId: args.smeId,
         sku: args.sku,
-        units: args.units
+        units: args.units,
+        coalitionId: args.coalitionId
       });
       return {
         status: "JOINED",
@@ -1418,7 +1420,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case "approve_damage_claim": {
-      const claim = claimsAdapter.approveClaimByBuyer(args.claimId, args.smeId);
+      const claim = claimsAdapter.approveClaimByBuyer(args.claimId, args.smeId || args.buyerId || args.memberId);
       return {
         status: "SUCCESS",
         claim
@@ -1515,7 +1517,8 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case "create_governance_proposal": {
-      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const targetCoalitionId = args.coalitionId || args.clanId;
+      const coalition = actionDispatcher.coalitions.get(targetCoalitionId);
       const members = coalition ? (coalition.members || []).map((m) => ({
         smeId: m.smeId || m.id,
         name: m.name,
@@ -1523,9 +1526,9 @@ export async function executeTool(toolName, args = {}) {
       })) : [];
 
       const proposal = clanGovernanceAdapter.proposeRuleChange({
-        coalitionId: args.coalitionId,
-        proposerSmeId: args.proposerSmeId,
-        ruleType: args.ruleType,
+        coalitionId: targetCoalitionId,
+        proposerSmeId: args.proposerSmeId || args.proposerId,
+        ruleType: args.ruleType || args.ruleKey,
         proposedValue: args.proposedValue,
         rationale: args.rationale,
         votingDurationHours: args.votingDurationHours,
@@ -1537,7 +1540,8 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case "cast_clan_vote": {
-      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const targetCoalitionId = args.coalitionId || args.clanId;
+      const coalition = actionDispatcher.coalitions.get(targetCoalitionId);
       const members = coalition ? (coalition.members || []).map((m) => ({
         smeId: m.smeId || m.id,
         name: m.name,
@@ -1546,8 +1550,8 @@ export async function executeTool(toolName, args = {}) {
 
       const vote = clanGovernanceAdapter.castVote({
         proposalId: args.proposalId,
-        coalitionId: args.coalitionId,
-        smeId: args.smeId,
+        coalitionId: targetCoalitionId,
+        smeId: args.smeId || args.voterId,
         choice: args.choice,
         signature: args.signature,
         members
@@ -1558,7 +1562,8 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case "tally_and_enact_proposal": {
-      const coalition = actionDispatcher.coalitions.get(args.coalitionId);
+      const targetCoalitionId = args.coalitionId || args.clanId;
+      const coalition = actionDispatcher.coalitions.get(targetCoalitionId);
       const members = coalition ? (coalition.members || []).map((m) => ({
         smeId: m.smeId || m.id,
         name: m.name,
@@ -1568,7 +1573,7 @@ export async function executeTool(toolName, args = {}) {
       const result = clanGovernanceAdapter.tallyAndEnact({
         proposalId: args.proposalId,
         members,
-        forceEarly: Boolean(args.forceEarly)
+        forceEarly: args.forceEarly !== undefined ? Boolean(args.forceEarly) : true
       });
 
       if (result.proposal.status === "ENACTED") {
@@ -1666,16 +1671,14 @@ export async function executeTool(toolName, args = {}) {
 
     case "issue_paypal_debt_invoice": {
       const repaymentStorage = getRepaymentStorage();
-      let invoiceResult = null;
-      try {
-        invoiceResult = await generateInvoiceWithQr({
-          recipientEmail: args.smeEmail,
-          amountCents: args.amountCents,
-          sku: `UNSETTLED_DEBT_${args.clanId}`,
-          note: args.note || `WholeShare Legal Debt Liability: ${args.reason} for clan ${args.clanId}`
-        });
-      } catch (err) {
-        invoiceResult = { invoiceId: `INV_DEBT_${Date.now()}`, qrCodeUrl: null, error: err.message };
+      const invoiceResult = await generateInvoiceWithQr({
+        recipientEmail: args.smeEmail,
+        totalCents: args.amountCents,
+        memo: args.note || `WholeShare Legal Debt Liability: ${args.reason} for clan ${args.clanId}`
+      });
+
+      if (!invoiceResult || !invoiceResult.invoiceId) {
+        throw new Error("Failed to generate authentic PayPal debt invoice: no invoice ID returned.");
       }
 
       const debtId = `debt_${args.smeId}_${Date.now()}`;
@@ -1685,8 +1688,8 @@ export async function executeTool(toolName, args = {}) {
         clanId: args.clanId,
         amountCents: args.amountCents,
         reason: args.reason,
-        paypalInvoiceId: invoiceResult?.invoiceId || `INV_${Date.now()}`,
-        paypalInvoiceQrUrl: invoiceResult?.qrCodeUrl || null,
+        paypalInvoiceId: invoiceResult.invoiceId,
+        paypalInvoiceQrUrl: invoiceResult.qrCodeUrl || null,
         status: "OUTSTANDING",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()

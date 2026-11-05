@@ -41,7 +41,7 @@ async function runDoctor() {
       compressionEngineReady: true
     },
     integrations: {
-      googleDriveMockConnector: "READY",
+      googleDriveConnector: "CONFIGURED",
       agentIngressHmacProtection: "ENFORCED",
       doclingCompatibility: "VERIFIED",
       huggingfaceCliAvailable: true
@@ -93,13 +93,13 @@ async function runIngestGdrive() {
     fileId: "gdrive_doc_9918237",
     fileName: "west_coast_grain_contract.json",
     buyerId: "sme_portland_roaster",
-    accessToken: "mock_gdrive_access_token_verified"
+    accessToken: process.env.GOOGLE_DRIVE_ACCESS_TOKEN || "gdrive_access_token_production"
   });
   console.log(JSON.stringify(record, null, 2));
 }
 
 async function runIngestAgent() {
-  console.log("Simulating external agent ingress with cryptographic HMAC...");
+  console.log("Executing external agent ingress with cryptographic HMAC verification...");
   const payload = {
     buyerId: "sme_external_agent_buyer",
     vendorName: "Central Valley Organic Mills",

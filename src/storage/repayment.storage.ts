@@ -129,6 +129,7 @@ export class RepaymentStorage {
   }
 
   public getOutstandingDebtTotalCents(smeId: string): number {
+    if (!smeId) return 0;
     const debts = this.getMemberDebts(smeId).filter((d) => d.status === "OUTSTANDING");
     return debts.reduce((sum, d) => sum + d.amountCents, 0);
   }

@@ -21,7 +21,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
   let storage: ClanGovernanceStorage;
   let adapter: ClanGovernanceAdapter;
 
-  const mockCoalitionId = "coalition_bakery_clan_01";
+  const testCoalitionId = "coalition_bakery_clan_01";
   const members = [
     { smeId: "sme_austin_01", name: "Austin Bakery", pledgedUnits: 200 },
     { smeId: "sme_bean_02", name: "Bean & Leaf", pledgedUnits: 150 },
@@ -35,8 +35,8 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
   describe("1. Constitution Defaults & Boundary Safeguards", () => {
     it("initializes new clan with standard default rules", () => {
-      const constitution = adapter.getConstitution(mockCoalitionId);
-      assert.equal(constitution.coalitionId, mockCoalitionId);
+      const constitution = adapter.getConstitution(testCoalitionId);
+      assert.equal(constitution.coalitionId, testCoalitionId);
       assert.equal(constitution.version, 1);
       assert.equal(
         constitution.rules.INSPECTION_WINDOW_HOURS,
@@ -61,7 +61,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       assert.throws(
         () => {
           adapter.proposeRuleChange({
-            coalitionId: mockCoalitionId,
+            coalitionId: testCoalitionId,
             proposerSmeId: "sme_austin_01",
             ruleType: "SPEND_CAP_ENFORCEMENT" as any,
             proposedValue: false as any,
@@ -82,7 +82,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       assert.throws(
         () => {
           adapter.proposeRuleChange({
-            coalitionId: mockCoalitionId,
+            coalitionId: testCoalitionId,
             proposerSmeId: "sme_austin_01",
             ruleType: "INSPECTION_WINDOW_HOURS",
             proposedValue: 6,
@@ -101,7 +101,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       assert.throws(
         () => {
           adapter.proposeRuleChange({
-            coalitionId: mockCoalitionId,
+            coalitionId: testCoalitionId,
             proposerSmeId: "sme_austin_01",
             ruleType: "STEP_UP_THRESHOLD_USD",
             proposedValue: 10000,
@@ -121,7 +121,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       assert.throws(
         () => {
           adapter.proposeRuleChange({
-            coalitionId: mockCoalitionId,
+            coalitionId: testCoalitionId,
             proposerSmeId: "sme_stranger_99",
             ruleType: "INSPECTION_WINDOW_HOURS",
             proposedValue: 72,
@@ -141,7 +141,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
   describe("2. Voting Dynamics & Single-Vote Invariant", () => {
     it("allows registered members to cast affirmative or negative votes", () => {
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 72,
@@ -151,7 +151,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
       const vote = adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_austin_01",
         choice: "AFFIRMATIVE",
         signature: "acp_sig_austin_01",
@@ -165,7 +165,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
     it("strictly enforces Single-Vote Invariant by blocking duplicate votes", () => {
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 72,
@@ -175,7 +175,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_bean_02",
         choice: "AFFIRMATIVE",
         members,
@@ -185,7 +185,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
         () => {
           adapter.castVote({
             proposalId: proposal.id,
-            coalitionId: mockCoalitionId,
+            coalitionId: testCoalitionId,
             smeId: "sme_bean_02",
             choice: "NEGATIVE",
             members,
@@ -201,7 +201,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
     it("blocks voting after voting deadline has elapsed", () => {
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 72,
@@ -216,7 +216,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
         () => {
           adapter.castVote({
             proposalId: proposal.id,
-            coalitionId: mockCoalitionId,
+            coalitionId: testCoalitionId,
             smeId: "sme_green_03",
             choice: "AFFIRMATIVE",
             members,
@@ -235,7 +235,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
   describe("3. Quorum, Supermajority & Rule Enactment", () => {
     it("fails enactment when quorum (>50%) is not met", () => {
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 72,
@@ -246,7 +246,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       // Only 1 out of 3 members votes (33% participation < 50% quorum)
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_austin_01",
         choice: "AFFIRMATIVE",
         members,
@@ -265,7 +265,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
     it("fails enactment when supermajority (>=66%) is not reached", () => {
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 72,
@@ -276,14 +276,14 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       // 2 members vote: 1 YES, 1 NO (50% approval < 66% supermajority)
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_austin_01",
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_bean_02",
         choice: "NEGATIVE",
         members,
@@ -301,7 +301,7 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
 
     it("enacts proposal and updates clan constitution when supermajority passes", () => {
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 72,
@@ -312,21 +312,21 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       // 3 members vote: 3 YES, 0 NO (100% quorum, 100% supermajority)
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_austin_01",
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_bean_02",
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_green_03",
         choice: "AFFIRMATIVE",
         members,
@@ -349,19 +349,19 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       );
 
       // Verify constitution stored persistently
-      const current = adapter.getConstitution(mockCoalitionId);
+      const current = adapter.getConstitution(testCoalitionId);
       assert.equal(current.rules.INSPECTION_WINDOW_HOURS, 72);
       assert.equal(current.version, 2);
     });
 
     it("evaluates volume-weighted voting when enabled", () => {
       // First enact VOLUME_WEIGHTED strategy on test storage
-      const initialConst = storage.getConstitution(mockCoalitionId);
+      const initialConst = storage.getConstitution(testCoalitionId);
       initialConst.rules.VOTING_WEIGHT_STRATEGY = "VOLUME_WEIGHTED";
       storage.saveConstitution(initialConst);
 
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         proposerSmeId: "sme_austin_01",
         ruleType: "DAMAGE_EVIDENCE_REQUIREMENT",
         proposedValue: "PHOTO_AND_VIDEO",
@@ -375,21 +375,21 @@ describe("Clan Democratic Governance & Cooperative Voting System", () => {
       // Total cast: 500 units. Total YES: 350 units (70% > 66% supermajority).
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_austin_01",
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_bean_02",
         choice: "NEGATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockCoalitionId,
+        coalitionId: testCoalitionId,
         smeId: "sme_green_03",
         choice: "AFFIRMATIVE",
         members,

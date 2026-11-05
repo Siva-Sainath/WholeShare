@@ -38,7 +38,7 @@ test("Instinct Profile generator produces 4-part profile with tasks board", () =
 });
 
 test("Instinct Dreaming Engine reconciles completed session into markdown memory", async () => {
-  const mockTrajectory = {
+  const testTrajectory = {
     id: `sess_dream_${Date.now()}`,
     steps: [
       {
@@ -54,7 +54,7 @@ test("Instinct Dreaming Engine reconciles completed session into markdown memory
     ]
   };
 
-  const dreamResult = await dreamingEngine.reconcileSession(mockTrajectory);
+  const dreamResult = await dreamingEngine.reconcileSession(testTrajectory);
   assert.equal(dreamResult.reconciled, true);
   assert.equal(dreamResult.updatesCount, 2);
 

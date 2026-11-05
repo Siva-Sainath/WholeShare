@@ -11,7 +11,7 @@ export class WholeshareModelClient {
   constructor(options = {}) {
     this.openRouterKey = options.openRouterKey || process.env.OPENROUTER_API_KEY;
     this.preferLocal = options.preferLocal || process.env.PREFER_LOCAL_MLX === "true";
-    this.timeoutMs = options.timeoutMs || 180000;
+    this.timeoutMs = options.timeoutMs || 360000;
   }
 
   async _executePost(endpoint, headers, body, timer, controller) {
@@ -100,21 +100,27 @@ export class WholeshareModelClient {
         body.response_format = responseFormat;
       }
 
-      const remoteRes = await this._executePost(OPENROUTER_ENDPOINT, headers, body, timer, controller);
-      clearTimeout(timer);
-      return {
-        model: DEFAULT_OPENROUTER_MODEL,
-        provider: "openrouter",
-        message: remoteRes.message,
-        usage: remoteRes.usage
-      };
+      const remoteController = new AbortController();
+      const remoteTimer = setTimeout(() => remoteController.abort(), this.timeoutMs);
+      try {
+        const remoteRes = await this._executePost(OPENROUTER_ENDPOINT, headers, body, remoteTimer, remoteController);
+        clearTimeout(remoteTimer);
+        return {
+          model: DEFAULT_OPENROUTER_MODEL,
+          provider: "openrouter",
+          message: remoteRes.message,
+          usage: remoteRes.usage
+        };
+      } finally {
+        clearTimeout(remoteTimer);
+      }
     } catch (err) {
       clearTimeout(timer);
       throw new Error(`Real model inference failed: ${err.message}`);
     }
   }
 
-  async callJsonPrompt({ systemPrompt, userPrompt, temperature = 0.1, maxTokens = 1024 }) {
+  async callJsonPrompt({ systemPrompt, userPrompt, temperature = 0.1, maxTokens = 2048 }) {
     const messages = [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }

@@ -56,11 +56,18 @@ export function interceptNegotiationProposal(proposal, context) {
     violations.push("Valid idempotency key is required.");
   }
 
-  // Invariant 7: Discount floor
+  // Invariant 7: Discount floor and discount calculation consistency
   if (Number.isInteger(catalogPriceCents) && unitPriceCents <= catalogPriceCents) {
     invariantsPassed.push("INVARIANT_7_DISCOUNT_FLOOR");
   } else {
     violations.push(`Unit price ${unitPriceCents} cents exceeds catalog price ${catalogPriceCents} cents.`);
+  }
+
+  if (Number.isInteger(catalogPriceCents) && Number.isInteger(proposal.discountPct) && proposal.discountPct >= 0) {
+    const expectedUnitPriceCents = Math.round(catalogPriceCents * (100 - proposal.discountPct) / 100);
+    if (unitPriceCents !== expectedUnitPriceCents) {
+      violations.push(`Unit price ${unitPriceCents} cents does not match discount ${proposal.discountPct}% on base catalog price ${catalogPriceCents} cents (expected ${expectedUnitPriceCents} cents).`);
+    }
   }
 
   if (!Array.isArray(allocations) || allocations.length === 0) {

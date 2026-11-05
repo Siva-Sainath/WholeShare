@@ -61,7 +61,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
   }
 
 
-  async startSession({ prompt, sessionId = `sess_${Date.now()}`, metadata = {} }) {
+  async startSession({ prompt, sessionId = `sess_${Date.now()}`, metadata = {}, maxTurns = 3 }) {
     const sessionStartTime = Date.now();
     await createAgentSession({
       id: sessionId,
@@ -92,9 +92,9 @@ Follow this operational protocol for sourcing, verification, and escrow:
       timestamp: new Date().toISOString()
     });
 
-    if (!layaDecision.requiresLlm && layaDecision.intent === "catalog_query") {
-      const skuMatch = prompt.match(/(?:for|sku|product)?\s*([a-z0-9-]+flour[a-z0-9-]*)/i);
-      const sku = skuMatch ? skuMatch[1] : "organic-flour-50lb";
+    const skuMatch = prompt.match(/(?:for|sku|product)?\s*([a-z0-9-]+flour[a-z0-9-]*)/i);
+    if (!layaDecision.requiresLlm && layaDecision.intent === "catalog_query" && skuMatch && skuMatch[1]) {
+      const sku = skuMatch[1];
       const result = await executeTool("discover_wholesale_catalog", { sku });
       const totalDurationMs = Date.now() - sessionStartTime;
 
@@ -139,11 +139,12 @@ Follow this operational protocol for sourcing, verification, and escrow:
       sessionId,
       messages,
       startStepIndex: 1,
-      sessionStartTime
+      sessionStartTime,
+      maxTurns
     });
   }
 
-  async resumeSession(sessionId) {
+  async resumeSession(sessionId, options = {}) {
     const trajectory = await loadSessionTrajectory(sessionId);
     if (!trajectory) {
       throw new Error(`Session ${sessionId} not found.`);
@@ -193,11 +194,12 @@ Follow this operational protocol for sourcing, verification, and escrow:
       sessionId,
       messages,
       startStepIndex: existingSteps.length + 1,
-      sessionStartTime
+      sessionStartTime,
+      maxTurns: options?.maxTurns || 3
     });
   }
 
-  async resumeWithStepUpApproval(sessionId, approvalToken) {
+  async resumeWithStepUpApproval(sessionId, approvalToken, options = {}) {
     const trajectory = await loadSessionTrajectory(sessionId);
     if (!trajectory) {
       throw new Error(`Session ${sessionId} not found.`);
@@ -248,16 +250,17 @@ Follow this operational protocol for sourcing, verification, and escrow:
       sessionId,
       messages,
       startStepIndex: (trajectory.steps?.length || 0) + 1,
-      sessionStartTime: Date.now()
+      sessionStartTime: Date.now(),
+      maxTurns: options?.maxTurns || 3
     });
   }
 
-  async runExecutionLoop({ sessionId, messages, startStepIndex, sessionStartTime }) {
+  async runExecutionLoop({ sessionId, messages, startStepIndex, sessionStartTime, maxTurns = 3 }) {
     let turn = startStepIndex;
     let finalMessage = "";
     let reflexiveRetries = 0;
 
-    while (turn <= MAX_TURNS) {
+    while (turn <= maxTurns) {
       const stepStartTime = Date.now();
 
       try {

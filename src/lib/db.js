@@ -78,6 +78,77 @@ export async function lockCoalition(client, coalitionId) {
   return res.rows[0] || null;
 }
 
+export async function joinCoalitionWithLock({
+  coalitionId,
+  buyerId,
+  buyerName,
+  buyerEmail = `${buyerId}@example.com`,
+  units,
+  authorizedCents = 0,
+  stepUpRequired = false
+}) {
+  return await withTransaction(async (client) => {
+    const coalition = await lockCoalition(client, coalitionId);
+    if (!coalition) {
+      throw new Error(`Coalition ${coalitionId} not found.`);
+    }
+
+    if (coalition.status !== "FORMING") {
+      throw new Error(`Coalition ${coalitionId} is already in ${coalition.status} state.`);
+    }
+
+    const currentUnits = parseInt(coalition.current_units, 10) || 0;
+    const targetUnits = parseInt(coalition.target_units, 10) || 0;
+    const nextUnits = currentUnits + units;
+    const thresholdMet = nextUnits >= targetUnits;
+    const nextStatus = thresholdMet ? "LOCKED" : "FORMING";
+
+    const memberId = `mem_${buyerId}_${Date.now()}`;
+    await client.query(
+      `INSERT INTO coalition_members (
+        id, coalition_id, buyer_id, buyer_name, buyer_email,
+        pledged_units, authorized_cents, status, step_up_required
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        memberId,
+        coalitionId,
+        buyerId,
+        buyerName,
+        buyerEmail,
+        units,
+        authorizedCents,
+        "PLEDGED",
+        stepUpRequired
+      ]
+    );
+
+    const updateRes = await client.query(
+      `UPDATE coalitions
+       SET current_units = $1,
+           status = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING *`,
+      [nextUnits, nextStatus, coalitionId]
+    );
+
+    await appendAuditEvent(client, coalitionId, thresholdMet ? "COALITION_THRESHOLD_MET" : "MEMBER_PLEDGED", {
+      buyerId,
+      units,
+      previousUnits: currentUnits,
+      nextUnits,
+      thresholdMet,
+      status: nextStatus
+    });
+
+    return {
+      coalition: updateRes.rows[0],
+      thresholdMet,
+      memberId
+    };
+  });
+}
+
 export async function appendAuditEvent(client, coalitionId, eventType, payload) {
   const res = await client.query(
     "INSERT INTO audit_events (coalition_id, event_type, payload) VALUES ($1, $2, $3) RETURNING *",

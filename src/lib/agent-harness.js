@@ -4,7 +4,7 @@ import { generateFeatureMapPromptContext } from "./feature-map.js";
 import { modelClient } from "./model-client.js";
 import { SERVING_TARGET } from "./serving-target.js";
 
-const MAX_TURNS = 6;
+const MAX_TURNS = 3;
 
 export class WholeshareAgentHarness {
   constructor() {
@@ -76,7 +76,8 @@ ${featureContext}`
     let turn = 0;
     let finalMessage = "";
 
-    while (turn < MAX_TURNS) {
+    const sessionMaxTurns = opts.maxTurns || MAX_TURNS;
+    while (turn < sessionMaxTurns) {
       turn++;
       const stepStartTime = Date.now();
 
@@ -190,7 +191,8 @@ ${featureContext}`
   async callModelWithTools(messages) {
     const res = await modelClient.callChat({
       messages,
-      tools: WHOLESHARE_TOOL_DECLARATIONS
+      tools: WHOLESHARE_TOOL_DECLARATIONS,
+      maxTokens: 600
     });
     return {
       message: res.message

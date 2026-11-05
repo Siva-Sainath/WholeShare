@@ -14,7 +14,7 @@ import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { modelClient } from "./model-client.js";
 import { SERVING_TARGET } from "./serving-target.js";
-import { verifyToolBoundary, verifyFinancialPolicy, verifyStateTransition } from "./policy.js";
+import { verifyToolBoundary, verifyFinancialPolicy, verifyStateTransition } from "./policy.ts";
 import { actionDispatcher } from "./web-actions.js";
 import { WHOLESHARE_TOOL_DECLARATIONS } from "./tool-registry.js";
 

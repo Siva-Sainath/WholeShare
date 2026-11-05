@@ -25,11 +25,11 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
   let adapter: ClanGovernanceAdapter;
   let repaymentStorage: RepaymentStorage;
 
-  const mockClanId = "coalition_ethiopian_coffee_01";
+  const testClanId = "coalition_ethiopian_coffee_01";
   const founderSmeId = "sme_founder_roaster_01";
 
   const customCharter: CustomClanCharter = {
-    clanId: mockClanId,
+    clanId: testClanId,
     clanName: "Specialty Ethiopian Green Coffee Syndicate",
     founderSmeId,
     sku: "ethiopian_coffee_beans",
@@ -72,7 +72,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
     it("successfully creates clan with custom constitution, rules, and meta-governance", () => {
       const constitution = adapter.createCustomCharter(customCharter);
 
-      assert.equal(constitution.coalitionId, mockClanId);
+      assert.equal(constitution.coalitionId, testClanId);
       assert.equal(constitution.founderSmeId, founderSmeId);
       assert.equal(constitution.rules.INSPECTION_WINDOW_HOURS, 72);
       assert.equal(constitution.rules.SILENCE_AUTO_CONFIRM_HOURS, 48);
@@ -168,7 +168,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       ];
 
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         proposerSmeId: "sme_whale_01",
         ruleType: "INSPECTION_WINDOW_HOURS",
         proposedValue: 96,
@@ -179,7 +179,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       // Member 1 (Whale) votes affirmative
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_whale_01",
         choice: "AFFIRMATIVE",
         members,
@@ -188,14 +188,14 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       // Member 2 & 3 vote negative
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_small_02",
         choice: "NEGATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_small_03",
         choice: "NEGATIVE",
         members,
@@ -228,7 +228,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
 
       // Propose modifying MIN_DISCOUNT_PERCENT (which is in founderVetoRules)
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         proposerSmeId: "sme_partner_02",
         ruleType: "MIN_DISCOUNT_PERCENT",
         proposedValue: 15,
@@ -239,14 +239,14 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       // Both partners vote AFFIRMATIVE (representing 80% of units)
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_partner_02",
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_partner_03",
         choice: "AFFIRMATIVE",
         members,
@@ -255,7 +255,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       // Founder casts NEGATIVE veto
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: founderSmeId,
         choice: "NEGATIVE",
         members,
@@ -283,7 +283,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       ];
 
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         proposerSmeId: founderSmeId,
         ruleType: "STEP_UP_THRESHOLD_USD",
         proposedValue: 2000,
@@ -293,14 +293,14 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
 
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: founderSmeId,
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_partner_02",
         choice: "AFFIRMATIVE",
         members,
@@ -329,7 +329,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       ];
 
       const proposal = adapter.proposeRuleChange({
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         proposerSmeId: founderSmeId,
         ruleType: "META_GOVERNANCE_PROCEDURE",
         proposedValue: "FOUNDER_ARBITRATION",
@@ -339,14 +339,14 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
 
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: founderSmeId,
         choice: "AFFIRMATIVE",
         members,
       });
       adapter.castVote({
         proposalId: proposal.id,
-        coalitionId: mockClanId,
+        coalitionId: testClanId,
         smeId: "sme_partner_02",
         choice: "AFFIRMATIVE",
         members,
@@ -374,7 +374,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       assert.throws(
         () => {
           adapter.proposeRuleChange({
-            coalitionId: mockClanId,
+            coalitionId: testClanId,
             proposerSmeId: founderSmeId,
             ruleType: "SINGLE_REFUND_INVARIANT" as any,
             proposedValue: false as any,
