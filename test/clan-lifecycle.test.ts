@@ -536,7 +536,7 @@ describe("Clan Sovereign Governance Lifecycle & Debt Binding Liabilities", () =>
       assert.equal(joinResult.id, "coalition_debt_gate_clan");
     });
 
-    it("issues PayPal debt invoice and settles debt cleanly via tools", async () => {
+    it("issues PayPal debt invoice and settles debt cleanly via tools", { skip: process.env.PAYPAL_CLIENT_ID === "test-client-id" ? "calls the PayPal sandbox and needs real sandbox credentials in .env" : false }, async () => {
       const debtorSmeId = `sme_invoice_test_${Date.now()}`;
 
       // Issue invoice via tool (it creates debt record and PayPal invoice)
