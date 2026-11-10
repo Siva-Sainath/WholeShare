@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WholeShare - Escrow Ledger</title>
+    <link rel="stylesheet" href="/app.css">
+    <!-- AG Grid Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-enterprise@36.2.0/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-enterprise@36.2.0/styles/ag-theme-quartz-dark.css">
+    <style>
+        /* Ledger View Specific Styles */
+        .ws-ledger-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-canvas, #08090b);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-ledger-topbar {
+            height: 56px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .ws-ledger-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-ledger-breadcrumb span {
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-ledger-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ws-ledger-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* KPI Summary Ribbon */
+        .ws-kpi-ribbon {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-kpi-card {
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .ws-kpi-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .ws-kpi-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-kpi-subvalue {
+            font-size: 12px;
+            color: var(--text-secondary, #94a3b8);
+            margin-top: 4px;
+        }
+
+        /* AG Studio Natural-Language Agent Bar */
+        .ws-agent-bar {
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ws-agent-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ws-agent-input {
+            flex: 1;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 14px;
+            outline: none;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-agent-input::placeholder {
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-agent-input:focus {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .ws-agent-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+            white-space: nowrap;
+        }
+
+        .ws-agent-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .ws-agent-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* AG Grid Container */
+        .ws-grid-container {
+            flex: 1;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        /* Custom AG Grid Theme Overrides */
+        .ag-theme-quartz-dark {
+            --ag-background-color: #08090b;
+            --ag-surface-color: #0d0f14;
+            --ag-elevated-surface-color: #14171f;
+            --ag-border-color: rgba(255,255,255,0.08);
+            --ag-secondary-border-color: rgba(255,255,255,0.04);
+            --ag-text-primary: #e2e8f0;
+            --ag-text-secondary: #94a3b8;
+            --ag-text-tertiary: #64748b;
+            --ag-icon-color: #94a3b8;
+            --ag-header-background-color: #0d0f14;
+            --ag-header-text-color: #e2e8f0;
+            --ag-row-background-color: #0d0f14;
+            --ag-row-border-color: rgba(255,255,255,0.04);
+            --ag-cell-border-color: rgba(255,255,255,0.04);
+            --ag-odd-row-background-color: #14171f;
+            --ag-hover-color: rgba(255,255,255,0.1);
+            --ag-selected-row-background-color: rgba(16, 185, 129, 0.15);
+            --ag-range-selection-background-color: rgba(16, 185, 129, 0.2);
+        }
+
+        /* Cell Flashing Animation */
+        @keyframes cellFlash {
+            0%, 100% {
+                background-color: transparent;
+            }
+            50% {
+                background-color: rgba(16, 185, 129, 0.3);
+            }
+        }
+
+        .ag-cell-flash {
+            animation: cellFlash 1.5s ease-in-out;
+        }
+
+        /* PayPal Button Styles */
+        .ws-paypal-btn-gold {
+            background: linear-gradient(135deg, #ffc439 0%, #ffb81c 100%);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #08090b;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-paypal-btn-gold:hover {
+            transform: translateY(-1px);
+        }
+
+        .ws-paypal-btn-gold:active {
+            transform: scale(0.98);
+        }
+
+        .ws-paypal-btn-blue {
+            background: linear-gradient(135deg, #009cde 0%, #0077b6 100%);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-paypal-btn-blue:hover {
+            transform: translateY(-1px);
+        }
+
+        .ws-paypal-btn-blue:active {
+            transform: scale(0.98);
+        }
+
+        /* Status Badges */
+        .ws-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .ws-status-badge.soft-hold {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        .ws-status-badge.authorized {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .ws-status-badge.settled {
+            background: rgba(5, 150, 105, 0.15);
+            border: 1px solid rgba(5, 150, 105, 0.3);
+            color: #059669;
+        }
+
+        .ws-status-badge.pending {
+            background: rgba(147, 163, 184, 0.15);
+            border: 1px solid rgba(147, 163, 184, 0.3);
+            color: #94a3b8;
+        }
+
+        .ws-status-badge.canceled {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        /* Progress Bar in Cell */
+        .ws-cell-progress {
+            height: 6px;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ws-cell-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 3px;
+        }
+
+        /* Loading State */
+        .ws-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .ws-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Qwen Badge */
+        .ws-qwen-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #10b981;
+            max-width: 300px;
+            animation: slideIn 300ms cubic-bezier(0.22, 1, 0.36, 1);
+            display: none;
+        }
+
+        .ws-qwen-badge.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .ws-ledger-topbar {
+                padding: 0 16px;
+            }
+
+            .ws-kpi-ribbon {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 16px;
+            }
+
+            .ws-agent-bar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 16px;
+            }
+
+            .ws-agent-input {
+                width: 100%;
+            }
+
+            .ws-grid-container {
+                padding: 16px;
+            }
+        }
+
+        /* Modal Styles */
+        .ws-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(8, 9, 11, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .ws-modal-overlay.show {
+            display: flex;
+        }
+
+        .ws-modal {
+            background: var(--bg-surface, #0d0f14);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .ws-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .ws-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+        }
+
+        .ws-modal-close:hover {
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-modal-body {
+            margin-bottom: 20px;
+        }
+
+        .ws-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .ws-qr-code {
+            width: 200px;
+            height: 200px;
+            background: white;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ws-qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="ws-ledger-view">
+        <!-- Top Contextual Bar -->
+        <header class="ws-ledger-topbar">
+            <div class="ws-ledger-breadcrumb">
+                <span class="ws-filter-label">Workspace</span>
+                <span>/</span>
+                <span>Escrow Ledger</span>
+            </div>
+            <div class="ws-ledger-topbar-right">
+                <button class="ws-export-btn">Export Ledger</button>
+                <button class="ws-summon-qwen-btn">Summon Qwen Copilot</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="ws-ledger-main">
+            <!-- KPI Summary Ribbon -->
+            <div class="ws-kpi-ribbon">
+                <div class="ws-kpi-card">
+                    <div class="ws-kpi-label">Total Escrow Authorized</div>
+                    <div class="ws-kpi-value" id="totalEscrow">$0.00</div>
+                    <div class="ws-kpi-subvalue">Across all active clans</div>
+                </div>
+                <div class="ws-kpi-card">
+                    <div class="ws-kpi-label">Active Soft Holds</div>
+                    <div class="ws-kpi-value" id="activeHolds">0</div>
+                    <div class="ws-kpi-subvalue">Pending authorization</div>
+                </div>
+                <div class="ws-kpi-card">
+                    <div class="ws-kpi-label">Pending Step-Up QR</div>
+                    <div class="ws-kpi-value" id="pendingQr">$0.00</div>
+                    <div class="ws-kpi-subvalue">Invoices > $1,000</div>
+                </div>
+                <div class="ws-kpi-card">
+                    <div class="ws-kpi-label">Settled Batch Payouts</div>
+                    <div class="ws-kpi-value" id="settledPayouts">$0.00</div>
+                    <div class="ws-kpi-subvalue">This month</div>
+                </div>
+            </div>
+
+            <!-- AG Studio Natural-Language Agent Bar -->
+            <div class="ws-agent-bar">
+                <span class="ws-agent-label">AG Studio Agent</span>
+                <input type="text" class="ws-agent-input" id="agentInput" placeholder="Tell Qwen to filter, sort, or inspect the ledger...">
+                <button class="ws-agent-btn" id="agentBtn">Execute</button>
+            </div>
+
+            <!-- AG Grid Container -->
+            <div class="ws-grid-container">
+                <div id="grid" class="ag-theme-quartz-dark" style="height: 100%; width: 100%;"></div>
+            </div>
+        </main>
+
+        <!-- Qwen Badge -->
+        <div class="ws-qwen-badge" id="qwenBadge"></div>
+
+        <!-- QR Code Modal -->
+        <div class="ws-modal-overlay" id="qrModal">
+            <div class="ws-modal">
+                <div class="ws-modal-header">
+                    <div class="ws-modal-title">Step-Up QR Code</div>
+                    <button class="ws-modal-close" onclick="closeQrModal()">&times;</button>
+                </div>
+                <div class="ws-modal-body">
+                    <p style="text-align: center; color: var(--text-secondary, #94a3b8); margin-bottom: 20px;">
+                        Scan this QR code to complete step-up KYC for invoices over $1,000
+                    </p>
+                    <div class="ws-qr-code" id="qrCodeContainer">
+                        <img src="" alt="QR Code" id="qrCodeImg">
+                    </div>
+                    <p style="text-align: center; color: var(--text-secondary, #94a3b8); margin-top: 20px; font-variant-numeric: tabular-nums;">
+                        Invoice Amount: $<span id="qrAmount">0.00</span>
+                    </p>
+                </div>
+                <div class="ws-modal-footer">
+                    <button class="ws-btn-secondary" onclick="closeQrModal()">Close</button>
+                    <button class="ws-btn-primary" onclick="confirmQrPayment()">Confirm Payment</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PayPal Authorization Modal -->
+        <div class="ws-modal-overlay" id="authModal">
+            <div class="ws-modal">
+                <div class="ws-modal-header">
+                    <div class="ws-modal-title">Authorize Soft Hold</div>
+                    <button class="ws-modal-close" onclick="closeAuthModal()">&times;</button>
+                </div>
+                <div class="ws-modal-body">
+                    <p style="color: var(--text-secondary, #94a3b8); margin-bottom: 20px;">
+                        You are about to authorize a soft hold for the following clan:
+                    </p>
+                    <div style="background: var(--bg-elevated, #14171f); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px;">
+                            <div style="color: var(--text-secondary, #94a3b8); font-size: 13px;">Clan SKU:</div>
+                            <div style="color: var(--text-primary, #e2e8f0); font-weight: 500;" id="authSku">-</div>
+                            <div style="color: var(--text-secondary, #94a3b8); font-size: 13px;">Units:</div>
+                            <div style="color: var(--text-primary, #e2e8f0); font-weight: 500; font-variant-numeric: tabular-nums;" id="authUnits">0</div>
+                            <div style="color: var(--text-secondary, #94a3b8); font-size: 13px;">Unit Price:</div>
+                            <div style="color: var(--text-primary, #e2e8f0); font-weight: 500; font-variant-numeric: tabular-nums;" id="authPrice">$0.00</div>
+                            <div style="color: var(--text-secondary, #94a3b8); font-size: 13px;">Total Amount:</div>
+                            <div style="color: #10b981; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums;" id="authTotal">$0.00</div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary, #94a3b8); font-size: 13px;">
+                        This will create a PayPal Orders v2 soft authorization hold with intent "AUTHORIZE". The funds will be held but not captured until the inspection period is complete.
+                    </p>
+                </div>
+                <div class="ws-modal-footer">
+                    <button class="ws-btn-secondary" onclick="closeAuthModal()">Cancel</button>
+                    <button class="ws-paypal-btn-gold" onclick="confirmAuthorization()">Authorize with PayPal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AG Grid Script -->
+    <script src="https://unpkg.com/ag-grid-enterprise@36.2.0/dist/ag-grid-enterprise.min.js"></script>
+    
+    <script>
+        // Sample Ledger Data
+        const sampleLedgerData = [
+            {
+                id: 'order_001',
+                clanId: 'clan_001',
+                sku: 'COFFEE_ARABICA_50LB',
+                skuName: 'Premium Arabica Coffee Beans 50lb',
+                category: 'Specialty Coffee',
+                units: 300,
+                targetUnits: 500,
+                progressPct: 60,
+                unitPrice: 7.20,
+                escrowLocked: 2160.00,
+                discountTier: 'Tier 2',
+                discountPct: 28,
+                escrowState: 'soft-hold',
+                stateBadge: 'soft-hold',
+                carrierTracking: 'UPS-1Z999AA10123456784',
+                trackingUrl: 'https://www.ups.com/track?tracknum=1Z999AA10123456784',
+                createdAt: '2024-01-15T10:30:00Z',
+                updatedAt: '2024-01-15T14:45:00Z',
+                membersCount: 15,
+                credibilityScore: 99.2
+            },
+            {
+                id: 'order_002',
+                clanId: 'clan_002',
+                sku: 'FLOUR_BREAD_50LB',
+                skuName: 'Artisan Bread Flour 50lb',
+                category: 'Bakery',
+                units: 450,
+                targetUnits: 600,
+                progressPct: 75,
+                unitPrice: 5.95,
+                escrowLocked: 2677.50,
+                discountTier: 'Tier 3',
+                discountPct: 30,
+                escrowState: 'authorized',
+                stateBadge: 'authorized',
+                carrierTracking: 'FEDEX-123456789012',
+                trackingUrl: 'https://www.fedex.com/tracking?tracknumbers=123456789012',
+                createdAt: '2024-01-14T09:15:00Z',
+                updatedAt: '2024-01-14T11:20:00Z',
+                membersCount: 22,
+                credibilityScore: 98.5
+            },
+            {
+                id: 'order_003',
+                clanId: 'clan_003',
+                sku: 'CERAMIC_MUGS_12PC',
+                skuName: 'Handcrafted Ceramic Mugs 12pc Set',
+                category: 'Ceramics',
+                units: 200,
+                targetUnits: 400,
+                progressPct: 50,
+                unitPrice: 8.40,
+                escrowLocked: 1680.00,
+                discountTier: 'Tier 1',
+                discountPct: 30,
+                escrowState: 'soft-hold',
+                stateBadge: 'soft-hold',
+                carrierTracking: 'USPS-9400100000000000000000',
+                trackingUrl: 'https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=9400100000000000000000',
+                createdAt: '2024-01-13T14:20:00Z',
+                updatedAt: '2024-01-13T16:30:00Z',
+                membersCount: 8,
+                credibilityScore: 97.8
+            },
+            {
+                id: 'order_004',
+                clanId: 'clan_004',
+                sku: 'ELECTRONICS_RESISTORS',
+                skuName: 'Precision Resistors Kit',
+                category: 'Electronics MRO',
+                units: 800,
+                targetUnits: 1000,
+                progressPct: 80,
+                unitPrice: 10.50,
+                escrowLocked: 8400.00,
+                discountTier: 'Tier 4',
+                discountPct: 30,
+                escrowState: 'settled',
+                stateBadge: 'settled',
+                carrierTracking: 'UPS-1Z999AA10123456785',
+                trackingUrl: 'https://www.ups.com/track?tracknum=1Z999AA10123456785',
+                createdAt: '2024-01-10T08:00:00Z',
+                updatedAt: '2024-01-12T17:00:00Z',
+                membersCount: 35,
+                credibilityScore: 99.5
+            },
+            {
+                id: 'order_005',
+                clanId: 'clan_005',
+                sku: 'FLOWERS_TULIPS_BUNCH',
+                skuName: 'Premium Tulips Bulk Bunch',
+                category: 'Floriculture',
+                units: 150,
+                targetUnits: 300,
+                progressPct: 50,
+                unitPrice: 17.50,
+                escrowLocked: 2625.00,
+                discountTier: 'Tier 2',
+                discountPct: 30,
+                escrowState: 'pending',
+                stateBadge: 'pending',
+                carrierTracking: '',
+                trackingUrl: '',
+                createdAt: '2024-01-16T11:00:00Z',
+                updatedAt: '2024-01-16T11:00:00Z',
+                membersCount: 6,
+                credibilityScore: 96.2
+            },
+            {
+                id: 'order_006',
+                clanId: 'clan_006',
+                sku: 'COFFEE_ROBUSTA_50LB',
+                skuName: 'Robusta Coffee Beans 50lb',
+                category: 'Specialty Coffee',
+                units: 250,
+                targetUnits: 400,
+                progressPct: 62,
+                unitPrice: 6.30,
+                escrowLocked: 1575.00,
+                discountTier: 'Tier 2',
+                discountPct: 30,
+                escrowState: 'soft-hold',
+                stateBadge: 'soft-hold',
+                carrierTracking: '',
+                trackingUrl: '',
+                createdAt: '2024-01-16T12:00:00Z',
+                updatedAt: '2024-01-16T12:00:00Z',
+                membersCount: 12,
+                credibilityScore: 98.0
+            },
+            {
+                id: 'order_007',
+                clanId: 'clan_007',
+                sku: 'PACKAGING_BOXES',
+                skuName: 'Eco-Friendly Packaging Boxes',
+                category: 'Packaging',
+                units: 500,
+                targetUnits: 1000,
+                progressPct: 50,
+                unitPrice: 2.50,
+                escrowLocked: 1250.00,
+                discountTier: 'Tier 1',
+                discountPct: 25,
+                escrowState: 'canceled',
+                stateBadge: 'canceled',
+                carrierTracking: '',
+                trackingUrl: '',
+                createdAt: '2024-01-05T10:00:00Z',
+                updatedAt: '2024-01-06T09:00:00Z',
+                membersCount: 5,
+                credibilityScore: 95.0
+            }
+        ];
+
+        // AG Grid Configuration
+        let gridApi;
+        let gridColumnApi;
+        
+        const columnDefs = [
+            {
+                headerName: 'Clan SKU',
+                field: 'sku',
+                minWidth: 140,
+                cellClass: 'ws-cell-sku',
+                filter: 'agTextColumnFilter',
+                sortable: true,
+                resizable: true
+            },
+            {
+                headerName: 'Name',
+                field: 'skuName',
+                minWidth: 200,
+                cellClass: 'ws-cell-name',
+                filter: 'agTextColumnFilter',
+                sortable: true,
+                resizable: true
+            },
+            {
+                headerName: 'Category',
+                field: 'category',
+                minWidth: 120,
+                cellClass: 'ws-cell-category',
+                filter: 'agTextColumnFilter',
+                sortable: true,
+                resizable: true
+            },
+            {
+                headerName: 'Pooled Units',
+                field: 'units',
+                minWidth: 120,
+                cellClass: 'ws-cell-numeric',
+                filter: 'agNumberColumnFilter',
+                sortable: true,
+                resizable: true,
+                cellRenderer: (params) => {
+                    return `${params.value} / ${params.data.targetUnits}`;
+                }
+            },
+            {
+                headerName: 'Progress',
+                field: 'progressPct',
+                minWidth: 100,
+                cellClass: 'ws-cell-progress-container',
+                sortable: true,
+                resizable: true,
+                cellRenderer: (params) => {
+                    return `
+                        <div class="ws-cell-progress">
+                            <div class="ws-cell-progress-fill" style="width: ${params.value}%"></div>
+                        </div>
+                        <div style="text-align: center; font-size: 11px; margin-top: 4px;">${params.value}%</div>
+                    `;
+                }
+            },
+            {
+                headerName: 'Escrow Locked ($)',
+                field: 'escrowLocked',
+                minWidth: 140,
+                cellClass: 'ws-cell-numeric',
+                filter: 'agNumberColumnFilter',
+                sortable: true,
+                resizable: true,
+                cellRenderer: (params) => {
+                    return `$${params.value.toFixed(2)}`;
+                }
+            },
+            {
+                headerName: 'Discount Tier',
+                field: 'discountTier',
+                minWidth: 100,
+                cellClass: 'ws-cell-tier',
+                filter: 'agTextColumnFilter',
+                sortable: true,
+                resizable: true
+            },
+            {
+                headerName: 'Status',
+                field: 'stateBadge',
+                minWidth: 120,
+                cellClass: 'ws-cell-status',
+                filter: 'agTextColumnFilter',
+                sortable: true,
+                resizable: true,
+                cellRenderer: (params) => {
+                    const status = params.value;
+                    const label = getStatusLabel(status);
+                    return `<span class="ws-status-badge ${status}">${label}</span>`;
+                }
+            },
+            {
+                headerName: 'Carrier Tracking',
+                field: 'carrierTracking',
+                minWidth: 160,
+                cellClass: 'ws-cell-tracking',
+                filter: 'agTextColumnFilter',
+                sortable: true,
+                resizable: true,
+                cellRenderer: (params) => {
+                    if (params.value) {
+                        return `<a href="${params.data.trackingUrl}" target="_blank" style="color: #10b981; text-decoration: none;">${params.value}</a>`;
+                    }
+                    return 'N/A';
+                }
+            },
+            {
+                headerName: 'Actions',
+                field: 'actions',
+                minWidth: 180,
+                cellClass: 'ws-cell-actions',
+                sortable: false,
+                resizable: false,
+                cellRenderer: (params) => {
+                    const data = params.data;
+                    const amount = data.escrowLocked;
+                    
+                    if (data.escrowState === 'soft-hold') {
+                        if (amount > 1000) {
+                            return `
+                                <button class="ws-paypal-btn-blue" onclick="showQrCode('${data.id}', ${amount})" style="margin-bottom: 4px; width: 100%;">Step-Up QR</button>
+                                <button class="ws-paypal-btn-gold" onclick="showAuthorization('${data.id}')" style="width: 100%;">Authorize Hold</button>
+                            `;
+                        } else {
+                            return `<button class="ws-paypal-btn-gold" onclick="showAuthorization('${data.id}')" style="width: 100%;">Authorize Hold</button>`;
+                        }
+                    } else if (data.escrowState === 'authorized') {
+                        return `<button class="ws-btn-secondary" onclick="inspectOrder('${data.id}')" style="width: 100%;">Inspect</button>`;
+                    } else {
+                        return `<button class="ws-btn-secondary" onclick="inspectOrder('${data.id}')" style="width: 100%;">View Details</button>`;
+                    }
+                }
+            }
+        ];
+
+        const gridOptions = {
+            columnDefs: columnDefs,
+            rowData: sampleLedgerData,
+            animateRows: true,
+            rowSelection: 'single',
+            enableCellChangeFlash: true,
+            suppressCellFocus: true,
+            headerHeight: 48,
+            rowHeight: 56,
+            suppressHorizontalScroll: false,
+            suppressVerticalScroll: false,
+            onGridReady: (params) => {
+                gridApi = params.api;
+                gridColumnApi = params.columnApi;
+                
+                // Auto-size columns on first load
+                params.api.sizeColumnsToFit();
+                
+                // Update KPIs
+                updateKPIs();
+                
+                // Load real data
+                loadRealData();
+            },
+            onFilterChanged: () => {
+                updateKPIs();
+            },
+            onSortChanged: () => {
+                updateKPIs();
+            },
+            onCellValueChanged: (params) => {
+                // Flash the cell
+                const cell = document.querySelector(`.ag-row[row-id="${params.data.id}"] .ag-cell[col-id="${params.column.getId()}"]`);
+                if (cell) {
+                    cell.classList.add('ag-cell-flash');
+                    setTimeout(() => {
+                        cell.classList.remove('ag-cell-flash');
+                    }, 1500);
+                }
+            }
+        };
+
+        // Get status label
+        function getStatusLabel(status) {
+            const labels = {
+                'soft-hold': 'Soft Hold',
+                'authorized': 'Authorized',
+                'settled': 'Settled',
+                'pending': 'Pending',
+                'canceled': 'Canceled'
+            };
+            return labels[status] || status;
+        }
+
+        // Update KPIs
+        function updateKPIs() {
+            if (!gridApi) return;
+            
+            const allData = gridApi.getModel().rowsToDisplay.map(row => row.data);
+            
+            const totalEscrow = allData.reduce((sum, row) => sum + (row.escrowLocked || 0), 0);
+            const activeHolds = allData.filter(row => row.escrowState === 'soft-hold').length;
+            const pendingQr = allData.filter(row => row.escrowState === 'soft-hold' && row.escrowLocked > 1000)
+                .reduce((sum, row) => sum + (row.escrowLocked || 0), 0);
+            const settledPayouts = allData.filter(row => row.escrowState === 'settled')
+                .reduce((sum, row) => sum + (row.escrowLocked || 0), 0);
+            
+            document.getElementById('totalEscrow').textContent = `$${totalEscrow.toFixed(2)}`;
+            document.getElementById('activeHolds').textContent = activeHolds;
+            document.getElementById('pendingQr').textContent = `$${pendingQr.toFixed(2)}`;
+            document.getElementById('settledPayouts').textContent = `$${settledPayouts.toFixed(2)}`;
+        }
+
+        // Load real data from API
+        async function loadRealData() {
+            try {
+                const response = await fetch('/api/v1/ledger');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.rows && data.rows.length > 0) {
+                        gridApi.setRowData(data.rows);
+                    }
+                }
+            } catch (error) {
+                console.log('Using sample data:', error.message);
+            }
+        }
+
+        // Show QR Code Modal
+        function showQrCode(orderId, amount) {
+            const order = sampleLedgerData.find(o => o.id === orderId);
+            if (!order) return;
+            
+            document.getElementById('qrAmount').textContent = amount.toFixed(2);
+            document.getElementById('qrModal').classList.add('show');
+            
+            // Generate QR code (in production, this would come from PayPal API)
+            generateMockQrCode(amount, orderId);
+            
+            showQwenBadge(`Generating Step-Up QR code for $${amount.toFixed(2)}`);
+        }
+
+        // Generate mock QR code
+        function generateMockQrCode(amount, orderId) {
+            // In production, this would call PayPal Invoicing v2 API
+            // For demo purposes, we'll use a placeholder
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`WHOLSHARE:${orderId}:${amount}`)}`;
+            document.getElementById('qrCodeImg').src = qrCodeUrl;
+        }
+
+        // Close QR Modal
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.remove('show');
+        }
+
+        // Confirm QR Payment
+        function confirmQrPayment() {
+            showQwenBadge('Step-Up QR payment confirmed');
+            closeQrModal();
+        }
+
+        // Show Authorization Modal
+        function showAuthorization(orderId) {
+            const order = sampleLedgerData.find(o => o.id === orderId);
+            if (!order) return;
+            
+            document.getElementById('authSku').textContent = order.sku;
+            document.getElementById('authUnits').textContent = order.units;
+            document.getElementById('authPrice').textContent = `$${order.unitPrice.toFixed(2)}`;
+            document.getElementById('authTotal').textContent = `$${order.escrowLocked.toFixed(2)}`;
+            
+            document.getElementById('authModal').classList.add('show');
+            
+            showQwenBadge(`Preparing authorization for ${order.sku}`);
+        }
+
+        // Close Authorization Modal
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('show');
+        }
+
+        // Confirm Authorization
+        function confirmAuthorization() {
+            const orderId = document.getElementById('authModal').dataset.orderId;
+            
+            // In production, this would call PayPal Orders v2 API
+            // with intent: "AUTHORIZE"
+            showQwenBadge('PayPal Orders v2 Soft Authorization Hold created');
+            
+            // Update the grid
+            const rowNode = gridApi.getRowNode(orderId);
+            if (rowNode) {
+                rowNode.setData({
+                    ...rowNode.data,
+                    escrowState: 'authorized',
+                    stateBadge: 'authorized'
+                });
+            }
+            
+            closeAuthModal();
+        }
+
+        // Inspect Order
+        function inspectOrder(orderId) {
+            const order = sampleLedgerData.find(o => o.id === orderId);
+            if (!order) return;
+            
+            showQwenBadge(`Inspecting order ${order.id} for ${order.sku}`);
+            
+            // This would open a slide-over drawer in the parent app
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'INSPECT_ORDER',
+                    orderId: orderId
+                }, '*');
+            }
+        }
+
+        // Show Qwen Badge
+        function showQwenBadge(message) {
+            const badge = document.getElementById('qwenBadge');
+            badge.textContent = message;
+            badge.classList.add('show');
+            
+            setTimeout(() => {
+                badge.classList.remove('show');
+            }, 3000);
+        }
+
+        // Execute AG Studio Agent Command
+        function executeAgentCommand() {
+            const input = document.getElementById('agentInput');
+            const command = input.value.trim();
+            
+            if (!command) return;
+            
+            showQwenBadge(`Executing: ${command}`);
+            
+            // Parse natural language command
+            const parsed = parseAgentCommand(command);
+            
+            if (parsed) {
+                // Apply filter
+                if (parsed.filter) {
+                    const filterModel = {};
+                    if (parsed.filter.category) {
+                        filterModel.category = {
+                            filterType: 'text',
+                            type: 'contains',
+                            filter: parsed.filter.category
+                        };
+                    }
+                    if (parsed.filter.minUnits) {
+                        filterModel.units = {
+                            filterType: 'number',
+                            type: 'greaterThan',
+                            filter: parsed.filter.minUnits
+                        };
+                    }
+                    gridApi.setFilterModel(filterModel);
+                }
+                
+                // Apply sort
+                if (parsed.sort) {
+                    const sortModel = [{
+                        colId: parsed.sort.field,
+                        sort: parsed.sort.direction
+                    }];
+                    gridApi.setSortModel(sortModel);
+                }
+                
+                // Highlight clan
+                if (parsed.highlightClanId) {
+                    const rowNode = gridApi.getRowNode(parsed.highlightClanId);
+                    if (rowNode) {
+                        rowNode.setSelected(true);
+                        gridApi.ensureNodeVisible(rowNode);
+                    }
+                }
+            }
+            
+            input.value = '';
+        }
+
+        // Parse agent command
+        function parseAgentCommand(command) {
+            const lowerCmd = command.toLowerCase();
+            const result = {};
+            
+            // Filter by category
+            if (lowerCmd.includes('category') || lowerCmd.includes('filter')) {
+                const categoryMatch = command.match(/category\s+(\w+)/i);
+                if (categoryMatch) {
+                    result.filter = { category: categoryMatch[1] };
+                }
+            }
+            
+            // Filter by units
+            if (lowerCmd.includes('units') || lowerCmd.includes('pledged')) {
+                const unitsMatch = command.match(/(\d+)\s+units/i);
+                if (unitsMatch) {
+                    result.filter = result.filter || {};
+                    result.filter.minUnits = parseInt(unitsMatch[1]);
+                }
+            }
+            
+            // Sort
+            if (lowerCmd.includes('sort by') || lowerCmd.includes('order by')) {
+                const sortMatch = command.match(/sort\s+by\s+(\w+)\s*(asc|desc)?/i);
+                if (sortMatch) {
+                    result.sort = {
+                        field: sortMatch[1],
+                        direction: sortMatch[2] || 'asc'
+                    };
+                }
+            }
+            
+            // Highlight
+            if (lowerCmd.includes('highlight') || lowerCmd.includes('show')) {
+                const highlightMatch = command.match(/highlight\s+(\w+)/i);
+                if (highlightMatch) {
+                    result.highlightClanId = highlightMatch[1];
+                }
+            }
+            
+            return result;
+        }
+
+        // Handle messages from parent (Qwen control)
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'QWEN_ACTION') {
+                handleQwenAction(event.data.action);
+            }
+        });
+
+        // Handle Qwen actions
+        function handleQwenAction(action) {
+            switch (action.type) {
+                case 'ledger.query':
+                    // Apply query parameters
+                    if (action.filterModel) {
+                        gridApi.setFilterModel(action.filterModel);
+                    }
+                    if (action.sortModel) {
+                        gridApi.setSortModel(action.sortModel);
+                    }
+                    if (action.highlightClanId) {
+                        const rowNode = gridApi.getRowNode(action.highlightClanId);
+                        if (rowNode) {
+                            rowNode.setSelected(true);
+                            gridApi.ensureNodeVisible(rowNode);
+                        }
+                    }
+                    showQwenBadge(`Applied ledger query: ${JSON.stringify(action)}`);
+                    break;
+                
+                case 'ui.navigate':
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'NAVIGATE',
+                            view: action.view
+                        }, '*');
+                    }
+                    break;
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Agent input
+            const agentInput = document.getElementById('agentInput');
+            const agentBtn = document.getElementById('agentBtn');
+            
+            agentInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    executeAgentCommand();
+                }
+            });
+            
+            agentBtn.addEventListener('click', executeAgentCommand);
+            
+            // Export button
+            document.querySelector('.ws-export-btn').addEventListener('click', () => {
+                exportLedger();
+            });
+            
+            // Summon Qwen
+            document.querySelector('.ws-summon-qwen-btn').addEventListener('click', () => {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'SUMMON_QWEN'
+                    }, '*');
+                }
+            });
+            
+            // Close modals on overlay click
+            document.getElementById('qrModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    closeQrModal();
+                }
+            });
+            
+            document.getElementById('authModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    closeAuthModal();
+                }
+            });
+        }
+
+        // Export ledger
+        function exportLedger() {
+            const allData = gridApi.getModel().rowsToDisplay.map(row => row.data);
+            
+            if (allData.length === 0) {
+                showQwenBadge('No data to export');
+                return;
+            }
+            
+            const csv = convertToCSV(allData);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wholeshare-ledger-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showQwenBadge(`Exported ${allData.length} ledger entries as CSV`);
+        }
+
+        // Convert to CSV
+        function convertToCSV(data) {
+            const headers = ['ID', 'Clan ID', 'SKU', 'Name', 'Category', 'Units', 'Target Units', 'Progress %', 'Unit Price', 'Escrow Locked', 'Discount Tier', 'Status', 'Carrier Tracking', 'Created At', 'Updated At'];
+            const rows = data.map(row => [
+                row.id,
+                row.clanId,
+                row.sku,
+                row.skuName,
+                row.category,
+                row.units,
+                row.targetUnits,
+                row.progressPct,
+                row.unitPrice,
+                row.escrowLocked,
+                row.discountTier,
+                getStatusLabel(row.stateBadge),
+                row.carrierTracking,
+                row.createdAt,
+                row.updatedAt
+            ]);
+            
+            return [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        }
+
+        // Initialize on load
+        function initLedgerView() {
+            // Create grid
+            const gridDiv = document.querySelector('#grid');
+            new agGrid.Grid(gridDiv, gridOptions);
+            
+            setupEventListeners();
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', initLedgerView);
+    </script>
+</body>
+</html>

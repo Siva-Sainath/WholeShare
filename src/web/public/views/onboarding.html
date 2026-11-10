@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WholeShare - SME Onboarding</title>
+    <link rel="stylesheet" href="/app.css">
+    <style>
+        /* Onboarding View Specific Styles */
+        .ws-onboarding-view {
+            display: flex;
+            height: 100%;
+            background: var(--bg-canvas, #08090b);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-onboarding-container {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Left Column - Qwen Chat & Document Drop */
+        .ws-onboarding-left {
+            width: 45%;
+            min-width: 400px;
+            background: var(--bg-surface, #0d0f14);
+            border-right: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow: auto;
+        }
+
+        .ws-onboarding-header {
+            margin-bottom: 24px;
+        }
+
+        .ws-onboarding-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 8px;
+        }
+
+        .ws-onboarding-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        /* Document Drop Zone */
+        .ws-drop-zone {
+            background: var(--bg-elevated, #14171f);
+            border: 2px dashed rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+            margin-bottom: 24px;
+        }
+
+        .ws-drop-zone:hover {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .ws-drop-zone.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .ws-drop-zone-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .ws-drop-zone-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 8px;
+        }
+
+        .ws-drop-zone-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+            margin-bottom: 12px;
+        }
+
+        .ws-drop-zone-formats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-drop-zone-format {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Qwen Chat */
+        .ws-qwen-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .ws-qwen-chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+        }
+
+        .ws-qwen-chat-input {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            border-top: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            background: var(--bg-surface, #0d0f14);
+        }
+
+        .ws-qwen-input {
+            flex: 1;
+            background: var(--bg-canvas, #08090b);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 14px;
+            outline: none;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-qwen-input::placeholder {
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-qwen-input:focus {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .ws-qwen-send-btn {
+            background: linear-gradient(135deg, #ffc439 0%, #ffb81c 100%);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #08090b;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+            white-space: nowrap;
+        }
+
+        .ws-qwen-send-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .ws-qwen-send-btn:active {
+            transform: scale(0.98);
+        }
+
+        .ws-qwen-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Demo Persona Pills */
+        .ws-demo-personas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .ws-demo-persona {
+            background: transparent;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 8px 14px;
+            border-radius: 20px;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-demo-persona:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        /* Right Column - Progressive Profile Card */
+        .ws-onboarding-right {
+            width: 55%;
+            min-width: 450px;
+            background: var(--bg-canvas, #08090b);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow: auto;
+        }
+
+        .ws-profile-card {
+            background: var(--bg-surface, #0d0f14);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 12px;
+            padding: 24px;
+            flex: 1;
+        }
+
+        .ws-step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .ws-step {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-step.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #10b981;
+            color: white;
+        }
+
+        .ws-step.completed {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .ws-step-connector {
+            width: 40px;
+            height: 2px;
+            background: var(--border-hairline, rgba(255,255,255,0.08));
+            margin-bottom: 16px;
+        }
+
+        .ws-step-title {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 24px;
+        }
+
+        /* Form Sections */
+        .ws-form-section {
+            display: none;
+        }
+
+        .ws-form-section.active {
+            display: block;
+            animation: fadeIn 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ws-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .ws-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ws-form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ws-form-input {
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 14px;
+            outline: none;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-form-input::placeholder {
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-form-input:focus {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .ws-form-input.error {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .ws-form-hint {
+            font-size: 11px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-form-error {
+            font-size: 11px;
+            color: rgba(239, 68, 68, 0.8);
+        }
+
+        /* Form Actions */
+        .ws-form-actions {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-btn-secondary:hover {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .ws-btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .ws-btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-btn-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .ws-btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .ws-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Progress Summary */
+        .ws-progress-summary {
+            background: var(--bg-elevated, #14171f);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .ws-progress-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .ws-progress-bar {
+            height: 6px;
+            background: var(--bg-canvas, #08090b);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .ws-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 3px;
+            transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        /* Success State */
+        .ws-success-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .ws-success-state.active {
+            display: flex;
+        }
+
+        .ws-success-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .ws-success-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: #10b981;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .ws-success-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 8px;
+        }
+
+        .ws-success-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+            max-width: 300px;
+        }
+
+        /* Loading Overlay */
+        .ws-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(8, 9, 11, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .ws-loading-overlay.active {
+            display: flex;
+        }
+
+        .ws-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .ws-onboarding-container {
+                flex-direction: column;
+            }
+
+            .ws-onboarding-left,
+            .ws-onboarding-right {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .ws-onboarding-left {
+                border-right: none;
+                border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            }
+
+            .ws-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Qwen Typing Indicator */
+        .ws-typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .ws-typing-dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .ws-typing-dot:nth-child(1) { animation-delay: 0s; }
+        .ws-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .ws-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+
+        /* Message Bubbles */
+        .ws-message {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            max-width: 85%;
+        }
+
+        .ws-message.user {
+            background: var(--bg-elevated, #14171f);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ws-message.qwen {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ws-message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .ws-message-avatar.user {
+            background: linear-gradient(135deg, #ffc439 0%, #ffb81c 100%);
+            color: #08090b;
+        }
+
+        .ws-message-avatar.qwen {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .ws-message-content {
+            flex: 1;
+        }
+
+        .ws-message-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-message-time {
+            font-size: 11px;
+            color: var(--text-secondary, #94a3b8);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ws-onboarding-view">
+        <div class="ws-onboarding-container">
+            <!-- Left Column - Qwen Chat & Document Drop -->
+            <div class="ws-onboarding-left">
+                <div class="ws-onboarding-header">
+                    <div class="ws-onboarding-title">Talk to Qwen or Drop a Document</div>
+                    <div class="ws-onboarding-subtitle">Let Qwen extract your business data automatically</div>
+                </div>
+
+                <!-- Document Drop Zone -->
+                <div class="ws-drop-zone" id="dropZone">
+                    <div class="ws-drop-zone-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <path d="M24 12L16 20L8 12M16 4V20M16 20V28M16 20H8" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="ws-drop-zone-title">Drop your documents here</div>
+                    <div class="ws-drop-zone-subtitle">or click to browse</div>
+                    <div class="ws-drop-zone-formats">
+                        <span class="ws-drop-zone-format">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4h8v8H4z" stroke="currentColor" stroke-width="1"/><path d="M4 4l4 4 4-4" stroke="currentColor" stroke-width="1"/></svg>
+                            PDF
+                        </span>
+                        <span class="ws-drop-zone-format">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1"/><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1"/></svg>
+                            CSV
+                        </span>
+                        <span class="ws-drop-zone-format">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1"/><path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="currentColor" stroke-width="1"/></svg>
+                            URL
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Qwen Chat -->
+                <div class="ws-qwen-chat">
+                    <div class="ws-qwen-chat-messages" id="chatMessages">
+                        <div class="ws-message qwen">
+                            <div class="ws-message-avatar qwen">Q</div>
+                            <div class="ws-message-content">
+                                <div class="ws-message-text">Hello! I'm Qwen, your autonomous business onboarding assistant. I can help you extract business data from documents or you can tell me about your business directly.</div>
+                                <div class="ws-message-time">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ws-qwen-chat-input">
+                        <input type="text" class="ws-qwen-input" id="qwenInput" placeholder="Tell me about your business...">
+                        <button class="ws-qwen-send-btn" id="sendBtn">Send</button>
+                    </div>
+                </div>
+
+                <!-- Demo Personas -->
+                <div class="ws-demo-personas">
+                    <button class="ws-demo-persona" data-persona="specialty-coffee">Specialty Coffee Roaster</button>
+                    <button class="ws-demo-persona" data-persona="artisan-bakery">Artisan Bakery</button>
+                    <button class="ws-demo-persona" data-persona="boutique-electronics">Boutique Electronics</button>
+                    <button class="ws-demo-persona" data-persona="eco-packaging">Eco-Packaging</button>
+                </div>
+            </div>
+
+            <!-- Right Column - Progressive Profile Card -->
+            <div class="ws-onboarding-right">
+                <div class="ws-profile-card">
+                    <!-- Step Indicator -->
+                    <div class="ws-step-indicator">
+                        <div class="ws-step active" data-step="1">1</div>
+                        <div class="ws-step-connector"></div>
+                        <div class="ws-step" data-step="2">2</div>
+                        <div class="ws-step-connector"></div>
+                        <div class="ws-step" data-step="3">3</div>
+                    </div>
+
+                    <!-- Step Title -->
+                    <div class="ws-step-title" id="stepTitle">Identity & KYB</div>
+
+                    <!-- Form Sections -->
+                    <form id="onboardingForm">
+                        <!-- Step 1: Identity & KYB -->
+                        <div class="ws-form-section active" id="step1">
+                            <div class="ws-form-grid">
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Business Legal Name *</label>
+                                    <input type="text" class="ws-form-input" id="legalName" required>
+                                    <div class="ws-form-hint">Your registered business name</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">DBA (Doing Business As)</label>
+                                    <input type="text" class="ws-form-input" id="dba">
+                                    <div class="ws-form-hint">Trade name if different from legal</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Trade Category *</label>
+                                    <select class="ws-form-input" id="tradeCategory" required>
+                                        <option value="">Select category...</option>
+                                        <option value="bakery">Bakery</option>
+                                        <option value="specialty-coffee">Specialty Coffee</option>
+                                        <option value="ceramics">Ceramics</option>
+                                        <option value="electronics-mro">Electronics MRO</option>
+                                        <option value="floriculture">Floriculture</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Tax ID *</label>
+                                    <input type="text" class="ws-form-input" id="taxId" required>
+                                    <div class="ws-form-hint">EIN or Tax Identification Number</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">PayPal Merchant ID *</label>
+                                    <input type="text" class="ws-form-input" id="paypalMerchantId" required>
+                                    <div class="ws-form-hint">Your PayPal business account ID</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">PayPal Email *</label>
+                                    <input type="email" class="ws-form-input" id="paypalEmail" required>
+                                    <div class="ws-form-hint">Email associated with your PayPal account</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Procurement & Logistics -->
+                        <div class="ws-form-section" id="step2">
+                            <div class="ws-form-grid">
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Target SKUs *</label>
+                                    <input type="text" class="ws-form-input" id="targetSkus" placeholder="Comma separated SKUs" required>
+                                    <div class="ws-form-hint">Products you want to source</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Monthly Volume *</label>
+                                    <input type="number" class="ws-form-input" id="monthlyVolume" min="0" required>
+                                    <div class="ws-form-hint">Estimated monthly purchase volume</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Shipping Address *</label>
+                                    <textarea class="ws-form-input" id="shippingAddress" rows="3" required></textarea>
+                                    <div class="ws-form-hint">Where deliveries should be sent</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Dock Capabilities</label>
+                                    <select class="ws-form-input" id="dockCapabilities">
+                                        <option value="">Select...</option>
+                                        <option value="full-dock">Full Dock Access</option>
+                                        <option value="limited-dock">Limited Dock Access</option>
+                                        <option value="curbside">Curbside Delivery Only</option>
+                                        <option value="none">No Special Requirements</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Guardrails & Agent Parity -->
+                        <div class="ws-form-section" id="step3">
+                            <div class="ws-form-grid">
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Max Monthly Spend Ceiling *</label>
+                                    <input type="number" class="ws-form-input" id="maxSpend" min="100" max="100000" step="100" required>
+                                    <div class="ws-form-hint">Maximum monthly spend limit</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Auto-Authorize Limit *</label>
+                                    <select class="ws-form-input" id="autoAuthorize" required>
+                                        <option value="">Select limit...</option>
+                                        <option value="100">$100</option>
+                                        <option value="500">$500</option>
+                                        <option value="1000">$1,000</option>
+                                        <option value="5000">$5,000</option>
+                                        <option value="10000">$10,000</option>
+                                    </select>
+                                    <div class="ws-form-hint">Automatic authorization threshold</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">Step-Up QR Threshold *</label>
+                                    <select class="ws-form-input" id="stepUpThreshold" required>
+                                        <option value="">Select threshold...</option>
+                                        <option value="500">$500</option>
+                                        <option value="1000">$1,000</option>
+                                        <option value="2500">$2,500</option>
+                                        <option value="5000">$5,000</option>
+                                    </select>
+                                    <div class="ws-form-hint">Amount above which QR code is required</div>
+                                </div>
+                                <div class="ws-form-group">
+                                    <label class="ws-form-label">ACP Shared Payment Token</label>
+                                    <input type="text" class="ws-form-input" id="acpToken">
+                                    <div class="ws-form-hint">Your ACP token for shared payments</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="ws-form-actions">
+                            <button type="button" class="ws-btn-secondary" id="prevBtn" style="display: none;">Back</button>
+                            <button type="button" class="ws-btn-primary" id="nextBtn">Continue to Step 2</button>
+                            <button type="submit" class="ws-btn-primary" id="submitBtn" style="display: none;">Complete Onboarding</button>
+                        </div>
+                    </form>
+
+                    <!-- Progress Summary -->
+                    <div class="ws-progress-summary">
+                        <div class="ws-progress-title">Onboarding Progress</div>
+                        <div class="ws-progress-bar">
+                            <div class="ws-progress-fill" id="progressFill" style="width: 33.33%;"></div>
+                        </div>
+                        <div class="ws-progress-text">
+                            <span>Step 1 of 3</span>
+                            <span id="progressPercent">33%</span>
+                        </div>
+                    </div>
+
+                    <!-- Success State -->
+                    <div class="ws-success-state" id="successState">
+                        <div class="ws-success-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="ws-success-title">Onboarding Complete!</div>
+                        <div class="ws-success-subtitle">Your business profile has been successfully created. You can now access the WholeShare platform.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="ws-loading-overlay" id="loadingOverlay">
+            <div class="ws-loading-spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        // Form state
+        let currentStep = 1;
+        const totalSteps = 3;
+        const formData = {
+            legalName: '',
+            dba: '',
+            tradeCategory: '',
+            taxId: '',
+            paypalMerchantId: '',
+            paypalEmail: '',
+            targetSkus: '',
+            monthlyVolume: '',
+            shippingAddress: '',
+            dockCapabilities: '',
+            maxSpend: '',
+            autoAuthorize: '',
+            stepUpThreshold: '',
+            acpToken: ''
+        };
+
+        // Initialize onboarding
+        function initOnboarding() {
+            setupEventListeners();
+            loadSavedData();
+            updateStepIndicator();
+            updateProgress();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Drop zone
+            const dropZone = document.getElementById('dropZone');
+            
+            dropZone.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.pdf,.csv,text/csv,application/pdf';
+                input.multiple = true;
+                input.addEventListener('change', handleFileSelect);
+                input.click();
+            });
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                handleFileSelect(e);
+            });
+
+            // Chat input
+            const qwenInput = document.getElementById('qwenInput');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            qwenInput.addEventListener('input', () => {
+                sendBtn.disabled = !qwenInput.value.trim();
+            });
+
+            qwenInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey && qwenInput.value.trim()) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            sendBtn.addEventListener('click', sendMessage);
+
+            // Demo personas
+            document.querySelectorAll('.ws-demo-persona').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const persona = btn.dataset.persona;
+                    loadDemoPersona(persona);
+                });
+            });
+
+            // Form navigation
+            document.getElementById('nextBtn').addEventListener('click', nextStep);
+            document.getElementById('prevBtn').addEventListener('click', prevStep);
+            
+            // Form submission
+            document.getElementById('onboardingForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitForm();
+            });
+
+            // Form input changes
+            document.querySelectorAll('.ws-form-input').forEach(input => {
+                input.addEventListener('input', () => {
+                    formData[input.id] = input.value;
+                });
+            });
+        }
+
+        // Handle file select
+        function handleFileSelect(event) {
+            let files;
+            if (event.dataTransfer) {
+                files = Array.from(event.dataTransfer.files);
+            } else if (event.target) {
+                files = Array.from(event.target.files);
+            }
+            
+            if (files && files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // Process uploaded files
+        async function processFiles(files) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Show typing indicator
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'ws-message qwen';
+            typingMsg.innerHTML = `
+                <div class="ws-message-avatar qwen">Q</div>
+                <div class="ws-message-content">
+                    <div class="ws-typing-indicator">
+                        <div class="ws-typing-dot"></div>
+                        <div class="ws-typing-dot"></div>
+                        <div class="ws-typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate processing delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Remove typing indicator
+            typingMsg.remove();
+            
+            // Process each file
+            for (const file of files) {
+                await processFile(file);
+            }
+        }
+
+        // Process single file
+        async function processFile(file) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Show processing message
+            addQwenMessage(`Processing ${file.name}...`);
+            
+            // Simulate processing
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Extract data based on file type
+            if (file.name.endsWith('.pdf')) {
+                await extractFromPDF(file);
+            } else if (file.name.endsWith('.csv')) {
+                await extractFromCSV(file);
+            } else {
+                addQwenMessage(`I can extract data from PDF invoices, CSV price sheets, or commercial website URLs. Please upload a supported file type.`);
+            }
+        }
+
+        // Extract from PDF
+        async function extractFromPDF(file) {
+            // Simulate PDF extraction
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Mock extracted data
+            const extractedData = {
+                legalName: 'Acme Coffee Roasters LLC',
+                tradeCategory: 'specialty-coffee',
+                taxId: '12-3456789',
+                paypalMerchantId: 'ACME12345',
+                paypalEmail: 'payments@acmecoffee.com',
+                targetSkus: 'COFFEE_ARABICA_50LB,COFFEE_ROBUSTA_50LB',
+                monthlyVolume: '5000',
+                shippingAddress: '123 Main St, Portland, OR 97201',
+                maxSpend: '50000',
+                autoAuthorize: '5000',
+                stepUpThreshold: '1000'
+            };
+            
+            addQwenMessage(`I've extracted the following data from your PDF invoice: Business Name, Tax ID, PayPal details, and procurement information. Would you like me to populate the form with this data?`);
+            
+            // Store extracted data for potential auto-fill
+            window.extractedData = extractedData;
+        }
+
+        // Extract from CSV
+        async function extractFromCSV(file) {
+            // Simulate CSV extraction
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Mock extracted data
+            const extractedData = {
+                targetSkus: 'COFFEE_ARABICA_50LB,COFFEE_ROBUSTA_50LB,FLOUR_BREAD_50LB',
+                monthlyVolume: '3000',
+                shippingAddress: '456 Oak Ave, Seattle, WA 98101'
+            };
+            
+            addQwenMessage(`I've extracted SKU data and volume information from your CSV file. Would you like me to populate the procurement section with this data?`);
+            
+            // Store extracted data
+            window.extractedData = extractedData;
+        }
+
+        // Send message to Qwen
+        function sendMessage() {
+            const input = document.getElementById('qwenInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addUserMessage(message);
+            input.value = '';
+            document.getElementById('sendBtn').disabled = true;
+            
+            // Process message
+            processUserMessage(message);
+        }
+
+        // Add user message to chat
+        function addUserMessage(text) {
+            const chatMessages = document.getElementById('chatMessages');
+            const msg = document.createElement('div');
+            msg.className = 'ws-message user';
+            msg.innerHTML = `
+                <div class="ws-message-avatar user">U</div>
+                <div class="ws-message-content">
+                    <div class="ws-message-text">${escapeHtml(text)}</div>
+                    <div class="ws-message-time">Just now</div>
+                </div>
+            `;
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Add Qwen message to chat
+        function addQwenMessage(text) {
+            const chatMessages = document.getElementById('chatMessages');
+            const msg = document.createElement('div');
+            msg.className = 'ws-message qwen';
+            msg.innerHTML = `
+                <div class="ws-message-avatar qwen">Q</div>
+                <div class="ws-message-content">
+                    <div class="ws-message-text">${escapeHtml(text)}</div>
+                    <div class="ws-message-time">Just now</div>
+                </div>
+            `;
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Process user message
+        async function processUserMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Show typing indicator
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'ws-message qwen';
+            typingMsg.innerHTML = `
+                <div class="ws-message-avatar qwen">Q</div>
+                <div class="ws-message-content">
+                    <div class="ws-typing-indicator">
+                        <div class="ws-typing-dot"></div>
+                        <div class="ws-typing-dot"></div>
+                        <div class="ws-typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate thinking
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Remove typing indicator
+            typingMsg.remove();
+            
+            // Generate response based on message
+            const response = generateQwenResponse(message);
+            addQwenMessage(response);
+            
+            // Auto-fill form if applicable
+            if (window.extractedData && (message.toLowerCase().includes('yes') || message.toLowerCase().includes('populate'))) {
+                autoFillForm(window.extractedData);
+                delete window.extractedData;
+            }
+        }
+
+        // Generate Qwen response
+        function generateQwenResponse(message) {
+            const lowerMsg = message.toLowerCase();
+            
+            if (lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+                return "Hello! I'm Qwen, your autonomous business onboarding assistant. I can help you extract business data from documents or you can tell me about your business directly. What would you like to do?";
+            }
+            
+            if (lowerMsg.includes('business') && lowerMsg.includes('name')) {
+                return "I can help you with that. Please provide your business legal name, and I'll guide you through the rest of the onboarding process.";
+            }
+            
+            if (lowerMsg.includes('help') || lowerMsg.includes('what can you do')) {
+                return "I can extract data from PDF invoices, CSV price sheets, or commercial website URLs. I can also understand natural language descriptions of your business and help populate the onboarding form.";
+            }
+            
+            if (lowerMsg.includes('thank') || lowerMsg.includes('thanks')) {
+                return "You're welcome! Let me know if you need any more help with your onboarding.";
+            }
+            
+            return "I understand. Let me know if you have any specific questions about the onboarding process or if you'd like me to help extract data from your documents.";
+        }
+
+        // Load demo persona
+        function loadDemoPersona(persona) {
+            const personas = {
+                'specialty-coffee': {
+                    legalName: 'Artisan Coffee Collective LLC',
+                    dba: 'Artisan Coffee',
+                    tradeCategory: 'specialty-coffee',
+                    taxId: '12-3456789',
+                    paypalMerchantId: 'COFFEE123',
+                    paypalEmail: 'payments@artisancoffee.com',
+                    targetSkus: 'COFFEE_ARABICA_50LB,COFFEE_ROBUSTA_50LB',
+                    monthlyVolume: '10000',
+                    shippingAddress: '123 Coffee St, Portland, OR 97201',
+                    dockCapabilities: 'full-dock',
+                    maxSpend: '100000',
+                    autoAuthorize: '5000',
+                    stepUpThreshold: '1000',
+                    acpToken: 'ACP_COFFEE_2024'
+                },
+                'artisan-bakery': {
+                    legalName: 'Golden Crust Bakery Inc',
+                    dba: 'Golden Crust',
+                    tradeCategory: 'bakery',
+                    taxId: '98-7654321',
+                    paypalMerchantId: 'BAKERY456',
+                    paypalEmail: 'orders@goldencrust.com',
+                    targetSkus: 'FLOUR_BREAD_50LB,FLOUR_PASTRY_50LB,SUGAR_50LB',
+                    monthlyVolume: '15000',
+                    shippingAddress: '456 Bread Ave, San Francisco, CA 94102',
+                    dockCapabilities: 'limited-dock',
+                    maxSpend: '75000',
+                    autoAuthorize: '10000',
+                    stepUpThreshold: '1000',
+                    acpToken: 'ACP_BAKERY_2024'
+                },
+                'boutique-electronics': {
+                    legalName: 'Precision Electronics LLC',
+                    dba: 'Precision Electronics',
+                    tradeCategory: 'electronics-mro',
+                    taxId: '45-6789012',
+                    paypalMerchantId: 'ELECTRONICS789',
+                    paypalEmail: 'sales@precisionelectronics.com',
+                    targetSkus: 'ELECTRONICS_RESISTORS,ELECTRONICS_CAPACITORS,ELECTRONICS_IC',
+                    monthlyVolume: '20000',
+                    shippingAddress: '789 Circuit Blvd, Austin, TX 78701',
+                    dockCapabilities: 'full-dock',
+                    maxSpend: '200000',
+                    autoAuthorize: '10000',
+                    stepUpThreshold: '2500',
+                    acpToken: 'ACP_ELECTRONICS_2024'
+                },
+                'eco-packaging': {
+                    legalName: 'GreenPack Solutions Inc',
+                    dba: 'GreenPack',
+                    tradeCategory: 'other',
+                    taxId: '34-5678901',
+                    paypalMerchantId: 'GREENPACK012',
+                    paypalEmail: 'info@greenpack.com',
+                    targetSkus: 'PACKAGING_BOXES,PACKAGING_TAPE,PACKAGING_FILLER',
+                    monthlyVolume: '50000',
+                    shippingAddress: '321 Eco Way, Boulder, CO 80301',
+                    dockCapabilities: 'full-dock',
+                    maxSpend: '500000',
+                    autoAuthorize: '5000',
+                    stepUpThreshold: '5000',
+                    acpToken: 'ACP_GREENPACK_2024'
+                }
+            };
+            
+            const data = personas[persona];
+            if (data) {
+                autoFillForm(data);
+                addQwenMessage(`I've loaded the ${persona.replace('-', ' ')} demo persona. You can review and modify the information as needed.`);
+            }
+        }
+
+        // Auto-fill form
+        function autoFillForm(data) {
+            for (const [key, value] of Object.entries(data)) {
+                const input = document.getElementById(key);
+                if (input) {
+                    input.value = value;
+                    formData[key] = value;
+                }
+            }
+            
+            // Update form state
+            validateCurrentStep();
+        }
+
+        // Next step
+        function nextStep() {
+            if (!validateCurrentStep()) return;
+            
+            // Save current step data
+            saveStepData();
+            
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepIndicator();
+                updateFormVisibility();
+                updateProgress();
+                updateButtonText();
+            }
+        }
+
+        // Previous step
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepIndicator();
+                updateFormVisibility();
+                updateProgress();
+                updateButtonText();
+            }
+        }
+
+        // Update step indicator
+        function updateStepIndicator() {
+            document.querySelectorAll('.ws-step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (index + 1 === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        // Update form visibility
+        function updateFormVisibility() {
+            document.querySelectorAll('.ws-form-section').forEach((section, index) => {
+                section.classList.remove('active');
+                if (index + 1 === currentStep) {
+                    section.classList.add('active');
+                }
+            });
+        }
+
+        // Update progress
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressPercent').textContent = `${Math.round(progress)}%`;
+            document.querySelector('.ws-step-title').textContent = getStepTitle(currentStep);
+        }
+
+        // Get step title
+        function getStepTitle(step) {
+            const titles = {
+                1: 'Identity & KYB',
+                2: 'Procurement & Logistics',
+                3: 'Guardrails & Agent Parity'
+            };
+            return titles[step] || 'Onboarding';
+        }
+
+        // Update button text
+        function updateButtonText() {
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+            nextBtn.style.display = currentStep < totalSteps ? 'block' : 'none';
+            submitBtn.style.display = currentStep === totalSteps ? 'block' : 'none';
+            
+            if (currentStep < totalSteps) {
+                nextBtn.textContent = `Continue to Step ${currentStep + 1}`;
+            }
+        }
+
+        // Validate current step
+        function validateCurrentStep() {
+            const currentSection = document.getElementById(`step${currentStep}`);
+            const requiredInputs = currentSection.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredInputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('error');
+                    isValid = false;
+                } else {
+                    input.classList.remove('error');
+                }
+            });
+            
+            return isValid;
+        }
+
+        // Save step data
+        function saveStepData() {
+            const currentSection = document.getElementById(`step${currentStep}`);
+            currentSection.querySelectorAll('.ws-form-input').forEach(input => {
+                formData[input.id] = input.value;
+            });
+        }
+
+        // Load saved data
+        function loadSavedData() {
+            // Check for saved form data in localStorage
+            const savedData = localStorage.getItem('wholeshare_onboarding_data');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    for (const [key, value] of Object.entries(data)) {
+                        const input = document.getElementById(key);
+                        if (input) {
+                            input.value = value;
+                            formData[key] = value;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Error loading saved data:', e);
+                }
+            }
+        }
+
+        // Save all data
+        function saveAllData() {
+            localStorage.setItem('wholeshare_onboarding_data', JSON.stringify(formData));
+        }
+
+        // Submit form
+        async function submitForm() {
+            if (!validateCurrentStep()) return;
+            
+            // Save all data
+            saveStepData();
+            saveAllData();
+            
+            // Show loading
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            try {
+                // Submit to API
+                const response = await fetch('/api/v1/onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    // Show success state
+                    document.getElementById('onboardingForm').style.display = 'none';
+                    document.getElementById('successState').classList.add('active');
+                    
+                    // Notify parent window
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'ONBOARDING_COMPLETE',
+                            data: formData
+                        }, '*');
+                    }
+                    
+                    // Clear localStorage
+                    localStorage.removeItem('wholeshare_onboarding_data');
+                } else {
+                    const error = await response.json();
+                    addQwenMessage(`There was an error submitting your onboarding: ${error.error || 'Please try again.'}`);
+                }
+            } catch (error) {
+                addQwenMessage(`There was an error submitting your onboarding: ${error.message}`);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Handle messages from parent (Qwen control)
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'QWEN_ACTION') {
+                handleQwenAction(event.data.action);
+            }
+        });
+
+        // Handle Qwen actions
+        function handleQwenAction(action) {
+            switch (action.type) {
+                case 'onboarding.prefill':
+                    autoFillForm(action.profile);
+                    addQwenMessage(`I've pre-filled your onboarding information based on the provided data.`);
+                    break;
+                
+                case 'ui.navigate':
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'NAVIGATE',
+                            view: action.view
+                        }, '*');
+                    }
+                    break;
+            }
+        }
+
+        // Initialize on load
+        initOnboarding();
+    </script>
+</body>
+</html>

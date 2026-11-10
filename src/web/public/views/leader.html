@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WholeShare - Clan Leader Console</title>
+    <link rel="stylesheet" href="/app.css">
+    <style>
+        /* Leader Console Specific Styles */
+        .ws-leader-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-canvas, #08090b);
+            color: var(--text-primary, #e2e8f0);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .ws-leader-topbar {
+            height: 56px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .ws-leader-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-leader-breadcrumb span {
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-leader-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Role Switcher */
+        .ws-role-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-elevated, #14171f);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-role-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-role-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-role-btn.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .ws-summon-qwen-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ffc439 0%, #ffb347 100%);
+            border: none;
+            color: #08090b;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-summon-qwen-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 196, 57, 0.3);
+        }
+
+        .ws-summon-qwen-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Main Content Area */
+        .ws-leader-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Clan Creation Wizard */
+        .ws-leader-left {
+            width: 350px;
+            min-width: 300px;
+            background: var(--bg-surface, #0d0f14);
+            border-right: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .ws-wizard-header {
+            margin-bottom: 20px;
+        }
+
+        .ws-wizard-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 8px;
+        }
+
+        .ws-wizard-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-wizard-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .ws-wizard-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ws-wizard-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ws-wizard-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ws-wizard-field-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-wizard-field-input {
+            padding: 10px 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            color: var(--text-primary, #e2e8f0);
+            border-radius: 6px;
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-wizard-field-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .ws-wizard-field-input::placeholder {
+            color: var(--text-secondary, #64748b);
+        }
+
+        .ws-wizard-field-hint {
+            font-size: 11px;
+            color: var(--text-tertiary, #64748b);
+        }
+
+        /* Tier Price Ladder */
+        .ws-tier-ladder {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ws-tier-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 8px;
+        }
+
+        .ws-tier-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-tier-1 { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+        .ws-tier-2 { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .ws-tier-3 { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+        .ws-tier-info {
+            flex: 1;
+        }
+
+        .ws-tier-range {
+            font-size: 12px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-tier-price {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Freight Terms */
+        .ws-freight-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ws-freight-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-freight-option:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .ws-freight-option input[type="radio"] {
+            accent-color: #3b82f6;
+        }
+
+        .ws-freight-option-label {
+            font-size: 13px;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-freight-option-desc {
+            font-size: 11px;
+            color: var(--text-tertiary, #64748b);
+        }
+
+        /* Dues Configuration */
+        .ws-dues-config {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ws-dues-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ws-dues-select {
+            padding: 8px 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            color: var(--text-primary, #e2e8f0);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .ws-dues-input {
+            width: 100px;
+            padding: 8px 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            color: var(--text-primary, #e2e8f0);
+            border-radius: 6px;
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Create Clan Button */
+        .ws-create-clan-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+            margin-top: 8px;
+        }
+
+        .ws-create-clan-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .ws-create-clan-btn:active {
+            transform: scale(0.98);
+        }
+
+        .ws-create-clan-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Right Panel - Member Escrow Audit */
+        .ws-leader-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ws-audit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-audit-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-audit-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ws-audit-filter {
+            padding: 8px 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            color: var(--text-primary, #e2e8f0);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .ws-refresh-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-refresh-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        /* Audit Table */
+        .ws-audit-table-container {
+            flex: 1;
+            overflow: auto;
+            padding: 0 24px 24px;
+        }
+
+        .ws-audit-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ws-audit-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-secondary, #94a3b8);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .ws-audit-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.04));
+            font-size: 13px;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-audit-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .ws-audit-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badges */
+        .ws-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .ws-status-authorized {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .ws-status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .ws-status-completed {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .ws-status-expired {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        /* Progress Bar */
+        .ws-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ws-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 3px;
+            transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Batch Capture Console */
+        .ws-batch-console {
+            padding: 20px 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-top: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-batch-console-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 12px;
+        }
+
+        .ws-batch-console-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .ws-batch-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ws-batch-stat-label {
+            font-size: 11px;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ws-batch-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-batch-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .ws-batch-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-batch-btn-primary {
+            background: linear-gradient(135deg, #ffc439 0%, #ffb347 100%);
+            color: #08090b;
+        }
+
+        .ws-batch-btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 196, 57, 0.3);
+        }
+
+        .ws-batch-btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .ws-batch-btn-secondary {
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-primary, #e2e8f0);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-batch-btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* Loading State */
+        .ws-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .ws-leader-left {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .ws-leader-main {
+                flex-direction: column;
+            }
+
+            .ws-leader-left {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            }
+
+            .ws-leader-topbar {
+                padding: 0 16px;
+            }
+
+            .ws-role-switcher {
+                display: none;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ws-wizard-section {
+            animation: fadeIn 200ms ease-out;
+        }
+
+        /* Qwen Control Integration */
+        .ws-qwen-integration {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="ws-leader-view">
+        <!-- Top Bar -->
+        <div class="ws-leader-topbar">
+            <div class="ws-leader-breadcrumb">
+                <span>Workspace</span>
+                <span>/</span>
+                <span>Clan Leader Console</span>
+            </div>
+            <div class="ws-leader-topbar-right">
+                <div class="ws-role-switcher">
+                    <button class="ws-role-btn" data-role="member">SME Member</button>
+                    <button class="ws-role-btn active" data-role="leader">Clan Leader</button>
+                </div>
+                <button class="ws-summon-qwen-btn">Summon Qwen</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="ws-leader-main">
+            <!-- Left Panel: Clan Creation Wizard -->
+            <div class="ws-leader-left">
+                <div class="ws-wizard-header">
+                    <div class="ws-wizard-title">Clan Creation Wizard</div>
+                    <div class="ws-wizard-subtitle">Configure your wholesale coalition</div>
+                </div>
+
+                <form class="ws-wizard-form" id="clanCreationForm">
+                    <!-- Target SKU -->
+                    <div class="ws-wizard-section">
+                        <div class="ws-wizard-section-title">Target SKU</div>
+                        <div class="ws-wizard-field">
+                            <label class="ws-wizard-field-label" for="skuName">SKU Name</label>
+                            <input type="text" class="ws-wizard-field-input" id="skuName" placeholder="e.g., Organic Sourdough Flour 50lb" required>
+                        </div>
+                        <div class="ws-wizard-field">
+                            <label class="ws-wizard-field-label" for="skuId">SKU ID</label>
+                            <input type="text" class="ws-wizard-field-input" id="skuId" placeholder="e.g., SOURDOUGH_FLOUR_50LB" required>
+                            <div class="ws-wizard-field-hint">Unique identifier for the product</div>
+                        </div>
+                        <div class="ws-wizard-field">
+                            <label class="ws-wizard-field-label" for="category">Category</label>
+                            <select class="ws-wizard-field-input" id="category" required>
+                                <option value="">Select category...</option>
+                                <option value="bakery">Bakery</option>
+                                <option value="coffee">Specialty Coffee</option>
+                                <option value="electronics">Electronics MRO</option>
+                                <option value="packaging">Eco-Packaging</option>
+                                <option value="ceramics">Ceramics</option>
+                                <option value="floriculture">Floriculture</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- MOQ Threshold -->
+                    <div class="ws-wizard-section">
+                        <div class="ws-wizard-section-title">MOQ Threshold</div>
+                        <div class="ws-wizard-field">
+                            <label class="ws-wizard-field-label" for="targetUnits">Target Units</label>
+                            <input type="number" class="ws-wizard-field-input" id="targetUnits" placeholder="e.g., 500" min="10" value="500" required>
+                            <div class="ws-wizard-field-hint">Minimum units required to trigger wholesale pricing</div>
+                        </div>
+                        <div class="ws-wizard-field">
+                            <label class="ws-wizard-field-label" for="commitmentTerm">Commitment Term (days)</label>
+                            <input type="number" class="ws-wizard-field-input" id="commitmentTerm" placeholder="e.g., 30" min="7" value="30" required>
+                            <div class="ws-wizard-field-hint">Duration of the clan commitment</div>
+                        </div>
+                    </div>
+
+                    <!-- 3-Tier Volume Price Ladder -->
+                    <div class="ws-wizard-section">
+                        <div class="ws-wizard-section-title">3-Tier Volume Price Ladder</div>
+                        <div class="ws-tier-ladder">
+                            <div class="ws-tier-item">
+                                <div class="ws-tier-badge ws-tier-1">T1</div>
+                                <div class="ws-tier-info">
+                                    <div class="ws-tier-range">1 - 249 units</div>
+                                    <input type="number" class="ws-wizard-field-input ws-tier-price-input" id="tier1Price" placeholder="Price" step="0.01" value="8.50">
+                                </div>
+                            </div>
+                            <div class="ws-tier-item">
+                                <div class="ws-tier-badge ws-tier-2">T2</div>
+                                <div class="ws-tier-info">
+                                    <div class="ws-tier-range">250 - 499 units</div>
+                                    <input type="number" class="ws-wizard-field-input ws-tier-price-input" id="tier2Price" placeholder="Price" step="0.01" value="7.80">
+                                </div>
+                            </div>
+                            <div class="ws-tier-item">
+                                <div class="ws-tier-badge ws-tier-3">T3</div>
+                                <div class="ws-tier-info">
+                                    <div class="ws-tier-range">500+ units</div>
+                                    <input type="number" class="ws-wizard-field-input ws-tier-price-input" id="tier3Price" placeholder="Price" step="0.01" value="7.20">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ws-wizard-field-hint">Prices are per unit in USD</div>
+                    </div>
+
+                    <!-- Freight Terms -->
+                    <div class="ws-wizard-section">
+                        <div class="ws-wizard-section-title">Freight Terms</div>
+                        <div class="ws-freight-options">
+                            <label class="ws-freight-option">
+                                <input type="radio" name="freightTerms" value="prepaid" checked>
+                                <span class="ws-freight-option-label">Prepaid by Leader</span>
+                                <span class="ws-freight-option-desc">Leader covers all freight costs</span>
+                            </label>
+                            <label class="ws-freight-option">
+                                <input type="radio" name="freightTerms" value="split">
+                                <span class="ws-freight-option-label">Split Among Members</span>
+                                <span class="ws-freight-option-desc">Freight costs divided pro-rata by units</span>
+                            </label>
+                            <label class="ws-freight-option">
+                                <input type="radio" name="freightTerms" value="collect">
+                                <span class="ws-freight-option-label">Collect on Delivery</span>
+                                <span class="ws-freight-option-desc">Each member pays their share on delivery</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Inspection Window -->
+                    <div class="ws-wizard-section">
+                        <div class="ws-wizard-section-title">Inspection Window</div>
+                        <div class="ws-wizard-field">
+                            <label class="ws-wizard-field-label" for="inspectionHours">48-Hour Window</label>
+                            <select class="ws-wizard-field-input" id="inspectionHours">
+                                <option value="24">24 hours</option>
+                                <option value="48" selected>48 hours</option>
+                                <option value="72">72 hours</option>
+                            </select>
+                            <div class="ws-wizard-field-hint">Time allowed for post-delivery inspection before batch payout</div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Dues -->
+                    <div class="ws-wizard-section">
+                        <div class="ws-wizard-section-title">Subscription Dues</div>
+                        <div class="ws-dues-config">
+                            <div class="ws-dues-row">
+                                <select class="ws-dues-select" id="duesCadence">
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                                <input type="number" class="ws-dues-input" id="duesAmount" placeholder="Amount" step="0.01" value="49.00">
+                                <span>USD</span>
+                            </div>
+                            <div class="ws-dues-row">
+                                <input type="number" class="ws-dues-input" id="cancellationNotice" placeholder="Notice days" min="1" value="30">
+                                <span>days notice required</span>
+                            </div>
+                        </div>
+                        <div class="ws-wizard-field-hint">Yearly billing saves 15% compared to monthly</div>
+                    </div>
+
+                    <!-- Create Clan Button -->
+                    <button type="submit" class="ws-create-clan-btn" id="createClanBtn">
+                        Create Clan & Configure PayPal Subscriptions
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Panel: Member Escrow Audit -->
+            <div class="ws-leader-right">
+                <div class="ws-audit-header">
+                    <div class="ws-audit-title">Member Escrow Audit & Atomic Batch Capture</div>
+                    <div class="ws-audit-controls">
+                        <select class="ws-audit-filter" id="auditFilter">
+                            <option value="all">All Members</option>
+                            <option value="authorized">Authorized</option>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <button class="ws-refresh-btn" id="refreshAudit">Refresh</button>
+                    </div>
+                </div>
+
+                <div class="ws-audit-table-container">
+                    <table class="ws-audit-table" id="auditTable">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Units</th>
+                                <th>Amount</th>
+                                <th>Soft Hold Status</th>
+                                <th>QR Status</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Batch Capture Console -->
+                <div class="ws-batch-console">
+                    <div class="ws-batch-console-title">Atomic Batch Capture & Payout</div>
+                    <div class="ws-batch-console-grid">
+                        <div class="ws-batch-stat">
+                            <span class="ws-batch-stat-label">Total Authorized</span>
+                            <span class="ws-batch-stat-value" id="totalAuthorized">$0.00</span>
+                        </div>
+                        <div class="ws-batch-stat">
+                            <span class="ws-batch-stat-label">Pending QR</span>
+                            <span class="ws-batch-stat-value" id="pendingQR">0</span>
+                        </div>
+                        <div class="ws-batch-stat">
+                            <span class="ws-batch-stat-label">Ready for Payout</span>
+                            <span class="ws-batch-stat-value" id="readyPayout">0</span>
+                        </div>
+                        <div class="ws-batch-stat">
+                            <span class="ws-batch-stat-label">Inspection Window</span>
+                            <span class="ws-batch-stat-value" id="inspectionWindow">48h</span>
+                        </div>
+                    </div>
+                    <div class="ws-batch-actions">
+                        <button class="ws-batch-btn ws-batch-btn-secondary" id="validateBatch">Validate All</button>
+                        <button class="ws-batch-btn ws-batch-btn-primary" id="releaseBatch">Release Atomic Batch Payout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Qwen Control Integration -->
+        <div class="ws-qwen-integration" id="qwenIntegration"></div>
+    </div>
+
+    <script>
+        // Design Tokens
+        const DESIGN_TOKENS = {
+            bgCanvas: '#08090b',
+            bgSurface: '#0d0f14',
+            bgElevated: '#14171f',
+            borderHairline: 'rgba(255,255,255,0.08)',
+            textPrimary: '#e2e8f0',
+            textSecondary: '#94a3b8',
+            textTertiary: '#64748b',
+            paypalGold: '#ffc439',
+            paypalBlue: '#003087',
+            success: '#10b981',
+            warning: '#f59e0b',
+            error: '#ef4444'
+        };
+
+        // Sample Member Data
+        const sampleMembers = [
+            {
+                id: 'sme_austin_01',
+                name: 'Austin Artisan Bakery',
+                units: 120,
+                amount: 864.00,
+                softHoldStatus: 'authorized',
+                qrStatus: 'not_required',
+                progress: 100,
+                joinedAt: '2024-01-15T09:30:00'
+            },
+            {
+                id: 'sme_bench_02',
+                name: 'Bench Bakers Co',
+                units: 85,
+                amount: 612.00,
+                softHoldStatus: 'authorized',
+                qrStatus: 'not_required',
+                progress: 100,
+                joinedAt: '2024-01-15T10:15:00'
+            },
+            {
+                id: 'sme_medellin_03',
+                name: 'Medellin Coffee Roasters',
+                units: 200,
+                amount: 1440.00,
+                softHoldStatus: 'authorized',
+                qrStatus: 'required',
+                progress: 100,
+                joinedAt: '2024-01-15T11:45:00'
+            },
+            {
+                id: 'sme_shenzhen_04',
+                name: 'Shenzhen SMT Electronics',
+                units: 50,
+                amount: 360.00,
+                softHoldStatus: 'pending',
+                qrStatus: 'pending',
+                progress: 60,
+                joinedAt: '2024-01-15T14:20:00'
+            },
+            {
+                id: 'sme_naivasha_05',
+                name: 'Naivasha Floriculture',
+                units: 150,
+                amount: 1080.00,
+                softHoldStatus: 'authorized',
+                qrStatus: 'completed',
+                progress: 100,
+                joinedAt: '2024-01-15T16:10:00'
+            }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply design tokens
+            Object.entries(DESIGN_TOKENS).forEach(([key, value]) => {
+                document.documentElement.style.setProperty(`--${key}`, value);
+            });
+
+            // Populate audit table
+            populateAuditTable();
+
+            // Update batch stats
+            updateBatchStats();
+
+            // Setup form validation
+            setupFormValidation();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Setup Qwen control
+            setupQwenControl();
+
+            // Notify parent
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'view-loaded', view: 'leader' }, '*');
+            }
+        });
+
+        function populateAuditTable(filter = 'all') {
+            const tbody = document.getElementById('auditTableBody');
+            tbody.innerHTML = '';
+
+            const filteredMembers = sampleMembers.filter(member => {
+                if (filter === 'all') return true;
+                return member.softHoldStatus === filter || member.qrStatus === filter;
+            });
+
+            filteredMembers.forEach(member => {
+                const row = document.createElement('tr');
+                
+                // Member
+                const memberCell = document.createElement('td');
+                memberCell.innerHTML = `
+                    <div style="font-weight: 500;">${member.name}</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary);">${member.id}</div>
+                `;
+
+                // Units
+                const unitsCell = document.createElement('td');
+                unitsCell.textContent = member.units;
+                unitsCell.style.fontVariantNumeric = 'tabular-nums';
+
+                // Amount
+                const amountCell = document.createElement('td');
+                amountCell.textContent = `$${member.amount.toFixed(2)}`;
+                amountCell.style.fontVariantNumeric = 'tabular-nums';
+
+                // Soft Hold Status
+                const statusCell = document.createElement('td');
+                const statusClass = `ws-status-${member.softHoldStatus}`;
+                statusCell.innerHTML = `<span class="ws-status-badge ${statusClass}">${member.softHoldStatus}</span>`;
+
+                // QR Status
+                const qrCell = document.createElement('td');
+                const qrClass = member.qrStatus === 'completed' ? 'ws-status-completed' : 
+                               member.qrStatus === 'required' ? 'ws-status-pending' :
+                               member.qrStatus === 'pending' ? 'ws-status-pending' : 'ws-status-authorized';
+                qrCell.innerHTML = `<span class="ws-status-badge ${qrClass}">${member.qrStatus.replace('_', ' ')}</span>`;
+
+                // Progress
+                const progressCell = document.createElement('td');
+                progressCell.innerHTML = `
+                    <div class="ws-progress-bar">
+                        <div class="ws-progress-fill" style="width: ${member.progress}%;"></div>
+                    </div>
+                `;
+
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.innerHTML = `
+                    <button class="ws-action-btn" onclick="viewMemberDetails('${member.id}')" style="
+                        padding: 6px 12px;
+                        background: var(--bg-elevated);
+                        border: 1px solid var(--border-hairline);
+                        color: var(--text-secondary);
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 11px;
+                    ">View</button>
+                `;
+
+                row.appendChild(memberCell);
+                row.appendChild(unitsCell);
+                row.appendChild(amountCell);
+                row.appendChild(statusCell);
+                row.appendChild(qrCell);
+                row.appendChild(progressCell);
+                row.appendChild(actionsCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateBatchStats() {
+            const totalAuthorized = sampleMembers
+                .filter(m => m.softHoldStatus === 'authorized')
+                .reduce((sum, m) => sum + m.amount, 0);
+            
+            const pendingQR = sampleMembers
+                .filter(m => m.qrStatus === 'required' || m.qrStatus === 'pending').length;
+            
+            const readyPayout = sampleMembers
+                .filter(m => m.softHoldStatus === 'authorized' && m.progress === 100).length;
+
+            document.getElementById('totalAuthorized').textContent = `$${totalAuthorized.toFixed(2)}`;
+            document.getElementById('pendingQR').textContent = pendingQR;
+            document.getElementById('readyPayout').textContent = readyPayout;
+        }
+
+        function viewMemberDetails(memberId) {
+            const member = sampleMembers.find(m => m.id === memberId);
+            if (member) {
+                alert(`Member Details:\n\nName: ${member.name}\nID: ${member.id}\nUnits: ${member.units}\nAmount: $${member.amount.toFixed(2)}\nSoft Hold: ${member.softHoldStatus}\nQR Status: ${member.qrStatus}\nProgress: ${member.progress}%`);
+            }
+        }
+
+        function setupFormValidation() {
+            const form = document.getElementById('clanCreationForm');
+            const createBtn = document.getElementById('createClanBtn');
+
+            // Validate form on input
+            form.addEventListener('input', () => {
+                const isValid = form.checkValidity();
+                createBtn.disabled = !isValid;
+            });
+
+            // Handle form submission
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                createClan();
+            });
+        }
+
+        function createClan() {
+            const formData = {
+                skuName: document.getElementById('skuName').value,
+                skuId: document.getElementById('skuId').value,
+                category: document.getElementById('category').value,
+                targetUnits: parseInt(document.getElementById('targetUnits').value),
+                commitmentTerm: parseInt(document.getElementById('commitmentTerm').value),
+                tier1Price: parseFloat(document.getElementById('tier1Price').value),
+                tier2Price: parseFloat(document.getElementById('tier2Price').value),
+                tier3Price: parseFloat(document.getElementById('tier3Price').value),
+                freightTerms: document.querySelector('input[name="freightTerms"]:checked').value,
+                inspectionHours: parseInt(document.getElementById('inspectionHours').value),
+                duesCadence: document.getElementById('duesCadence').value,
+                duesAmount: parseFloat(document.getElementById('duesAmount').value),
+                cancellationNotice: parseInt(document.getElementById('cancellationNotice').value)
+            };
+
+            console.log('Creating clan with data:', formData);
+
+            // In a real implementation, you would:
+            // 1. Send clan data to server via POST /api/v1/clans
+            // 2. Configure PayPal Subscriptions v1 billing plans
+            // 3. Create the clan in the database
+            // 4. Broadcast SSE event for UI updates
+
+            alert(`Clan "${formData.skuName}" created successfully!\n\nSKU ID: ${formData.skuId}\nTarget Units: ${formData.targetUnits}\nFreight Terms: ${formData.freightTerms}\nDues: $${formData.duesAmount} ${formData.duesCadence}`);
+
+            // Reset form
+            document.getElementById('clanCreationForm').reset();
+            document.getElementById('createClanBtn').disabled = true;
+        }
+
+        function setupEventListeners() {
+            // Role switcher
+            document.querySelectorAll('.ws-role-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.ws-role-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // In a real implementation, this would switch between SME and Leader views
+                    if (btn.dataset.role === 'member') {
+                        // Switch to member view
+                        window.parent.postMessage({ type: 'switch-role', role: 'member' }, '*');
+                    }
+                });
+            });
+
+            // Audit filter
+            document.getElementById('auditFilter').addEventListener('change', (e) => {
+                populateAuditTable(e.target.value);
+            });
+
+            // Refresh audit
+            document.getElementById('refreshAudit').addEventListener('click', () => {
+                populateAuditTable(document.getElementById('auditFilter').value);
+                updateBatchStats();
+            });
+
+            // Batch actions
+            document.getElementById('validateBatch').addEventListener('click', () => {
+                alert('Validating all members for batch payout...');
+            });
+
+            document.getElementById('releaseBatch').addEventListener('click', () => {
+                const readyCount = sampleMembers.filter(m => m.softHoldStatus === 'authorized' && m.progress === 100).length;
+                if (readyCount > 0) {
+                    alert(`Releasing atomic batch payout for ${readyCount} members...\n\nThis will trigger PayPal Payouts v1 to release funds to all authorized members.`);
+                } else {
+                    alert('No members ready for batch payout. Ensure all members have completed authorization.');
+                }
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    // Close any open modals/drawers
+                }
+            });
+        }
+
+        // Qwen Control Integration
+        function setupQwenControl() {
+            // Listen for Qwen commands via SSE
+            if (window.qwenBridge) {
+                window.qwenBridge.onAction('leader.createClan', (data) => {
+                    // Auto-fill clan creation form from Qwen
+                    if (data.skuName) document.getElementById('skuName').value = data.skuName;
+                    if (data.skuId) document.getElementById('skuId').value = data.skuId;
+                    if (data.category) document.getElementById('category').value = data.category;
+                    if (data.targetUnits) document.getElementById('targetUnits').value = data.targetUnits;
+                    if (data.tier1Price) document.getElementById('tier1Price').value = data.tier1Price;
+                    if (data.tier2Price) document.getElementById('tier2Price').value = data.tier2Price;
+                    if (data.tier3Price) document.getElementById('tier3Price').value = data.tier3Price;
+                    if (data.freightTerms) {
+                        const radio = document.querySelector(`input[name="freightTerms"][value="${data.freightTerms}"]`);
+                        if (radio) radio.checked = true;
+                    }
+                    if (data.duesAmount) document.getElementById('duesAmount').value = data.duesAmount;
+                    if (data.duesCadence) document.getElementById('duesCadence').value = data.duesCadence;
+                    
+                    // Validate form
+                    document.getElementById('clanCreationForm').dispatchEvent(new Event('input'));
+                });
+
+                window.qwenBridge.onAction('leader.auditMember', (data) => {
+                    if (data.memberId) {
+                        viewMemberDetails(data.memberId);
+                    }
+                });
+
+                window.qwenBridge.onAction('leader.releaseBatch', () => {
+                    document.getElementById('releaseBatch').click();
+                });
+            }
+
+            // Also listen for direct messages from parent window (app.html)
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'qwen-action') {
+                    const action = event.data.action;
+                    const data = event.data.data;
+
+                    switch (action) {
+                        case 'leader.createClan':
+                            if (data.skuName) document.getElementById('skuName').value = data.skuName;
+                            if (data.skuId) document.getElementById('skuId').value = data.skuId;
+                            if (data.category) document.getElementById('category').value = data.category;
+                            if (data.targetUnits) document.getElementById('targetUnits').value = data.targetUnits;
+                            break;
+                        case 'leader.auditMember':
+                            if (data.memberId) viewMemberDetails(data.memberId);
+                            break;
+                        case 'leader.releaseBatch':
+                            document.getElementById('releaseBatch').click();
+                            break;
+                    }
+                }
+            });
+        }
+
+        // Make functions available globally for inline handlers
+        window.viewMemberDetails = viewMemberDetails;
+    </script>
+</body>
+</html>

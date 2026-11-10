@@ -1,0 +1,993 @@
+[
+  {
+    "file": "coffee.jpg",
+    "topic": "green coffee beans sack",
+    "title": "File:Green Bean Coffee.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Green_Bean_Coffee.jpg",
+    "author": "DeaPeaJay",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "file": "flour.jpg",
+    "topic": "wheat flour bag",
+    "title": "File:A nice bag of wheat flour!.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_nice_bag_of_wheat_flour!.jpg",
+    "author": "Ph scale 56",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "olive-oil.jpg",
+    "topic": "olive oil bottles",
+    "title": "File:Ferrari Olive Oil Company.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ferrari_Olive_Oil_Company.jpg",
+    "author": "Ferrarioliveoil",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "pistachio.jpg",
+    "topic": "pistachio nuts",
+    "title": "File:Fried pistachio nuts.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fried_pistachio_nuts.jpg",
+    "author": "Fumikas Sagisavas",
+    "license": "CC0"
+  },
+  {
+    "file": "vanilla.jpg",
+    "topic": "vanilla pods",
+    "title": "File:Vanilla 6beans (rot. 90 deg.).JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vanilla_6beans_(rot._90_deg.).JPG",
+    "author": "Vanilla_6beans.JPG: B.navez derivative work: Andrzej 22 (talk)",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "tea.jpg",
+    "topic": "tea leaves",
+    "title": "File:Zhu-Ye-Qing-Tea-03.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Zhu-Ye-Qing-Tea-03.jpg",
+    "author": "CEphoto, Uwe Aranas",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "spice.jpg",
+    "topic": "spices market",
+    "title": "File:Spices of Sa\u00fade flea market, S\u00e3o Paulo, Brazil.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Spices_of_Sa%C3%BAde_flea_market,_S%C3%A3o_Paulo,_Brazil.jpg",
+    "author": "Wilfredor",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "chocolate.jpg",
+    "topic": "cocoa beans",
+    "title": "File:Theobroma cacao MHNT.BOT.2004.0.204.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Theobroma_cacao_MHNT.BOT.2004.0.204.jpg",
+    "author": "Roger Culos",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "honey.jpg",
+    "topic": "honey jar",
+    "title": "File:Antique Glass Honey Jar With Rusted Metal Cap (31009798197).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Antique_Glass_Honey_Jar_With_Rusted_Metal_Cap_(31009798197).jpg",
+    "author": "Cindy Shebley",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "rice.jpg",
+    "topic": "rice grain",
+    "title": "File:Rice grains (IRRI).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rice_grains_(IRRI).jpg",
+    "author": "IRRI Images",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "tiles.jpg",
+    "topic": "porcelain floor tiles",
+    "title": "File:Polished Porcelain Floor Tiling.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Polished_Porcelain_Floor_Tiling.jpg",
+    "author": "ColumbD",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "pallet.jpg",
+    "topic": "warehouse pallets",
+    "title": "File:Modern warehouse with pallet rack storage system.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Modern_warehouse_with_pallet_rack_storage_system.jpg",
+    "author": "Axisadman",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "bolts.jpg",
+    "topic": "bolts and nuts",
+    "title": "File:Bolts Nuts and Washers 3D.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bolts_Nuts_and_Washers_3D.JPG",
+    "author": "TeWeBs",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "tool.jpg",
+    "topic": "end mill milling cutter",
+    "title": "File:MillingCutterSlotEndMillBallnose.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:MillingCutterSlotEndMillBallnose.jpg",
+    "author": "Unknown",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "file": "solar.jpg",
+    "topic": "solar panels",
+    "title": "File:Ground mounted solar panels.gk.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ground_mounted_solar_panels.gk.jpg",
+    "author": "Grendelkhan",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "heat.jpg",
+    "topic": "heat exchanger industrial",
+    "title": "File:Disassembled chiller heat exchanger.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Disassembled_chiller_heat_exchanger.jpg",
+    "author": "Rsparks3",
+    "license": "CC0"
+  },
+  {
+    "file": "gloves.jpg",
+    "topic": "disposable gloves",
+    "title": "File:Disposable clear pastic gloves for kids.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Disposable_clear_pastic_gloves_for_kids.jpg",
+    "author": "Guculen",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "janitorial.jpg",
+    "topic": "cleaning supplies",
+    "title": "File:Variety of car cleaning and care products in hardware store in Germany.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Variety_of_car_cleaning_and_care_products_in_hardware_store_in_Germany.jpg",
+    "author": "Pittigrilli",
+    "license": "CC0"
+  },
+  {
+    "file": "bottles.jpg",
+    "topic": "glass bottles",
+    "title": "File:Beer bottles 2018 G1.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Beer_bottles_2018_G1.jpg",
+    "author": "George Chernilevsky",
+    "license": "Public domain"
+  },
+  {
+    "file": "container.jpg",
+    "topic": "shipping container port",
+    "title": "File:Shipping container - Port of Rotterdam - 2017 - 3.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shipping_container_-_Port_of_Rotterdam_-_2017_-_3.jpg",
+    "author": "AgainErick",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "boxes.jpg",
+    "topic": "cardboard boxes stacked warehouse",
+    "title": "File:EFTA00002251 - White door with a window and handle stands in a warehouse next to stacked cardboard boxes on a pallet.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:EFTA00002251_-_White_door_with_a_window_and_handle_stands_in_a_warehouse_next_to_stacked_cardboard_boxes_on_a_pallet.jpg",
+    "author": "Federal Bureau of Investigation",
+    "license": "Public domain"
+  },
+  {
+    "file": "pump.jpg",
+    "topic": "centrifugal pump",
+    "title": "File:Warman centrifugal pump.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Warman_centrifugal_pump.jpg",
+    "author": "Bernard S. Janse",
+    "license": "CC BY 2.5"
+  },
+  {
+    "file": "denim.jpg",
+    "topic": "blue jeans fabric texture",
+    "title": "File:Broken twill denim Wrangler 13MWZ jeans (2026-01-21).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Broken_twill_denim_Wrangler_13MWZ_jeans_(2026-01-21).jpg",
+    "author": "Olgierd Rudak",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "kitchen.jpg",
+    "topic": "restaurant kitchen stainless steel",
+    "title": "File:DSCF0807 A busy market kitchen worker carefully preparing fresh vegetables at a stainless-steel counter lined with squeeze bottles and ingredients.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:DSCF0807_A_busy_market_kitchen_worker_carefully_preparing_fresh_vegetables_at_a_stainless-steel_counter_lined_with_squeeze_bottles_and_ingredients.jpg",
+    "author": "PattayaPatrol",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "geothermal.jpg",
+    "topic": "heat pump outdoor unit",
+    "title": "File:Ecodan outdoor unit in the snow.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ecodan_outdoor_unit_in_the_snow.jpg",
+    "author": "PeterEastern",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "coffee-2.jpg",
+    "topic": "green coffee beans sack",
+    "title": "File:Green Decaffeinated Brazilian Coffee Sack.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Green_Decaffeinated_Brazilian_Coffee_Sack.JPG",
+    "author": "Jkafader",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "olive-oil-2.jpg",
+    "topic": "olive oil bottles",
+    "title": "File:Olive Oil Bar.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Olive_Oil_Bar.jpg",
+    "author": "Josh Hallett from Winter Haven, FL, USA",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "olive-oil-3.jpg",
+    "topic": "olive oil bottles",
+    "title": "File:Bottle of olive oil.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bottle_of_olive_oil.jpg",
+    "author": "margenauer from Pixabay",
+    "license": "CC0"
+  },
+  {
+    "file": "pistachio-2.jpg",
+    "topic": "pistachio nuts",
+    "title": "File:Close up of Pistachio Nuts (16656177641).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Close_up_of_Pistachio_Nuts_(16656177641).jpg",
+    "author": "Willis Lam",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "file": "pistachio-3.jpg",
+    "topic": "pistachio nuts",
+    "title": "File:Pistachio Nuts (Day 13 of 50) (23183126032).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pistachio_Nuts_(Day_13_of_50)_(23183126032).jpg",
+    "author": "Austin Kirk",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "tea-3.jpg",
+    "topic": "tea leaves",
+    "title": "File:Csinensis.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Csinensis.jpg",
+    "author": "AxelBoldt at en.wikipedia",
+    "license": "Public domain"
+  },
+  {
+    "file": "spice-2.jpg",
+    "topic": "spices market",
+    "title": "File:Spices WATERFRONT MARKET.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Spices_WATERFRONT_MARKET.jpg",
+    "author": "Ithra Dubai",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "spice-3.jpg",
+    "topic": "spices market",
+    "title": "File:Spices market Medenine.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Spices_market_Medenine.jpg",
+    "author": "Bernard Gagnon",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "chocolate-3.jpg",
+    "topic": "cocoa beans",
+    "title": "File:Cocoa beans in cocoa pod at El Trapiche, Costa Rica.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cocoa_beans_in_cocoa_pod_at_El_Trapiche,_Costa_Rica.jpg",
+    "author": "Aude",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "honey-2.jpg",
+    "topic": "honey jar",
+    "title": "File:Honey jars.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Honey_jars.jpg",
+    "author": "Deerpeter",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "rice-2.jpg",
+    "topic": "rice grain",
+    "title": "File:Green rice sheaves planted in a paddy field with long shadows at golden hour in Don Det Laos.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Green_rice_sheaves_planted_in_a_paddy_field_with_long_shadows_at_golden_hour_in_Don_Det_Laos.jpg",
+    "author": "Basile Morin",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "rice-3.jpg",
+    "topic": "rice grain",
+    "title": "File:Rice Grains at Bakin Dogo Market Kaduna North.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rice_Grains_at_Bakin_Dogo_Market_Kaduna_North.jpg",
+    "author": "JoabJacob",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "tiles-2.jpg",
+    "topic": "porcelain floor tiles",
+    "title": "File:6\"x6\" porcelain floor tiles.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:6%22x6%22_porcelain_floor_tiles.jpg",
+    "author": "PJM (talk) (Uploads)",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "boxes-2.jpg",
+    "topic": "cardboard boxes stacked warehouse",
+    "title": "File:EFTA00002256 - Stacked cardboard boxes fill the corner of a warehouse room with white doors and an exit sign above.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:EFTA00002256_-_Stacked_cardboard_boxes_fill_the_corner_of_a_warehouse_room_with_white_doors_and_an_exit_sign_above.jpg",
+    "author": "Federal Bureau of Investigation",
+    "license": "Public domain"
+  },
+  {
+    "file": "pallet-2.jpg",
+    "topic": "warehouse pallets",
+    "title": "File:UNICEF pallets 02.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:UNICEF_pallets_02.jpg",
+    "author": "heb@Wikimedia Commons (mail)",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "bolts-2.jpg",
+    "topic": "bolts and nuts",
+    "title": "File:Bolts and nuts in the box.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bolts_and_nuts_in_the_box.jpg",
+    "author": "I would appreciate being notified if you use my work outside Wikimedia. Do not copy this image illegally by ignoring the terms of the license below, as it is no",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "solar-2.jpg",
+    "topic": "solar panels",
+    "title": "File:Photovoltaic Panels at the Travers Solar Farm.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Photovoltaic_Panels_at_the_Travers_Solar_Farm.jpg",
+    "author": "Kkiefuik This photo was taken with Canon EOS Rebel T5i",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "solar-3.jpg",
+    "topic": "solar panels",
+    "title": "File:Photovoltaic Panels at a Solar Farm Near Vulcan, Alberta.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Photovoltaic_Panels_at_a_Solar_Farm_Near_Vulcan,_Alberta.jpg",
+    "author": "Kkiefuik This photo was taken with Canon EOS 90D",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "heat-2.jpg",
+    "topic": "heat exchanger industrial",
+    "title": "File:Cologne Germany Bundle-extractor-01.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cologne_Germany_Bundle-extractor-01.jpg",
+    "author": "CEphoto, Uwe Aranas",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "heat-3.jpg",
+    "topic": "heat exchanger industrial",
+    "title": "File:Duisburg, Landschaftspark Duisburg-Nord, Gasreinigung West -- 2024 -- 4173.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Duisburg,_Landschaftspark_Duisburg-Nord,_Gasreinigung_West_--_2024_--_4173.jpg",
+    "author": "Dietmar Rabich",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "pump-2.jpg",
+    "topic": "centrifugal pump",
+    "title": "File:Centrifugal Pump.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Centrifugal_Pump.jpg",
+    "author": "Saud",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "denim-2.jpg",
+    "topic": "blue jeans fabric texture",
+    "title": "File:Jeans Detail (184193271).jpeg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Jeans_Detail_(184193271).jpeg",
+    "author": "Uwe Jelting",
+    "license": "CC0"
+  },
+  {
+    "file": "denim-3.jpg",
+    "topic": "blue jeans fabric texture",
+    "title": "File:Denim fabric 03 disp 8k (Rico Cilliers and colormass via Poly Haven).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Denim_fabric_03_disp_8k_(Rico_Cilliers_and_colormass_via_Poly_Haven).jpg",
+    "author": "Rico Cilliers (Processing) colormass (Photography)",
+    "license": "CC0"
+  },
+  {
+    "file": "gloves-2.jpg",
+    "topic": "disposable gloves",
+    "title": "File:Disposable gloves 06.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Disposable_gloves_06.JPG",
+    "author": "Werneuchen",
+    "license": "Public domain"
+  },
+  {
+    "file": "gloves-3.jpg",
+    "topic": "disposable gloves",
+    "title": "File:Disposable gloves 01.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Disposable_gloves_01.JPG",
+    "author": "Werneuchen",
+    "license": "Public domain"
+  },
+  {
+    "file": "janitorial-2.jpg",
+    "topic": "cleaning supplies",
+    "title": "File:Cleaning product refills in Kindly.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cleaning_product_refills_in_Kindly.jpg",
+    "author": "Andy Li",
+    "license": "CC0"
+  },
+  {
+    "file": "janitorial-3.jpg",
+    "topic": "cleaning supplies",
+    "title": "File:Cleaning a coffee table at home with cleaning supplies and worn furniture.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cleaning_a_coffee_table_at_home_with_cleaning_supplies_and_worn_furniture.jpg",
+    "author": "Shixart1985",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "kitchen-2.jpg",
+    "topic": "restaurant kitchen stainless steel",
+    "title": "File:DFC 3008 A busy open-air kitchen with large pots and cooking equipment lined up on stainless-steel tables as staff in blue caps and aprons prepare meals.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:DFC_3008_A_busy_open-air_kitchen_with_large_pots_and_cooking_equipment_lined_up_on_stainless-steel_tables_as_staff_in_blue_caps_and_aprons_prepare_meals.jpg",
+    "author": "PattayaPatrol",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "kitchen-3.jpg",
+    "topic": "restaurant kitchen stainless steel",
+    "title": "File:Salim's, Turnpike Lane, London, England preparing and grilling kebabs.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Salim%27s,_Turnpike_Lane,_London,_England_preparing_and_grilling_kebabs.jpg",
+    "author": "Acabashi",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "aluminum.jpg",
+    "topic": "aluminium coil",
+    "title": "File:Tesla coil - Top loads.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tesla_coil_-_Top_loads.jpg",
+    "author": "matthew venn from london, uk",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "file": "aluminum-2.jpg",
+    "topic": "aluminium coil",
+    "title": "File:CSIRO ScienceImage 937 Coiled magnesium sheets and magnesium ingots.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_937_Coiled_magnesium_sheets_and_magnesium_ingots.jpg",
+    "author": "Mark Fergus, CSIRO",
+    "license": "CC BY 3.0"
+  },
+  {
+    "file": "geothermal-2.jpg",
+    "topic": "heat pump outdoor unit",
+    "title": "File:Carrier Outdoor Split Air Conditioner Heat Pump System (55005181522).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Carrier_Outdoor_Split_Air_Conditioner_Heat_Pump_System_(55005181522).jpg",
+    "author": "Tony Webster",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "geothermal-3.jpg",
+    "topic": "heat pump outdoor unit",
+    "title": "File:Sanyo SAP-KRV-93EHN.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sanyo_SAP-KRV-93EHN.jpg",
+    "author": "Piisamson",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "bottles-2.jpg",
+    "topic": "glass bottles",
+    "title": "File:D\u00fclmen, Alte Brennerei L\u00f6hning -- 2015 -- 8677-81.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Alte_Brennerei_L%C3%B6hning_--_2015_--_8677-81.jpg",
+    "author": "Dietmar Rabich",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "container-2.jpg",
+    "topic": "shipping container port",
+    "title": "File:Shipping container - Eimskip - Port of Rotterdam - 2017 - 2.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shipping_container_-_Eimskip_-_Port_of_Rotterdam_-_2017_-_2.jpg",
+    "author": "AgainErick",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "container-3.jpg",
+    "topic": "shipping container port",
+    "title": "File:Shipping container - Port of Rotterdam - 2014 - 2.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Shipping_container_-_Port_of_Rotterdam_-_2014_-_2.jpg",
+    "author": "AgainErick",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "cashew.jpg",
+    "topic": "cashew nuts kernels",
+    "title": "File:Factory workers engaged in deshelling, scooping, and kernel separation of cashew nuts.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Factory_workers_engaged_in_deshelling,_scooping,_and_kernel_separation_of_cashew_nuts.jpg",
+    "author": "Sandeep Vengurlekar",
+    "license": "CC0"
+  },
+  {
+    "file": "almond.jpg",
+    "topic": "almonds nuts bowl",
+    "title": "File:Bowl of Cashews and Almonds (48140118636).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bowl_of_Cashews_and_Almonds_(48140118636).jpg",
+    "author": "NIAID",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "almond-3.jpg",
+    "topic": "almonds nuts bowl",
+    "title": "File:MixedNutsInGlassBowl.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:MixedNutsInGlassBowl.JPG",
+    "author": "Simon Speed",
+    "license": "CC0"
+  },
+  {
+    "file": "walnut.jpg",
+    "topic": "walnuts shelled",
+    "title": "File:Juglans regia 2009 G2.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Juglans_regia_2009_G2.jpg",
+    "author": "George Chernilevsky",
+    "license": "Public domain"
+  },
+  {
+    "file": "walnut-2.jpg",
+    "topic": "walnuts shelled",
+    "title": "File:Walnuts - whole and open with halved kernel.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Walnuts_-_whole_and_open_with_halved_kernel.jpg",
+    "author": "Ivar Leidus",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "saffron.jpg",
+    "topic": "saffron threads",
+    "title": "File:Iran saffron threads.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iran_saffron_threads.jpg",
+    "author": "Rainer Zenz",
+    "license": "Public domain"
+  },
+  {
+    "file": "saffron-2.jpg",
+    "topic": "saffron threads",
+    "title": "File:Saffron threads in a glass jar ( Viora Saffron packaging).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Saffron_threads_in_a_glass_jar_(_Viora_Saffron_packaging).jpg",
+    "author": "ulleo",
+    "license": "CC0"
+  },
+  {
+    "file": "saffron-3.jpg",
+    "topic": "saffron threads",
+    "title": "File:Safran-Weinviertel Niederreiter 2 Gramm 8285.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Safran-Weinviertel_Niederreiter_2_Gramm_8285.jpg",
+    "author": "Hubertl",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "cardamom.jpg",
+    "topic": "green cardamom pods",
+    "title": "File:Green Cardamom Pods.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Green_Cardamom_Pods.jpg",
+    "author": "Misterneedlemouse",
+    "license": "CC0"
+  },
+  {
+    "file": "cardamom-2.jpg",
+    "topic": "green cardamom pods",
+    "title": "File:Black and green cardamom.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Black_and_green_cardamom.jpg",
+    "author": "Autopilot",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "cardamom-3.jpg",
+    "topic": "green cardamom pods",
+    "title": "File:Cardamom (5193854049).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cardamom_(5193854049).jpg",
+    "author": "Leslie Seaton from Seattle, WA, USA",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "pepper.jpg",
+    "topic": "black pepper peppercorns",
+    "title": "File:Bumbu dan Rempah - rempah.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bumbu_dan_Rempah_-_rempah.jpg",
+    "author": "Galeri ega",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "pepper-2.jpg",
+    "topic": "black pepper peppercorns",
+    "title": "File:Tellicherry Black Peppercorns.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tellicherry_Black_Peppercorns.jpg",
+    "author": "Misterneedlemouse",
+    "license": "CC0"
+  },
+  {
+    "file": "pepper-3.jpg",
+    "topic": "black pepper peppercorns",
+    "title": "File:Black Pepper IMG 4866 - 02.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Black_Pepper_IMG_4866_-_02.jpg",
+    "author": "Hubertl",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "basmati-2.jpg",
+    "topic": "basmati rice grains",
+    "title": "File:Basmati Rice India, raw.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Basmati_Rice_India,_raw.jpg",
+    "author": "cookbookman17",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "basmati-3.jpg",
+    "topic": "basmati rice grains",
+    "title": "File:Cooked cilantro lime dish basmati rice India.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cooked_cilantro_lime_dish_basmati_rice_India.jpg",
+    "author": "Brian Child",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "file": "dates.jpg",
+    "topic": "medjool dates",
+    "title": "File:Medjool dates as luxury item.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Medjool_dates_as_luxury_item.jpg",
+    "author": "Chiswick Chap",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "dates-2.jpg",
+    "topic": "medjool dates",
+    "title": "File:\u015awie\u017cy daktyle odmiany MEDJOOL.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:%C5%9Awie%C5%BCy_daktyle_odmiany_MEDJOOL.jpg",
+    "author": "ORGANIChouse",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "dates-3.jpg",
+    "topic": "medjool dates",
+    "title": "File:DATES MEDJOOL.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:DATES_MEDJOOL.jpg",
+    "author": "ORGANIChouse",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "pcb.jpg",
+    "topic": "printed circuit board electronics",
+    "title": "File:DIY Printed Circuit Board (7059452663).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:DIY_Printed_Circuit_Board_(7059452663).jpg",
+    "author": "kjackman",
+    "license": "CC BY-SA 2.0"
+  },
+  {
+    "file": "pcb-3.jpg",
+    "topic": "printed circuit board electronics",
+    "title": "File:Kramer Electronics PT-102AN - board-9846.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kramer_Electronics_PT-102AN_-_board-9846.jpg",
+    "author": "Raimond Spekking",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "battery.jpg",
+    "topic": "lithium ion battery cells",
+    "title": "File:18650 and 21700 lithium ion battery cell.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:18650_and_21700_lithium_ion_battery_cell.jpg",
+    "author": "Sevenethics",
+    "license": "CC0"
+  },
+  {
+    "file": "battery-2.jpg",
+    "topic": "lithium ion battery cells",
+    "title": "File:Lithium-Ion Cell cylindric.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lithium-Ion_Cell_cylindric.JPG",
+    "author": "RudolfSimon",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "led-2.jpg",
+    "topic": "LED lights strip",
+    "title": "File:LED string lights.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:LED_string_lights.jpg",
+    "author": "Battuaruna",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "microcontroller.jpg",
+    "topic": "arduino microcontroller board",
+    "title": "File:Arduino Esplora.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arduino_Esplora.jpg",
+    "author": "Arduino SA",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "microcontroller-2.jpg",
+    "topic": "arduino microcontroller board",
+    "title": "File:Arduino diecimila pcb top.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arduino_diecimila_pcb_top.jpg",
+    "author": "Remko van Dokkum",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "microcontroller-3.jpg",
+    "topic": "arduino microcontroller board",
+    "title": "File:Arduino Uno dllu.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arduino_Uno_dllu.jpg",
+    "author": "Dllu",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "resistor.jpg",
+    "topic": "electronic components resistors capacitors",
+    "title": "File:Electronic components in Printed Circuit Board.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Electronic_components_in_Printed_Circuit_Board.jpg",
+    "author": "Soumyapatra13",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "resistor-2.jpg",
+    "topic": "electronic components resistors capacitors",
+    "title": "File:Componentes electronicos.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Componentes_electronicos.jpg",
+    "author": "Ivan2010",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "resistor-3.jpg",
+    "topic": "electronic components resistors capacitors",
+    "title": "File:Sprague Atom axial electrolytic capacitors (14292922088).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sprague_Atom_axial_electrolytic_capacitors_(14292922088).jpg",
+    "author": "Mercado Viagens from Brasil",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "wire-2.jpg",
+    "topic": "electrical wire spools",
+    "title": "File:Rosin core electrical solder.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rosin_core_electrical_solder.JPG",
+    "author": "Kevin Hadley",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "bearing.jpg",
+    "topic": "ball bearings steel",
+    "title": "File:Stainless steel 1.4034 X46Cr13 bearing ball 60mm G100 removed camera.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Stainless_steel_1.4034_X46Cr13_bearing_ball_60mm_G100_removed_camera.jpg",
+    "author": "Stainless_steel_1.4034_X46Cr13_bearing_ball_60mm_G100.jpg: Lucasbosch derivative work: Bobek",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "welding.jpg",
+    "topic": "welding electrodes",
+    "title": "File:Arc welding electrodes and electrode holder.triddle.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arc_welding_electrodes_and_electrode_holder.triddle.jpg",
+    "author": "Unknown",
+    "license": "Public domain"
+  },
+  {
+    "file": "jute.jpg",
+    "topic": "jute hessian fabric",
+    "title": "File:Coffee sacks.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Coffee_sacks.jpg",
+    "author": "Downtowngal",
+    "license": "Public domain"
+  },
+  {
+    "file": "jute-2.jpg",
+    "topic": "jute hessian fabric",
+    "title": "File:Hessian 230 ao 8k (Rico Cilliers and colormass via Poly Haven).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hessian_230_ao_8k_(Rico_Cilliers_and_colormass_via_Poly_Haven).jpg",
+    "author": "Rico Cilliers (Processing) colormass (Photography)",
+    "license": "CC0"
+  },
+  {
+    "file": "jute-3.jpg",
+    "topic": "jute hessian fabric",
+    "title": "File:Hessian 230 rough 8k (Rico Cilliers and colormass via Poly Haven).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hessian_230_rough_8k_(Rico_Cilliers_and_colormass_via_Poly_Haven).jpg",
+    "author": "Rico Cilliers (Processing) colormass (Photography)",
+    "license": "CC0"
+  },
+  {
+    "file": "stone-3.jpg",
+    "topic": "natural stone slabs",
+    "title": "File:Tandur stones.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tandur_stones.jpg",
+    "author": "C.Chandra Kanth Rao at Telugu Wikipedia",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "cement.jpg",
+    "topic": "cement bags construction",
+    "title": "File:Cement bags in Douma.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cement_bags_in_Douma.jpg",
+    "author": "Alex.Simon89",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "cement-2.jpg",
+    "topic": "cement bags construction",
+    "title": "File:Portland Cement Bags.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Portland_Cement_Bags.jpg",
+    "author": "KVDP",
+    "license": "Public domain"
+  },
+  {
+    "file": "cement-3.jpg",
+    "topic": "cement bags construction",
+    "title": "File:Stockage de ciments.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Stockage_de_ciments.JPG",
+    "author": "Oussama zrafi",
+    "license": "CC BY-SA 3.0"
+  },
+  {
+    "file": "glassware.jpg",
+    "topic": "glass jars bottles",
+    "title": "File:Dura-Europos archival photograph, YUAG negative number dam-66~01 -object-id-4252.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dura-Europos_archival_photograph,_YUAG_negative_number_dam-66~01_-object-id-4252.jpg",
+    "author": "anonymous",
+    "license": "CC0"
+  },
+  {
+    "file": "glassware-2.jpg",
+    "topic": "glass jars bottles",
+    "title": "File:Glass jars, glass bottles in the kitchen, Rostov-on-Don, Russia.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Glass_jars,_glass_bottles_in_the_kitchen,_Rostov-on-Don,_Russia.jpg",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "glassware-3.jpg",
+    "topic": "glass jars bottles",
+    "title": "File:IKEA store, Dark glass bottles and jars, Rostov-on-Don, Russia.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:IKEA_store,_Dark_glass_bottles_and_jars,_Rostov-on-Don,_Russia.jpg",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "plastic-2.jpg",
+    "topic": "plastic pellets granules",
+    "title": "File:Plastic pellets.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plastic_pellets.jpg",
+    "author": "SuSanA Secretariat",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "plastic-3.jpg",
+    "topic": "plastic pellets granules",
+    "title": "File:Pellet azul.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pellet_azul.jpg",
+    "author": "ISIPLAST S.A de C.V",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "neem.jpg",
+    "topic": "essential oil bottles",
+    "title": "File:Essential oil kit.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Essential_oil_kit.jpg",
+    "author": "Vanilla and lace",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "neem-2.jpg",
+    "topic": "essential oil bottles",
+    "title": "File:Eucalyptus Oil Bottles Inglewood.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eucalyptus_Oil_Bottles_Inglewood.jpg",
+    "author": "Staceycv",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "neem-3.jpg",
+    "topic": "essential oil bottles",
+    "title": "File:\"15 - ITALY - crema viso con oli essenziali naturali - face cream with essential oil ecobio spignatto fai da te.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:%2215_-_ITALY_-_crema_viso_con_oli_essenziali_naturali_-_face_cream_with_essential_oil_ecobio_spignatto_fai_da_te.jpg",
+    "author": "cosmesi fai da te naturale",
+    "license": "CC BY-SA 3.0 it"
+  },
+  {
+    "file": "street-light.jpg",
+    "topic": "solar street light",
+    "title": "File:Solar power for streetlights along part of Paradise Trail (3937798321).jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Solar_power_for_streetlights_along_part_of_Paradise_Trail_(3937798321).jpg",
+    "author": "Robert Ashworth from Bellingham, WA., USA",
+    "license": "CC BY 2.0"
+  },
+  {
+    "file": "street-light-3.jpg",
+    "topic": "solar street light",
+    "title": "File:BS Solar Wind Street Light.JPG",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:BS_Solar_Wind_Street_Light.JPG",
+    "author": "TeWeBs",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "inverter-2.jpg",
+    "topic": "solar inverter",
+    "title": "File:Sunsathi inverter.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sunsathi_inverter.jpg",
+    "author": "Sunsathisolar",
+    "license": "CC0"
+  },
+  {
+    "file": "mask.jpg",
+    "topic": "surgical face masks",
+    "title": "File:Surgical Face Masks used in Hospitals.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Surgical_Face_Masks_used_in_Hospitals.jpg",
+    "author": "https://www.nursetogether.com/",
+    "license": "CC BY-SA 4.0"
+  },
+  {
+    "file": "mask-2.jpg",
+    "topic": "surgical face masks",
+    "title": "File:FFP and Surgical Face masks used in Coronavirus pandemic COVID-19.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:FFP_and_Surgical_Face_masks_used_in_Coronavirus_pandemic_COVID-19.jpg",
+    "author": "https://www.nursetogether.com/",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "mask-3.jpg",
+    "topic": "surgical face masks",
+    "title": "File:FFP and Surgical Face masks used during Coronavirus pandemic COVID-19.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:FFP_and_Surgical_Face_masks_used_during_Coronavirus_pandemic_COVID-19.jpg",
+    "author": "https://www.nursetogether.com/",
+    "license": "CC BY 4.0"
+  },
+  {
+    "file": "induction-2.jpg",
+    "topic": "commercial kitchen equipment",
+    "title": "File:Kitchen in Earthship Brighton.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kitchen_in_Earthship_Brighton.jpg",
+    "author": "Andy Li",
+    "license": "CC0"
+  },
+  {
+    "file": "led.jpg",
+    "topic": "LED light panel lamp",
+    "title": "Project 365 #38: 070222 Paradise By The Dashboard Light",
+    "sourceUrl": "https://www.flickr.com/photos/23408922@N07/51868657576",
+    "author": "comedy_nose",
+    "license": "BY 2.0",
+    "provider": "flickr"
+  },
+  {
+    "file": "cashew-2.jpg",
+    "topic": "cashew nuts raw",
+    "title": "Raw cashew nuts fruit",
+    "sourceUrl": "https://www.rawpixel.com/image/5974867/raw-cashew-nuts-fruit",
+    "author": "Unknown",
+    "license": "CC0 1.0",
+    "provider": "rawpixel"
+  },
+  {
+    "file": "tea-4.jpg",
+    "topic": "tea leaves processing",
+    "title": "Tea Harvesting",
+    "sourceUrl": "https://www.flickr.com/photos/76025239@N02/54764660723",
+    "author": "Son Hoa Nguyen",
+    "license": "CC0 1.0",
+    "provider": "flickr"
+  },
+  {
+    "file": "honey-4.jpg",
+    "topic": "honey jar jars",
+    "title": "Small Honey Jar with Honeycomb",
+    "sourceUrl": "https://www.flickr.com/photos/184594136@N08/51330849013",
+    "author": "Alabama Extension",
+    "license": "CC0 1.0",
+    "provider": "flickr"
+  },
+  {
+    "file": "lumber.jpg",
+    "topic": "stacked lumber planks timber",
+    "title": "Wooden planks are stacked in neat piles at a lumber yard",
+    "sourceUrl": "https://www.flickr.com/photos/202846129@N03/54553060236",
+    "author": "nenadstojkovicart",
+    "license": "BY 2.0",
+    "provider": "flickr"
+  },
+  {
+    "file": "induction.jpg",
+    "topic": "induction cooktop",
+    "title": "Induction cooktop",
+    "sourceUrl": "https://www.flickr.com/photos/154752783@N05/52185189352",
+    "author": "tjmills1520",
+    "license": "BY-SA 2.0",
+    "provider": "flickr"
+  },
+  {
+    "file": "induction-3.jpg",
+    "topic": "induction cooktop",
+    "title": "Gnali & Zani Moka Pot [20180512_085709]",
+    "sourceUrl": "https://www.flickr.com/photos/87054972@N00/31312260397",
+    "author": "trekkyandy",
+    "license": "BY-SA 2.0",
+    "provider": "flickr"
+  }
+]

@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WholeShare - Subscriptions & Dues</title>
+    <link rel="stylesheet" href="/app.css">
+    <style>
+        /* Subscriptions View Specific Styles */
+        .ws-subscriptions-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-canvas, #08090b);
+            color: var(--text-primary, #e2e8f0);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .ws-subscriptions-topbar {
+            height: 56px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .ws-subscriptions-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-subscriptions-breadcrumb span {
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-subscriptions-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ws-summon-qwen-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ffc439 0%, #ffb347 100%);
+            border: none;
+            color: #08090b;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-summon-qwen-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 196, 57, 0.3);
+        }
+
+        .ws-summon-qwen-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Main Content */
+        .ws-subscriptions-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Billing Toggle */
+        .ws-billing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-billing-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-elevated, #14171f);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-billing-toggle-btn {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-billing-toggle-btn:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .ws-billing-toggle-btn.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        /* Pricing Cards */
+        .ws-pricing-cards {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding: 32px 24px;
+            background: var(--bg-canvas, #08090b);
+        }
+
+        .ws-pricing-card {
+            flex: 1;
+            max-width: 360px;
+            background: var(--bg-surface, #0d0f14);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 16px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .ws-pricing-card.popular {
+            border-color: #10b981;
+            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .ws-popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ws-pricing-card-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .ws-pricing-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 8px;
+        }
+
+        .ws-pricing-card-price {
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-pricing-card-period {
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+            margin-left: 4px;
+        }
+
+        .ws-pricing-card-description {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .ws-pricing-card-features {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .ws-pricing-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-pricing-feature-icon {
+            width: 20px;
+            height: 20px;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #10b981;
+            font-size: 12px;
+        }
+
+        .ws-pricing-card-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-pricing-card-btn.monthly {
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-primary, #e2e8f0);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-pricing-card-btn.monthly:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .ws-pricing-card-btn.yearly {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .ws-pricing-card-btn.yearly:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .ws-pricing-card-btn.yearly:active {
+            transform: scale(0.98);
+        }
+
+        /* Savings Badge */
+        .ws-savings-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Current Subscription */
+        .ws-current-subscription {
+            padding: 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-current-subscription-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .ws-current-subscription-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-manage-btn {
+            padding: 8px 16px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-manage-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-current-subscription-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .ws-subscription-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ws-subscription-detail-label {
+            font-size: 11px;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ws-subscription-detail-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Subscription Table */
+        .ws-subscriptions-table-container {
+            flex: 1;
+            overflow: auto;
+            padding: 0 24px 24px;
+        }
+
+        .ws-subscriptions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ws-subscriptions-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-secondary, #94a3b8);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .ws-subscriptions-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.04));
+            font-size: 13px;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-subscriptions-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .ws-subscriptions-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badges */
+        .ws-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .ws-status-active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .ws-status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .ws-status-cancelled {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .ws-status-past_due {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* Action Buttons */
+        .ws-action-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-action-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .ws-action-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+        }
+
+        /* Cancellation Period Guardian */
+        .ws-guardian-banner {
+            padding: 16px 24px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            margin: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ws-guardian-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f59e0b;
+            font-size: 16px;
+        }
+
+        .ws-guardian-content {
+            flex: 1;
+        }
+
+        .ws-guardian-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f59e0b;
+            margin-bottom: 4px;
+        }
+
+        .ws-guardian-text {
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-guardian-countdown {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f59e0b;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Loading State */
+        .ws-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .ws-pricing-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .ws-pricing-card {
+                max-width: 100%;
+            }
+
+            .ws-subscriptions-topbar {
+                padding: 0 16px;
+            }
+
+            .ws-pricing-cards {
+                padding: 24px 16px;
+            }
+
+            .ws-current-subscription {
+                padding: 16px;
+            }
+
+            .ws-subscriptions-table-container {
+                padding: 0 16px 16px;
+            }
+
+            .ws-guardian-banner {
+                margin: 16px;
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ws-pricing-card {
+            animation: fadeIn 300ms ease-out;
+        }
+
+        .ws-pricing-card:nth-child(2) {
+            animation-delay: 100ms;
+        }
+
+        /* Qwen Control Integration */
+        .ws-qwen-integration {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="ws-subscriptions-view">
+        <!-- Top Bar -->
+        <div class="ws-subscriptions-topbar">
+            <div class="ws-subscriptions-breadcrumb">
+                <span>Workspace</span>
+                <span>/</span>
+                <span>Subscriptions & Dues</span>
+            </div>
+            <div class="ws-subscriptions-topbar-right">
+                <button class="ws-summon-qwen-btn">Summon Qwen</button>
+            </div>
+        </div>
+
+        <!-- Billing Toggle -->
+        <div class="ws-billing-toggle">
+            <div class="ws-billing-toggle-container">
+                <button class="ws-billing-toggle-btn active" data-cadence="monthly">Monthly</button>
+                <button class="ws-billing-toggle-btn" data-cadence="yearly">Yearly <span class="ws-savings-badge">Save 15%</span></button>
+            </div>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="ws-pricing-cards">
+            <!-- Monthly Plan -->
+            <div class="ws-pricing-card" id="monthlyCard">
+                <div class="ws-pricing-card-header">
+                    <div class="ws-pricing-card-title">Monthly Plan</div>
+                    <div class="ws-pricing-card-price">
+                        $49
+                        <span class="ws-pricing-card-period">/mo</span>
+                    </div>
+                </div>
+                <div class="ws-pricing-card-description">
+                    Flexible month-to-month billing with no long-term commitment. Perfect for testing the waters.
+                </div>
+                <div class="ws-pricing-card-features">
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Unlimited Clan Creation</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Up to 100 Members per Clan</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>PayPal Orders v2 Integration</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>48-Hour Inspection Window</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Basic Analytics</span>
+                    </div>
+                </div>
+                <button class="ws-pricing-card-btn monthly" id="selectMonthly">Select Monthly</button>
+            </div>
+
+            <!-- Yearly Plan -->
+            <div class="ws-pricing-card popular" id="yearlyCard">
+                <div class="ws-popular-badge">MOST POPULAR</div>
+                <div class="ws-pricing-card-header">
+                    <div class="ws-pricing-card-title">Yearly Plan</div>
+                    <div class="ws-pricing-card-price">
+                        $499
+                        <span class="ws-pricing-card-period">/yr</span>
+                    </div>
+                </div>
+                <div class="ws-pricing-card-description">
+                    Best value with 15% savings. Commit for a year and enjoy premium features.
+                </div>
+                <div class="ws-pricing-card-features">
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Everything in Monthly</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Up to 500 Members per Clan</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Advanced Analytics & Reports</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Priority Support</span>
+                    </div>
+                    <div class="ws-pricing-feature">
+                        <div class="ws-pricing-feature-icon">✓</div>
+                        <span>Custom Branding Options</span>
+                    </div>
+                </div>
+                <button class="ws-pricing-card-btn yearly" id="selectYearly">Select Yearly</button>
+            </div>
+        </div>
+
+        <!-- Current Subscription -->
+        <div class="ws-current-subscription">
+            <div class="ws-current-subscription-header">
+                <div class="ws-current-subscription-title">Current Subscription</div>
+                <button class="ws-manage-btn" id="manageSubscription">Manage Subscription</button>
+            </div>
+            <div class="ws-current-subscription-details">
+                <div class="ws-subscription-detail">
+                    <span class="ws-subscription-detail-label">Plan</span>
+                    <span class="ws-subscription-detail-value" id="currentPlan">Monthly</span>
+                </div>
+                <div class="ws-subscription-detail">
+                    <span class="ws-subscription-detail-label">Amount</span>
+                    <span class="ws-subscription-detail-value" id="currentAmount">$49.00</span>
+                </div>
+                <div class="ws-subscription-detail">
+                    <span class="ws-subscription-detail-label">Billing Date</span>
+                    <span class="ws-subscription-detail-value" id="billingDate">15th of each month</span>
+                </div>
+                <div class="ws-subscription-detail">
+                    <span class="ws-subscription-detail-label">Status</span>
+                    <span class="ws-subscription-detail-value" id="subscriptionStatus">Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancellation Period Guardian -->
+        <div class="ws-guardian-banner">
+            <div class="ws-guardian-icon">⏰</div>
+            <div class="ws-guardian-content">
+                <div class="ws-guardian-title">Cancellation Period Guardian</div>
+                <div class="ws-guardian-text">
+                    Your current subscription has a <span class="ws-guardian-countdown" id="cancellationCountdown">30-day</span> notice period. 
+                    Automatic notifications will be sent before renewal.
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscriptions Table -->
+        <div class="ws-subscriptions-table-container">
+            <table class="ws-subscriptions-table">
+                <thead>
+                    <tr>
+                        <th>Subscription ID</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Billing Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="subscriptionsTableBody">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Qwen Control Integration -->
+        <div class="ws-qwen-integration" id="qwenIntegration"></div>
+    </div>
+
+    <script>
+        // Design Tokens
+        const DESIGN_TOKENS = {
+            bgCanvas: '#08090b',
+            bgSurface: '#0d0f14',
+            bgElevated: '#14171f',
+            borderHairline: 'rgba(255,255,255,0.08)',
+            textPrimary: '#e2e8f0',
+            textSecondary: '#94a3b8',
+            textTertiary: '#64748b',
+            paypalGold: '#ffc439',
+            paypalBlue: '#003087',
+            success: '#10b981',
+            warning: '#f59e0b',
+            error: '#ef4444'
+        };
+
+        // Sample Subscriptions Data
+        const sampleSubscriptions = [
+            {
+                id: 'sub_001',
+                plan: 'Monthly',
+                amount: 49.00,
+                billingDate: '15th of each month',
+                status: 'active',
+                createdAt: '2024-01-15',
+                nextBilling: '2024-02-15',
+                cancellationNotice: 30
+            },
+            {
+                id: 'sub_002',
+                plan: 'Yearly',
+                amount: 499.00,
+                billingDate: 'January 15th',
+                status: 'active',
+                createdAt: '2024-01-15',
+                nextBilling: '2025-01-15',
+                cancellationNotice: 30
+            },
+            {
+                id: 'sub_003',
+                plan: 'Monthly',
+                amount: 49.00,
+                billingDate: '1st of each month',
+                status: 'cancelled',
+                createdAt: '2023-12-01',
+                nextBilling: 'N/A',
+                cancellationNotice: 30
+            }
+        ];
+
+        // Current subscription state
+        let currentSubscription = {
+            plan: 'Monthly',
+            amount: 49.00,
+            billingDate: '15th of each month',
+            status: 'active',
+            cadence: 'monthly'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply design tokens
+            Object.entries(DESIGN_TOKENS).forEach(([key, value]) => {
+                document.documentElement.style.setProperty(`--${key}`, value);
+            });
+
+            // Populate subscriptions table
+            populateSubscriptionsTable();
+
+            // Update current subscription display
+            updateCurrentSubscription();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Setup Qwen control
+            setupQwenControl();
+
+            // Notify parent
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'view-loaded', view: 'subscriptions' }, '*');
+            }
+        });
+
+        function populateSubscriptionsTable() {
+            const tbody = document.getElementById('subscriptionsTableBody');
+            tbody.innerHTML = '';
+
+            sampleSubscriptions.forEach(sub => {
+                const row = document.createElement('tr');
+
+                // Subscription ID
+                const idCell = document.createElement('td');
+                idCell.textContent = sub.id;
+                idCell.style.fontVariantNumeric = 'tabular-nums';
+
+                // Plan
+                const planCell = document.createElement('td');
+                planCell.textContent = sub.plan;
+
+                // Amount
+                const amountCell = document.createElement('td');
+                amountCell.textContent = `$${sub.amount.toFixed(2)}`;
+                amountCell.style.fontVariantNumeric = 'tabular-nums';
+
+                // Billing Date
+                const billingCell = document.createElement('td');
+                billingCell.textContent = sub.billingDate;
+
+                // Status
+                const statusCell = document.createElement('td');
+                const statusClass = `ws-status-${sub.status.replace(' ', '_')}`;
+                statusCell.innerHTML = `<span class="ws-status-badge ${statusClass}">${sub.status}</span>`;
+
+                // Actions
+                const actionsCell = document.createElement('td');
+                if (sub.status === 'active') {
+                    actionsCell.innerHTML = `
+                        <button class="ws-action-btn" onclick="viewSubscription('${sub.id}')">View</button>
+                        <button class="ws-action-btn" onclick="updateSubscription('${sub.id}')">Update</button>
+                        <button class="ws-action-btn danger" onclick="cancelSubscription('${sub.id}')">Cancel</button>
+                    `;
+                } else if (sub.status === 'cancelled') {
+                    actionsCell.innerHTML = `
+                        <button class="ws-action-btn" onclick="viewSubscription('${sub.id}')">View</button>
+                        <button class="ws-action-btn" onclick="reactivateSubscription('${sub.id}')">Reactivate</button>
+                    `;
+                }
+
+                row.appendChild(idCell);
+                row.appendChild(planCell);
+                row.appendChild(amountCell);
+                row.appendChild(billingCell);
+                row.appendChild(statusCell);
+                row.appendChild(actionsCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateCurrentSubscription() {
+            document.getElementById('currentPlan').textContent = currentSubscription.plan;
+            document.getElementById('currentAmount').textContent = `$${currentSubscription.amount.toFixed(2)}`;
+            document.getElementById('billingDate').textContent = currentSubscription.billingDate;
+            document.getElementById('subscriptionStatus').textContent = currentSubscription.status;
+        }
+
+        function switchBillingCadence(cadence) {
+            // Update toggle buttons
+            document.querySelectorAll('.ws-billing-toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.cadence === cadence) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update pricing cards visibility
+            if (cadence === 'monthly') {
+                document.getElementById('monthlyCard').style.display = 'flex';
+                document.getElementById('yearlyCard').style.display = 'flex';
+            } else {
+                document.getElementById('monthlyCard').style.display = 'none';
+                document.getElementById('yearlyCard').style.display = 'flex';
+            }
+        }
+
+        function selectPlan(plan) {
+            if (plan === 'monthly') {
+                currentSubscription = {
+                    plan: 'Monthly',
+                    amount: 49.00,
+                    billingDate: '15th of each month',
+                    status: 'active',
+                    cadence: 'monthly'
+                };
+                alert('Monthly plan selected! You will be billed $49.00 on the 15th of each month.');
+            } else if (plan === 'yearly') {
+                currentSubscription = {
+                    plan: 'Yearly',
+                    amount: 499.00,
+                    billingDate: 'January 15th',
+                    status: 'active',
+                    cadence: 'yearly'
+                };
+                alert('Yearly plan selected! You will be billed $499.00 annually on January 15th. You save 15% compared to monthly billing.');
+            }
+
+            updateCurrentSubscription();
+            populateSubscriptionsTable();
+        }
+
+        function viewSubscription(subId) {
+            const sub = sampleSubscriptions.find(s => s.id === subId);
+            if (sub) {
+                alert(`Subscription Details:\n\nID: ${sub.id}\nPlan: ${sub.plan}\nAmount: $${sub.amount.toFixed(2)}\nBilling Date: ${sub.billingDate}\nStatus: ${sub.status}\nCreated: ${sub.createdAt}\nNext Billing: ${sub.nextBilling}`);
+            }
+        }
+
+        function updateSubscription(subId) {
+            const sub = sampleSubscriptions.find(s => s.id === subId);
+            if (sub) {
+                alert(`Update subscription ${sub.id}\n\nThis would open a form to update payment method, billing date, or change plan.`);
+            }
+        }
+
+        function cancelSubscription(subId) {
+            if (confirm('Are you sure you want to cancel this subscription? You will need to provide 30 days notice.')) {
+                const sub = sampleSubscriptions.find(s => s.id === subId);
+                if (sub) {
+                    sub.status = 'cancelled';
+                    alert(`Subscription ${sub.id} has been scheduled for cancellation. It will remain active until ${sub.nextBilling}.`);
+                    populateSubscriptionsTable();
+                }
+            }
+        }
+
+        function reactivateSubscription(subId) {
+            const sub = sampleSubscriptions.find(s => s.id === subId);
+            if (sub) {
+                sub.status = 'active';
+                alert(`Subscription ${sub.id} has been reactivated.`);
+                populateSubscriptionsTable();
+            }
+        }
+
+        function manageSubscription() {
+            alert('Manage Subscription\n\nThis would open the PayPal Subscriptions v1 management interface to update payment methods, change plans, or cancel subscriptions.');
+        }
+
+        function setupEventListeners() {
+            // Billing toggle
+            document.querySelectorAll('.ws-billing-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchBillingCadence(btn.dataset.cadence);
+                });
+            });
+
+            // Plan selection
+            document.getElementById('selectMonthly').addEventListener('click', () => {
+                selectPlan('monthly');
+            });
+
+            document.getElementById('selectYearly').addEventListener('click', () => {
+                selectPlan('yearly');
+            });
+
+            // Manage subscription
+            document.getElementById('manageSubscription').addEventListener('click', manageSubscription);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    // Close any open modals/drawers
+                }
+            });
+        }
+
+        // Qwen Control Integration
+        function setupQwenControl() {
+            // Listen for Qwen commands via SSE
+            if (window.qwenBridge) {
+                window.qwenBridge.onAction('subscriptions.selectPlan', (data) => {
+                    if (data.plan === 'monthly') {
+                        selectPlan('monthly');
+                    } else if (data.plan === 'yearly') {
+                        selectPlan('yearly');
+                    }
+                });
+
+                window.qwenBridge.onAction('subscriptions.view', (data) => {
+                    if (data.subscriptionId) {
+                        viewSubscription(data.subscriptionId);
+                    }
+                });
+
+                window.qwenBridge.onAction('subscriptions.cancel', (data) => {
+                    if (data.subscriptionId) {
+                        cancelSubscription(data.subscriptionId);
+                    }
+                });
+
+                window.qwenBridge.onAction('subscriptions.manage', () => {
+                    manageSubscription();
+                });
+            }
+
+            // Also listen for direct messages from parent window (app.html)
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'qwen-action') {
+                    const action = event.data.action;
+                    const data = event.data.data;
+
+                    switch (action) {
+                        case 'subscriptions.selectPlan':
+                            if (data.plan === 'monthly') {
+                                selectPlan('monthly');
+                            } else if (data.plan === 'yearly') {
+                                selectPlan('yearly');
+                            }
+                            break;
+                        case 'subscriptions.view':
+                            if (data.subscriptionId) viewSubscription(data.subscriptionId);
+                            break;
+                        case 'subscriptions.cancel':
+                            if (data.subscriptionId) cancelSubscription(data.subscriptionId);
+                            break;
+                        case 'subscriptions.manage':
+                            manageSubscription();
+                            break;
+                    }
+                }
+            });
+        }
+
+        // Make functions available globally for inline handlers
+        window.viewSubscription = viewSubscription;
+        window.updateSubscription = updateSubscription;
+        window.cancelSubscription = cancelSubscription;
+        window.reactivateSubscription = reactivateSubscription;
+    </script>
+</body>
+</html>

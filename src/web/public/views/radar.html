@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WholeShare - Matchmaking Radar</title>
+    <link rel="stylesheet" href="/app.css">
+    <style>
+        /* Radar View Specific Styles */
+        .ws-radar-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-canvas, #08090b);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-radar-topbar {
+            height: 56px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .ws-radar-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-radar-breadcrumb span {
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-radar-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ws-spend-ceiling-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-export-btn {
+            background: transparent;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-export-btn:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-summon-qwen-btn {
+            background: linear-gradient(135deg, #ffc439 0%, #ffb81c 100%);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #08090b;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-summon-qwen-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .ws-summon-qwen-btn:active {
+            transform: scale(0.98);
+        }
+
+        .ws-radar-main {
+            flex: 1;
+            overflow: auto;
+            padding: 24px;
+        }
+
+        /* Filter & Control Bar */
+        .ws-filter-bar {
+            background: var(--bg-surface, #0d0f14);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .ws-filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ws-filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 8px;
+        }
+
+        .ws-category-pill {
+            background: transparent;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-category-pill:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-category-pill.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .ws-search-input {
+            flex: 1;
+            min-width: 250px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 14px;
+            outline: none;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-search-input::placeholder {
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-search-input:focus {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        /* MOQ Volume Slider */
+        .ws-moq-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-left: auto;
+        }
+
+        .ws-moq-label {
+            font-size: 12px;
+            color: var(--text-secondary, #94a3b8);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .ws-moq-slider {
+            width: 200px;
+            height: 4px;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .ws-moq-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #ffc439 0%, #ffb81c 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-moq-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .ws-moq-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+            min-width: 50px;
+        }
+
+        /* Clan Opportunity Grid */
+        .ws-clan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .ws-clan-card {
+            background: var(--bg-surface, #0d0f14);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-clan-card:hover {
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .ws-clan-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .ws-clan-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 4px;
+        }
+
+        .ws-clan-category {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #10b981;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ws-credibility-score {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-credibility-badge {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* Price Comparison Box */
+        .ws-price-comparison {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 8px;
+        }
+
+        .ws-price-retail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ws-price-retail-value {
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+            text-decoration: line-through;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-price-wholesale {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ws-price-wholesale-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-savings-pill {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        /* MOQ Progress Bar */
+        .ws-moq-progress {
+            margin-bottom: 16px;
+        }
+
+        .ws-moq-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-moq-progress-bar {
+            height: 8px;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .ws-moq-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 4px;
+            transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-moq-progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        /* Tier Markers */
+        .ws-tier-markers {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .ws-tier-marker {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+        }
+
+        .ws-tier-marker.active {
+            background: #10b981;
+        }
+
+        /* Footer Actions */
+        .ws-clan-card-footer {
+            display: flex;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-btn-paypal-gold {
+            flex: 1;
+            background: linear-gradient(135deg, #ffc439 0%, #ffb81c 100%);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #08090b;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-btn-paypal-gold:hover {
+            transform: translateY(-1px);
+        }
+
+        .ws-btn-paypal-gold:active {
+            transform: scale(0.98);
+        }
+
+        .ws-btn-titanium {
+            background: transparent;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-btn-titanium:hover {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .ws-btn-titanium:active {
+            transform: scale(0.98);
+        }
+
+        /* Empty State */
+        .ws-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .ws-empty-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-elevated, #14171f);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .ws-empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 8px;
+        }
+
+        .ws-empty-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+            max-width: 300px;
+        }
+
+        /* Loading State */
+        .ws-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .ws-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .ws-clan-grid {
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ws-filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ws-moq-slider-container {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .ws-moq-slider {
+                width: 100%;
+            }
+
+            .ws-clan-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ws-radar-topbar {
+                padding: 0 16px;
+            }
+
+            .ws-radar-main {
+                padding: 16px;
+            }
+        }
+
+        /* Qwen Explanation Badge */
+        .ws-qwen-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #10b981;
+            max-width: 300px;
+            animation: slideIn 300ms cubic-bezier(0.22, 1, 0.36, 1);
+            display: none;
+        }
+
+        .ws-qwen-badge.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ws-radar-view">
+        <!-- Top Contextual Bar -->
+        <header class="ws-radar-topbar">
+            <div class="ws-radar-breadcrumb">
+                <span class="ws-filter-label">Workspace</span>
+                <span>/</span>
+                <span>Matchmaking Radar</span>
+            </div>
+            <div class="ws-radar-topbar-right">
+                <span class="ws-spend-ceiling-badge">Spend Ceiling: $50,000</span>
+                <button class="ws-export-btn">Export Agent Snapshot</button>
+                <button class="ws-summon-qwen-btn">Summon Qwen Copilot</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="ws-radar-main">
+            <!-- Filter & Control Bar -->
+            <div class="ws-filter-bar">
+                <div class="ws-filter-section">
+                    <span class="ws-filter-label">Category</span>
+                    <button class="ws-category-pill active" data-category="all">All</button>
+                    <button class="ws-category-pill" data-category="bakery">Bakery</button>
+                    <button class="ws-category-pill" data-category="specialty-coffee">Specialty Coffee</button>
+                    <button class="ws-category-pill" data-category="ceramics">Ceramics</button>
+                    <button class="ws-category-pill" data-category="electronics-mro">Electronics MRO</button>
+                    <button class="ws-category-pill" data-category="floriculture">Floriculture</button>
+                </div>
+                
+                <div class="ws-filter-section">
+                    <input type="text" class="ws-search-input" placeholder="Search clans, SKUs, or suppliers...">
+                </div>
+                
+                <div class="ws-moq-slider-container">
+                    <span class="ws-moq-label">MOQ Volume</span>
+                    <input type="range" class="ws-moq-slider" min="0" max="1000" value="500">
+                    <span class="ws-moq-value">500</span>
+                </div>
+            </div>
+
+            <!-- Clan Opportunity Grid -->
+            <div class="ws-clan-grid" id="clanGrid">
+                <!-- Clan cards will be populated dynamically -->
+                <div class="ws-loading">
+                    <div class="ws-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Qwen Explanation Badge -->
+            <div class="ws-qwen-badge" id="qwenBadge"></div>
+        </main>
+    </div>
+
+    <script>
+        // Sample Clan Data
+        const sampleClans = [
+            {
+                id: 'clan_001',
+                sku: 'COFFEE_ARABICA_50LB',
+                skuName: 'Premium Arabica Coffee Beans 50lb',
+                category: 'Specialty Coffee',
+                credibilityScore: 99.2,
+                retailPrice: 10.00,
+                wholesalePrice: 7.20,
+                savingsPercent: 28,
+                currentUnits: 300,
+                targetUnits: 500,
+                progressPct: 60,
+                tier: 2,
+                membersCount: 15
+            },
+            {
+                id: 'clan_002',
+                sku: 'FLOUR_BREAD_50LB',
+                skuName: 'Artisan Bread Flour 50lb',
+                category: 'Bakery',
+                credibilityScore: 98.5,
+                retailPrice: 8.50,
+                wholesalePrice: 5.95,
+                savingsPercent: 30,
+                currentUnits: 450,
+                targetUnits: 600,
+                progressPct: 75,
+                tier: 3,
+                membersCount: 22
+            },
+            {
+                id: 'clan_003',
+                sku: 'CERAMIC_MUGS_12PC',
+                skuName: 'Handcrafted Ceramic Mugs 12pc Set',
+                category: 'Ceramics',
+                credibilityScore: 97.8,
+                retailPrice: 12.00,
+                wholesalePrice: 8.40,
+                savingsPercent: 30,
+                currentUnits: 200,
+                targetUnits: 400,
+                progressPct: 50,
+                tier: 1,
+                membersCount: 8
+            },
+            {
+                id: 'clan_004',
+                sku: 'ELECTRONICS_RESISTORS',
+                skuName: 'Precision Resistors Kit',
+                category: 'Electronics MRO',
+                credibilityScore: 99.5,
+                retailPrice: 15.00,
+                wholesalePrice: 10.50,
+                savingsPercent: 30,
+                currentUnits: 800,
+                targetUnits: 1000,
+                progressPct: 80,
+                tier: 4,
+                membersCount: 35
+            },
+            {
+                id: 'clan_005',
+                sku: 'FLOWERS_TULIPS_BUNCH',
+                skuName: 'Premium Tulips Bulk Bunch',
+                category: 'Floriculture',
+                credibilityScore: 96.2,
+                retailPrice: 25.00,
+                wholesalePrice: 17.50,
+                savingsPercent: 30,
+                currentUnits: 150,
+                targetUnits: 300,
+                progressPct: 50,
+                tier: 2,
+                membersCount: 6
+            },
+            {
+                id: 'clan_006',
+                sku: 'COFFEE_ROBUSTA_50LB',
+                skuName: 'Robusta Coffee Beans 50lb',
+                category: 'Specialty Coffee',
+                credibilityScore: 98.0,
+                retailPrice: 9.00,
+                wholesalePrice: 6.30,
+                savingsPercent: 30,
+                currentUnits: 250,
+                targetUnits: 400,
+                progressPct: 62,
+                tier: 2,
+                membersCount: 12
+            }
+        ];
+
+        // Filter state
+        let currentCategory = 'all';
+        let currentSearch = '';
+        let currentMoq = 500;
+
+        // Initialize the view
+        function initRadarView() {
+            renderClanGrid();
+            setupEventListeners();
+            loadRealData();
+        }
+
+        // Load real data from API
+        async function loadRealData() {
+            try {
+                const response = await fetch('/api/v1/clans');
+                if (response.ok) {
+                    const data = await response.json();
+                    // Replace sample data with real data
+                    sampleClans.length = 0;
+                    sampleClans.push(...data.clans || data);
+                    renderClanGrid();
+                }
+            } catch (error) {
+                console.log('Using sample data:', error.message);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Category filters
+            document.querySelectorAll('.ws-category-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.ws-category-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentCategory = pill.dataset.category;
+                    renderClanGrid();
+                });
+            });
+
+            // Search input
+            const searchInput = document.querySelector('.ws-search-input');
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                renderClanGrid();
+            });
+
+            // MOQ slider
+            const moqSlider = document.querySelector('.ws-moq-slider');
+            const moqValue = document.querySelector('.ws-moq-value');
+            moqSlider.addEventListener('input', (e) => {
+                currentMoq = parseInt(e.target.value);
+                moqValue.textContent = currentMoq;
+                renderClanGrid();
+            });
+
+            // Export buttons
+            document.querySelector('.ws-export-btn').addEventListener('click', () => {
+                exportSnapshot('json');
+            });
+
+            // Summon Qwen
+            document.querySelector('.ws-summon-qwen-btn').addEventListener('click', () => {
+                summonQwen();
+            });
+        }
+
+        // Filter clans based on current filters
+        function filterClans() {
+            return sampleClans.filter(clan => {
+                // Category filter
+                if (currentCategory !== 'all' && clan.category.toLowerCase() !== currentCategory) {
+                    return false;
+                }
+                
+                // Search filter
+                if (currentSearch && !clan.skuName.toLowerCase().includes(currentSearch) && 
+                    !clan.sku.toLowerCase().includes(currentSearch) &&
+                    !clan.category.toLowerCase().includes(currentSearch)) {
+                    return false;
+                }
+                
+                // MOQ filter
+                if (clan.targetUnits < currentMoq) {
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+
+        // Render clan grid
+        function renderClanGrid() {
+            const clanGrid = document.getElementById('clanGrid');
+            const filteredClans = filterClans();
+            
+            if (filteredClans.length === 0) {
+                clanGrid.innerHTML = `
+                    <div class="ws-empty-state">
+                        <div class="ws-empty-icon">
+                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                                <circle cx="20" cy="20" r="18" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+                                <path d="M12 20h16M20 12v16" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="ws-empty-title">No clans found</div>
+                        <div class="ws-empty-subtitle">Try adjusting your filters or search criteria</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            clanGrid.innerHTML = filteredClans.map(clan => createClanCard(clan)).join('');
+        }
+
+        // Create clan card HTML
+        function createClanCard(clan) {
+            const tierMarkers = [];
+            for (let i = 1; i <= 4; i++) {
+                tierMarkers.push(`<div class="ws-tier-marker ${i <= clan.tier ? 'active' : ''}"></div>`);
+            }
+            
+            return `
+                <div class="ws-clan-card" data-clan-id="${clan.id}">
+                    <div class="ws-clan-card-header">
+                        <div>
+                            <div class="ws-clan-title">${clan.skuName}</div>
+                            <span class="ws-clan-category">${clan.category}</span>
+                        </div>
+                        <div class="ws-credibility-score">
+                            <span class="ws-credibility-badge">${clan.credibilityScore}%</span>
+                            <span>Supplier Score</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ws-price-comparison">
+                        <div class="ws-price-retail">
+                            <span class="ws-price-retail-value">$${clan.retailPrice.toFixed(2)}/u</span>
+                        </div>
+                        <div class="ws-price-wholesale">
+                            <span class="ws-price-wholesale-value">$${clan.wholesalePrice.toFixed(2)}/u</span>
+                        </div>
+                        <span class="ws-savings-pill">Save ${clan.savingsPercent}%</span>
+                    </div>
+                    
+                    <div class="ws-moq-progress">
+                        <div class="ws-moq-progress-header">
+                            <span>${clan.currentUnits} / ${clan.targetUnits} Units Pledged</span>
+                            <span>${clan.progressPct}%</span>
+                        </div>
+                        <div class="ws-moq-progress-bar">
+                            <div class="ws-moq-progress-fill" style="width: ${clan.progressPct}%"></div>
+                        </div>
+                        <div class="ws-moq-progress-text">
+                            <span>${clan.membersCount} members</span>
+                            <span>Tier ${clan.tier}</span>
+                        </div>
+                        <div class="ws-tier-markers">
+                            ${tierMarkers.join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="ws-clan-card-footer">
+                        <button class="ws-btn-paypal-gold" onclick="authorizeEscrow('${clan.id}')">
+                            Authorize Escrow with PayPal
+                        </button>
+                        <button class="ws-btn-titanium" onclick="inspectClan('${clan.id}')">
+                            Inspect Clan Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Authorize escrow with PayPal
+        function authorizeEscrow(clanId) {
+            const clan = sampleClans.find(c => c.id === clanId);
+            if (!clan) return;
+            
+            // Show Qwen explanation
+            showQwenBadge(`Authorizing escrow for ${clan.skuName} - ${clan.currentUnits} units at $${clan.wholesalePrice.toFixed(2)}/u`);
+            
+            // Send to parent window (app.html will handle this)
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'AUTHORIZE_ESCROW',
+                    clanId: clanId,
+                    sku: clan.sku,
+                    units: clan.currentUnits,
+                    price: clan.wholesalePrice
+                }, '*');
+            } else {
+                // Direct API call
+                fetch('/api/v1/coalition/pledge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        coalitionId: clanId,
+                        sku: clan.sku,
+                        units: clan.currentUnits
+                    })
+                });
+            }
+        }
+
+        // Inspect clan details
+        function inspectClan(clanId) {
+            const clan = sampleClans.find(c => c.id === clanId);
+            if (!clan) return;
+            
+            showQwenBadge(`Opening inspector for ${clan.skuName}`);
+            
+            // This would open a slide-over drawer in the parent app
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'INSPECT_CLAN',
+                    clanId: clanId
+                }, '*');
+            }
+        }
+
+        // Export snapshot
+        function exportSnapshot(format = 'json') {
+            const filteredClans = filterClans();
+            const snapshot = {
+                timestamp: new Date().toISOString(),
+                filters: {
+                    category: currentCategory,
+                    search: currentSearch,
+                    moq: currentMoq
+                },
+                clans: filteredClans
+            };
+            
+            if (format === 'json') {
+                const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `wholeshare-radar-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'csv') {
+                const csv = convertToCSV(filteredClans);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `wholeshare-radar-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+            
+            showQwenBadge(`Exported ${filteredClans.length} clans as ${format.toUpperCase()}`);
+        }
+
+        // Convert to CSV
+        function convertToCSV(clans) {
+            const headers = ['SKU', 'Name', 'Category', 'Retail Price', 'Wholesale Price', 'Savings', 'Units Pledged', 'Target Units', 'Progress', 'Members', 'Tier', 'Credibility Score'];
+            const rows = clans.map(clan => [
+                clan.sku,
+                clan.skuName,
+                clan.category,
+                clan.retailPrice,
+                clan.wholesalePrice,
+                `${clan.savingsPercent}%`,
+                clan.currentUnits,
+                clan.targetUnits,
+                `${clan.progressPct}%`,
+                clan.membersCount,
+                clan.tier,
+                `${clan.credibilityScore}%`
+            ]);
+            
+            return [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        }
+
+        // Summon Qwen Copilot
+        function summonQwen() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'SUMMON_QWEN'
+                }, '*');
+            }
+        }
+
+        // Show Qwen badge
+        function showQwenBadge(message) {
+            const badge = document.getElementById('qwenBadge');
+            badge.textContent = message;
+            badge.classList.add('show');
+            
+            setTimeout(() => {
+                badge.classList.remove('show');
+            }, 3000);
+        }
+
+        // Handle messages from parent (Qwen control)
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'QWEN_ACTION') {
+                handleQwenAction(event.data.action);
+            }
+        });
+
+        // Handle Qwen actions
+        function handleQwenAction(action) {
+            switch (action.type) {
+                case 'radar.filter':
+                    // Update filters based on Qwen command
+                    if (action.category) {
+                        currentCategory = action.category;
+                        document.querySelectorAll('.ws-category-pill').forEach(p => p.classList.remove('active'));
+                        const pill = document.querySelector(`[data-category="${action.category}"]`);
+                        if (pill) pill.classList.add('active');
+                    }
+                    if (action.search) {
+                        currentSearch = action.search;
+                        document.querySelector('.ws-search-input').value = action.search;
+                    }
+                    if (action.minMoq) {
+                        currentMoq = action.minMoq;
+                        document.querySelector('.ws-moq-slider').value = action.minMoq;
+                        document.querySelector('.ws-moq-value').textContent = action.minMoq;
+                    }
+                    renderClanGrid();
+                    showQwenBadge(`Applied filters: ${JSON.stringify(action)}`);
+                    break;
+                
+                case 'clan.pledge':
+                    authorizeEscrow(action.clanId);
+                    break;
+                
+                case 'ui.navigate':
+                    // Navigate to different view
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'NAVIGATE',
+                            view: action.view
+                        }, '*');
+                    }
+                    break;
+            }
+        }
+
+        // Initialize on load
+        initRadarView();
+    </script>
+</body>
+</html>

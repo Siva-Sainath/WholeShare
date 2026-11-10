@@ -1,0 +1,34 @@
+# WholeShare Machine Agent Manifest (/llms.txt)
+
+> WholeShare is an autonomous B2B group-purchasing, multiparty escrow, and dispute resolution platform built on PayPal for Business and driven by fine-tuned Qwen 3.5 4B models.
+
+## Machine-Agent Ingress Endpoints
+
+1. **Autonomous Deal Reasoning & Chat**:
+   - `POST /api/v1/agent/chat`
+   - Payload: `{"prompt": "<natural-language-procurement-command>", "sessionId": "<optional-session-id>"}`
+   - Response: `{"sessionId": "...", "status": "COMPLETED", "finalMessage": "...", "steps": [...]}`
+
+2. **Real-Time Syndicate & Clan Directory**:
+   - `GET /api/v1/clans`
+   - Filter queries: `?category=BAKERY_STAPLES|SPECIALTY_COFFEE|TILE_AND_CERAMICS|INDUSTRIAL_PACKAGING|MRO_HARDWARE`
+   - Response: JSON list of active coalitions with pooled units, target tiers, and discount percentages.
+
+3. **Multi-Party Escrow Ledger State**:
+   - `GET /api/v1/ledger`
+   - Returns real-time aggregate escrow totals, member authorizations, and PayPal Orders v2 IDs.
+
+4. **SME Mandate Spawn**:
+   - `POST /api/v1/sme/spawn`
+   - Payload: `{"name": "...", "maxSpendCents": 150000, "stepUpThresholdCents": 100000}`
+   - Returns ACP Shared Payment Token and verified KYB credentials.
+
+5. **Democratic Clan Governance**:
+   - `POST /api/v1/governance/propose`
+   - `POST /api/v1/governance/vote`
+   - `GET /api/v1/governance/constitution`
+
+6. **WebMCP Machine Actions in DOM**:
+   - Interactive elements expose `[data-agent-action="pledge-units"]` and `[data-agent-action="authorize-escrow"]`.
+   - Financial figures expose `[data-tabular="true"]`.
+

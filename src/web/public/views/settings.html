@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings & Security Boundary - WholeShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ========================================================================
+       WHOLESHARE DESIGN SYSTEM - SETTINGS VIEW
+       Tastemaker: NO rainbow gradients, NO cartoonish 3D tilts, NO filler blobs
+       Emil Kowalski: Mechanical intent, GPU-only transforms, sub-400ms feedback
+       Jakub Krehel: 2x spacing hierarchy, logical properties, WCAG AA contrast
+       Better Typography: Tabular numbers, max 4 font sizes, max 65ch line width
+       ======================================================================== */
+    
+    :root {
+      /* Design Tokens - Stitch Light Palette */
+      --bg-canvas: #FAF8F3;
+      --bg-surface: #FFFFFF;
+      --bg-elevated: #F4EFEB;
+      --bg-hover: #F6F4EE;
+      --border-hairline: #E7E2D8;
+      --border-subtle: #EFECE6;
+      --text-primary: #0F1F2E;
+      --text-secondary: #1C3146;
+      --text-muted: #5C6A79;
+      --text-disabled: #8D9CAE;
+      
+      /* Accent Colors */
+      --accent-gold: #ffc439;
+      --accent-gold-hover: #ffb824;
+      --accent-titanium: #586574;
+      --accent-titanium-hover: #6d7a8a;
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.35);
+      --accent-red: #ef4444;
+      --accent-red-glow: rgba(239, 68, 68, 0.35);
+      --accent-blue: #0070ba;
+      
+      /* Spacing - 2x Hierarchy */
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      
+      /* Typography */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-size-xs: 11px;
+      --font-size-sm: 12px;
+      --font-size-base: 14px;
+      --font-size-lg: 16px;
+      --font-size-xl: 18px;
+      --font-size-2xl: 20px;
+      --font-size-3xl: 24px;
+      
+      /* Motion - Doherty Threshold (sub-400ms) */
+      --ease-mechanical: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: 150ms var(--ease-mechanical);
+      --transition-normal: 200ms var(--ease-mechanical);
+      
+      /* Border Radius */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-xl: 12px;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--font-size-base);
+      line-height: 1.5;
+      color: var(--text-primary);
+      background-color: var(--bg-canvas);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ========================================================================
+       TOP CONTEXTUAL BAR
+       ======================================================================== */
+    .ws-settings-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-lg);
+    }
+
+    .ws-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+
+    .ws-breadcrumb span {
+      color: var(--text-primary);
+    }
+
+    .ws-breadcrumb-separator {
+      color: var(--text-muted);
+    }
+
+    .ws-topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    /* ========================================================================
+       MAIN CONTENT LAYOUT
+       ======================================================================== */
+    .ws-settings-main {
+      padding: var(--space-xl);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .ws-settings-header {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .ws-settings-title {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-sm);
+    }
+
+    .ws-settings-subtitle {
+      font-size: var(--font-size-lg);
+      color: var(--text-secondary);
+      max-width: 65ch;
+    }
+
+    /* ========================================================================
+       SETTINGS SECTIONS - VISUALLY SEPARATED
+       ======================================================================== */
+    .ws-settings-grid {
+      display: grid;
+      gap: var(--space-xl);
+    }
+
+    .ws-settings-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .ws-settings-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-lg);
+      border-bottom: 1px solid var(--border-hairline);
+      background: var(--bg-elevated);
+    }
+
+    .ws-settings-section-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .ws-settings-section-badge {
+      font-size: var(--font-size-xs);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .ws-settings-section-badge.editable {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .ws-settings-section-badge.immutable {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .ws-settings-section-badge.clan {
+      background: rgba(0, 112, 186, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(0, 112, 186, 0.3);
+    }
+
+    .ws-settings-section-content {
+      padding: var(--space-lg);
+    }
+
+    /* ========================================================================
+       FORM ELEMENTS
+       ======================================================================== */
+    .ws-form-grid {
+      display: grid;
+      gap: var(--space-lg);
+    }
+
+    .ws-form-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .ws-form-label {
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .ws-form-label .ws-required {
+      color: var(--accent-red);
+    }
+
+    .ws-form-label .ws-info-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      cursor: help;
+    }
+
+    .ws-form-input-wrapper {
+      position: relative;
+    }
+
+    .ws-form-input {
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      font-size: var(--font-size-base);
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .ws-form-input:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 0 3px rgba(255, 196, 57, 0.15);
+    }
+
+    .ws-form-input:disabled {
+      color: var(--text-disabled);
+      background: var(--bg-elevated);
+      border-color: var(--border-subtle);
+      cursor: not-allowed;
+    }
+
+    .ws-form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Tabular Numerics for Financial Values */
+    .ws-form-input.tabular,
+    .ws-form-display.tabular {
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono);
+    }
+
+    .ws-form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+
+    .ws-form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .ws-form-hint {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+    }
+
+    .ws-form-error {
+      font-size: var(--font-size-xs);
+      color: var(--accent-red);
+      display: none;
+    }
+
+    .ws-form-row.error .ws-form-error {
+      display: block;
+    }
+
+    .ws-form-row.error .ws-form-input {
+      border-color: var(--accent-red);
+    }
+
+    /* ========================================================================
+       DISPLAY FIELDS (Immutable)
+       ======================================================================== */
+    .ws-form-display {
+      padding: var(--space-sm) var(--space-md);
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ws-form-display .ws-lock-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+
+    .ws-form-display .ws-crypto-badge {
+      width: 18px;
+      height: 18px;
+      background: var(--accent-green-glow);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--accent-green);
+    }
+
+    /* ========================================================================
+       TOGGLE SWITCH
+       ======================================================================== */
+    .ws-toggle {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .ws-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .ws-toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-hairline);
+      border-radius: 12px;
+      transition: background var(--transition-fast);
+    }
+
+    .ws-toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      transition: transform var(--transition-fast), background var(--transition-fast);
+    }
+
+    .ws-toggle input:checked + .ws-toggle-slider {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent-green);
+    }
+
+    .ws-toggle input:checked + .ws-toggle-slider::before {
+      transform: translateX(20px);
+      background: var(--accent-green);
+    }
+
+    .ws-toggle:disabled .ws-toggle-slider {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ========================================================================
+       BUTTONS
+       ======================================================================== */
+    .ws-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-lg);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      font-family: var(--font-sans);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    /* Button Press Physics: scale(0.98) on :active */
+    .ws-btn:active {
+      transform: scale(0.98);
+    }
+
+    .ws-btn-primary {
+      background: var(--accent-gold);
+      color: #08090b;
+    }
+
+    .ws-btn-primary:hover:not(:disabled) {
+      background: var(--accent-gold-hover);
+    }
+
+    .ws-btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-hairline);
+    }
+
+    .ws-btn-secondary:hover:not(:disabled) {
+      background: var(--bg-hover);
+      border-color: var(--border-subtle);
+    }
+
+    .ws-btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .ws-btn-danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.35);
+    }
+
+    .ws-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .ws-btn-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ========================================================================
+       SETTINGS CATEGORIES
+       ======================================================================== */
+    
+    /* Editable SME Preferences */
+    .ws-preferences-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    /* Clan Leader Controls */
+    .ws-clan-controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    /* Immutable System Invariants */
+    .ws-invariants-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .ws-invariant-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--bg-canvas);
+      border-radius: var(--radius-md);
+    }
+
+    .ws-invariant-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-green-glow);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ws-invariant-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--accent-green);
+    }
+
+    .ws-invariant-content {
+      flex: 1;
+    }
+
+    .ws-invariant-label {
+      font-size: var(--font-size-sm);
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .ws-invariant-value {
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono);
+    }
+
+    /* ========================================================================
+       SECTION FOOTER
+       ======================================================================== */
+    .ws-settings-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border-hairline);
+      margin-top: var(--space-lg);
+    }
+
+    .ws-settings-footer-hint {
+      font-size: var(--font-size-sm);
+      color: var(--text-muted);
+    }
+
+    /* ========================================================================
+       RESPONSIVE DESIGN
+       ======================================================================== */
+    @media (max-width: 1200px) {
+      .ws-preferences-grid,
+      .ws-clan-controls-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .ws-settings-main {
+        padding: var(--space-lg);
+      }
+      
+      .ws-preferences-grid,
+      .ws-clan-controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .ws-settings-topbar {
+        padding: 0 var(--space-md);
+      }
+      
+      .ws-breadcrumb {
+        font-size: var(--font-size-xs);
+      }
+      
+      .ws-settings-title {
+        font-size: var(--font-size-2xl);
+      }
+      
+      .ws-settings-subtitle {
+        font-size: var(--font-size-base);
+      }
+      
+      .ws-settings-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+      }
+    }
+
+    /* ========================================================================
+       ACCESSIBILITY
+       ======================================================================== */
+    .ws-form-input:focus-visible,
+    .ws-btn:focus-visible,
+    .ws-toggle:focus-visible {
+      outline: 2px solid var(--accent-gold);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (prefers-color-scheme: light) {
+      /* Light mode overrides if needed */
+    }
+
+    /* ========================================================================
+       PRINT STYLES
+       ======================================================================== */
+    @media print {
+      .ws-settings-topbar,
+      .ws-btn {
+        display: none;
+      }
+      
+      .ws-settings-section {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Skip Link for Accessibility -->
+  <a href="#main-content" class="ws-skip-link" style="position: absolute; left: -9999px; top: 0; background: var(--accent-gold); color: #000; padding: 8px 16px; z-index: 1000; text-decoration: none; font-weight: 600; border-radius: 0 0 4px 4px;" onfocus="this.style.left='0'" onblur="this.style.left='-9999px'">
+    Skip to main content
+  </a>
+
+  <!-- Top Contextual Bar -->
+  <header class="ws-settings-topbar" role="banner">
+    <nav class="ws-breadcrumb" aria-label="Breadcrumb">
+      <span>Workspace</span>
+      <span class="ws-breadcrumb-separator">/</span>
+      <span>Settings & Security</span>
+    </nav>
+    <div class="ws-topbar-actions">
+      <button class="ws-btn ws-btn-secondary" onclick="exportSettings()">
+        <svg class="ws-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export Settings
+      </button>
+      <button class="ws-btn ws-btn-primary" onclick="saveSettings()">
+        <svg class="ws-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Save Changes
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="ws-settings-main" role="main">
+    <!-- Header -->
+    <div class="ws-settings-header">
+      <h1 class="ws-settings-title">Settings & Security Boundary</h1>
+      <p class="ws-settings-subtitle">
+        Configure your SME preferences, Clan Leader controls, and view immutable system invariants. 
+        All financial operations remain bound by cryptographic guarantees.
+      </p>
+    </div>
+
+    <!-- Settings Grid -->
+    <div class="ws-settings-grid">
+      
+      <!-- =====================================================================
+           SECTION 1: Editable SME Preferences
+           ===================================================================== -->
+      <section class="ws-settings-section" aria-labelledby="sme-prefs-title">
+        <div class="ws-settings-section-header">
+          <h2 id="sme-prefs-title" class="ws-settings-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Editable SME Preferences
+          </h2>
+          <span class="ws-settings-section-badge editable">EDITABLE</span>
+        </div>
+        <div class="ws-settings-section-content">
+          <div class="ws-form-grid">
+            <div class="ws-preferences-grid">
+              <!-- Max Auto Authorize USD -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Max Auto Authorize USD
+                  <span class="ws-required">*</span>
+                  <svg class="ws-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  </svg>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Amount under which escrow authorizes automatically without step-up QR</div>
+                  <input 
+                    type="number" 
+                    class="ws-form-input tabular" 
+                    id="maxAutoAuthorizeUsd" 
+                    placeholder="Enter amount in USD"
+                    min="100" 
+                    max="10000" 
+                    step="1"
+                    value="1000"
+                  >
+                </div>
+              </div>
+
+              <!-- Step-Up Threshold USD -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Step-Up QR Threshold USD
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Pledges above this amount require QR code step-up verification</div>
+                  <input 
+                    type="number" 
+                    class="ws-form-input tabular" 
+                    id="stepUpThresholdUsd" 
+                    placeholder="Enter threshold in USD"
+                    min="500" 
+                    max="50000" 
+                    step="100"
+                    value="1000"
+                  >
+                </div>
+              </div>
+
+              <!-- Daily Spend Limit USD -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Daily Spend Limit USD
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Maximum daily spend across all active escrow holds</div>
+                  <input 
+                    type="number" 
+                    class="ws-form-input tabular" 
+                    id="dailySpendLimitUsd" 
+                    placeholder="Enter daily limit in USD"
+                    min="1000" 
+                    max="1000000" 
+                    step="1000"
+                    value="50000"
+                  >
+                </div>
+              </div>
+
+              <!-- Preferred Currency -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Preferred Currency
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <select class="ws-form-input ws-form-select" id="preferredCurrency">
+                    <option value="USD">US Dollar (USD)</option>
+                    <option value="EUR">Euro (EUR)</option>
+                    <option value="GBP">British Pound (GBP)</option>
+                    <option value="CAD">Canadian Dollar (CAD)</option>
+                    <option value="AUD">Australian Dollar (AUD)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Registered Agents -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Registered Agent Tokens
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">ACP Shared Payment Tokens for agent parity operations</div>
+                  <textarea 
+                    class="ws-form-input ws-form-textarea tabular" 
+                    id="registeredAgents" 
+                    placeholder="Enter agent tokens, one per line"
+                    rows="3"
+                  >agent_austin_artisan_001
+agent_sme_bakery_002
+agent_qwen_escrow_003</textarea>
+                </div>
+              </div>
+
+              <!-- Enable Notifications -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Enable Real-Time Notifications
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Receive SSE notifications for escrow state changes</div>
+                  <label class="ws-toggle">
+                    <input type="checkbox" id="enableNotifications" checked>
+                    <span class="ws-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 2: Clan Leader Controls
+           ===================================================================== -->
+      <section class="ws-settings-section" aria-labelledby="clan-controls-title">
+        <div class="ws-settings-section-header">
+          <h2 id="clan-controls-title" class="ws-settings-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Clan Leader Controls
+          </h2>
+          <span class="ws-settings-section-badge clan">CLAN LEADER</span>
+        </div>
+        <div class="ws-settings-section-content">
+          <div class="ws-form-grid">
+            <div class="ws-clan-controls-grid">
+              <!-- Monthly Dues USD -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Monthly Dues USD
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Monthly subscription fee for Clan members</div>
+                  <input 
+                    type="number" 
+                    class="ws-form-input tabular" 
+                    id="monthlyDuesUsd" 
+                    placeholder="Enter monthly dues in USD"
+                    min="0" 
+                    max="500" 
+                    step="1"
+                    value="49"
+                  >
+                </div>
+              </div>
+
+              <!-- Yearly Dues USD -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Yearly Dues USD
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Yearly subscription fee (15% savings vs monthly)</div>
+                  <input 
+                    type="number" 
+                    class="ws-form-input tabular" 
+                    id="yearlyDuesUsd" 
+                    placeholder="Enter yearly dues in USD"
+                    min="0" 
+                    max="5000" 
+                    step="1"
+                    value="499"
+                  >
+                </div>
+              </div>
+
+              <!-- Commitment Term -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Commitment Term (Months)
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Minimum commitment period for Clan members</div>
+                  <select class="ws-form-input ws-form-select" id="commitmentTerm">
+                    <option value="1">1 Month (Flexible)</option>
+                    <option value="3">3 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="12" selected>12 Months</option>
+                    <option value="24">24 Months</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Cancellation Notice Days -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Cancellation Notice Days
+                  <span class="ws-required">*</span>
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Days notice required before cancellation</div>
+                  <input 
+                    type="number" 
+                    class="ws-form-input tabular" 
+                    id="cancellationNoticeDays" 
+                    placeholder="Enter notice days"
+                    min="7" 
+                    max="90" 
+                    step="1"
+                    value="30"
+                  >
+                </div>
+              </div>
+
+              <!-- Auto-Renew -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Auto-Renew Subscriptions
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Automatically renew subscriptions at end of term</div>
+                  <label class="ws-toggle">
+                    <input type="checkbox" id="autoRenew" checked>
+                    <span class="ws-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Enable Clan Creation -->
+              <div class="ws-form-row">
+                <label class="ws-form-label">
+                  Enable Clan Creation
+                </label>
+                <div class="ws-form-input-wrapper">
+                  <div class="ws-form-hint">Allow SME members to create new Clans</div>
+                  <label class="ws-toggle">
+                    <input type="checkbox" id="enableClanCreation" checked>
+                    <span class="ws-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 3: Immutable System Invariants
+           ===================================================================== -->
+      <section class="ws-settings-section" aria-labelledby="invariants-title">
+        <div class="ws-settings-section-header">
+          <h2 id="invariants-title" class="ws-settings-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Immutable System Invariants
+          </h2>
+          <span class="ws-settings-section-badge immutable">IMMUTABLE</span>
+        </div>
+        <div class="ws-settings-section-content">
+          <p style="color: var(--text-muted); margin-bottom: var(--space-lg); font-size: var(--font-size-sm);">
+            These system-level invariants are cryptographically locked and cannot be modified. 
+            They form the mathematical foundation of WholeShare's zero-fraud guarantee.
+          </p>
+          
+          <div class="ws-invariants-list">
+            <!-- KYB Status -->
+            <div class="ws-invariant-item">
+              <div class="ws-invariant-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <div class="ws-invariant-content">
+                <div class="ws-invariant-label">KYB Verification Status</div>
+                <div class="ws-invariant-value">VERIFIED &bull; TIER 1</div>
+              </div>
+              <div class="ws-crypto-badge" title="Cryptographically Verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Escrow State -->
+            <div class="ws-invariant-item">
+              <div class="ws-invariant-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="ws-invariant-content">
+                <div class="ws-invariant-label">Escrow State Machine</div>
+                <div class="ws-invariant-value">5-STAGE LIFECYCLE ACTIVE</div>
+              </div>
+              <div class="ws-crypto-badge" title="Cryptographically Verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Settled Ledger History -->
+            <div class="ws-invariant-item">
+              <div class="ws-invariant-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <div class="ws-invariant-content">
+                <div class="ws-invariant-label">Settled Ledger History</div>
+                <div class="ws-invariant-value">IMMUTABLE &bull; SHA-256 LINKED</div>
+              </div>
+              <div class="ws-crypto-badge" title="Cryptographically Verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- PayPal Sandbox Connection -->
+            <div class="ws-invariant-item">
+              <div class="ws-invariant-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              </div>
+              <div class="ws-invariant-content">
+                <div class="ws-invariant-label">PayPal Sandbox Connection</div>
+                <div class="ws-invariant-value">LIVE &bull; HTTPS ACTIVE</div>
+              </div>
+              <div class="ws-crypto-badge" title="Cryptographically Verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Integer Cent Conservation -->
+            <div class="ws-invariant-item">
+              <div class="ws-invariant-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M2 12h20"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+              </div>
+              <div class="ws-invariant-content">
+                <div class="ws-invariant-label">Integer Cent Conservation</div>
+                <div class="ws-invariant-value">ENABLED &bull; ZERO ROUNDING ERROR</div>
+              </div>
+              <div class="ws-crypto-badge" title="Cryptographically Verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Zero-Simulation Standard -->
+            <div class="ws-invariant-item">
+              <div class="ws-invariant-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <div class="ws-invariant-content">
+                <div class="ws-invariant-label">Zero-Simulation Standard</div>
+                <div class="ws-invariant-value">ENFORCED &bull; 9-LAYER SENTINEL</div>
+              </div>
+              <div class="ws-crypto-badge" title="Cryptographically Verified">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION FOOTER
+           ===================================================================== -->
+      <div class="ws-settings-footer">
+        <div class="ws-settings-footer-hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: middle;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          Settings are automatically validated against backend invariants. 
+          Immutable fields will return HTTP 403 FORBIDDEN_SETTING_MUTATION.
+        </div>
+        <button class="ws-btn ws-btn-secondary" onclick="resetToDefaults()">
+          Reset to Defaults
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Qwen Copilot Launcher (Bottom Right) -->
+  <div class="ws-copilot-launcher" style="
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+  ">
+    <button 
+      class="ws-btn ws-btn-primary" 
+      onclick="summonQwenCopilot()"
+      style="
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 40px rgba(255, 196, 57, 0.3);
+        transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+      "
+      onmouseenter="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 50px rgba(255, 196, 57, 0.4)'"
+      onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='0 10px 40px rgba(255, 196, 57, 0.3)'"
+      title="Summon Qwen Copilot (Cmd+K)"
+      aria-label="Summon Qwen Copilot"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    // ========================================================================
+    // QWEN CONTROL INTEGRATION
+    // ========================================================================
+    
+    // Listen for messages from parent app.html
+    window.addEventListener('message', function(event) {
+      // Only accept messages from the same origin
+      if (event.origin !== window.location.origin) return;
+      
+      const message = event.data;
+      
+      // Handle Qwen-driven actions
+      if (message.type === 'qwen-action') {
+        handleQwenAction(message.action, message.payload);
+      }
+      
+      // Handle view navigation
+      if (message.type === 'navigate') {
+        // Parent handles navigation
+      }
+    });
+
+    // Send message to parent for Qwen control
+    function sendToParent(type, payload) {
+      window.parent.postMessage({
+        type: type,
+        view: 'settings',
+        payload: payload
+      }, window.location.origin);
+    }
+
+    // Handle Qwen actions
+    function handleQwenAction(action, payload) {
+      console.log('Settings view received Qwen action:', action, payload);
+      
+      switch (action) {
+        case 'settings.get':
+          sendToParent('settings.response', getCurrentSettings());
+          break;
+          
+        case 'settings.set':
+          applySettings(payload);
+          sendToParent('settings.updated', getCurrentSettings());
+          break;
+          
+        case 'settings.reset':
+          resetToDefaults();
+          sendToParent('settings.reset', getCurrentSettings());
+          break;
+          
+        case 'settings.export':
+          exportSettings();
+          break;
+          
+        case 'settings.validate':
+          const validation = validateSettings();
+          sendToParent('settings.validation', validation);
+          break;
+          
+        default:
+          console.log('Unknown Qwen action:', action);
+      }
+    }
+
+    // Summon Qwen Copilot
+    function summonQwenCopilot() {
+      sendToParent('copilot.summon', { view: 'settings' });
+    }
+
+    // ========================================================================
+    // SETTINGS MANAGEMENT
+    // ========================================================================
+    
+    function getCurrentSettings() {
+      return {
+        // SME Preferences
+        maxAutoAuthorizeUsd: parseFloat(document.getElementById('maxAutoAuthorizeUsd').value) || 1000,
+        stepUpThresholdUsd: parseFloat(document.getElementById('stepUpThresholdUsd').value) || 1000,
+        dailySpendLimitUsd: parseFloat(document.getElementById('dailySpendLimitUsd').value) || 50000,
+        preferredCurrency: document.getElementById('preferredCurrency').value || 'USD',
+        registeredAgents: document.getElementById('registeredAgents').value || '',
+        enableNotifications: document.getElementById('enableNotifications').checked,
+        
+        // Clan Leader Controls
+        monthlyDuesUsd: parseFloat(document.getElementById('monthlyDuesUsd').value) || 49,
+        yearlyDuesUsd: parseFloat(document.getElementById('yearlyDuesUsd').value) || 499,
+        commitmentTerm: parseInt(document.getElementById('commitmentTerm').value) || 12,
+        cancellationNoticeDays: parseInt(document.getElementById('cancellationNoticeDays').value) || 30,
+        autoRenew: document.getElementById('autoRenew').checked,
+        enableClanCreation: document.getElementById('enableClanCreation').checked,
+        
+        // Metadata
+        timestamp: new Date().toISOString(),
+        view: 'settings'
+      };
+    }
+
+    function applySettings(settings) {
+      // SME Preferences
+      if (settings.maxAutoAuthorizeUsd !== undefined) {
+        document.getElementById('maxAutoAuthorizeUsd').value = settings.maxAutoAuthorizeUsd;
+      }
+      if (settings.stepUpThresholdUsd !== undefined) {
+        document.getElementById('stepUpThresholdUsd').value = settings.stepUpThresholdUsd;
+      }
+      if (settings.dailySpendLimitUsd !== undefined) {
+        document.getElementById('dailySpendLimitUsd').value = settings.dailySpendLimitUsd;
+      }
+      if (settings.preferredCurrency !== undefined) {
+        document.getElementById('preferredCurrency').value = settings.preferredCurrency;
+      }
+      if (settings.registeredAgents !== undefined) {
+        document.getElementById('registeredAgents').value = settings.registeredAgents;
+      }
+      if (settings.enableNotifications !== undefined) {
+        document.getElementById('enableNotifications').checked = settings.enableNotifications;
+      }
+      
+      // Clan Leader Controls
+      if (settings.monthlyDuesUsd !== undefined) {
+        document.getElementById('monthlyDuesUsd').value = settings.monthlyDuesUsd;
+      }
+      if (settings.yearlyDuesUsd !== undefined) {
+        document.getElementById('yearlyDuesUsd').value = settings.yearlyDuesUsd;
+      }
+      if (settings.commitmentTerm !== undefined) {
+        document.getElementById('commitmentTerm').value = settings.commitmentTerm;
+      }
+      if (settings.cancellationNoticeDays !== undefined) {
+        document.getElementById('cancellationNoticeDays').value = settings.cancellationNoticeDays;
+      }
+      if (settings.autoRenew !== undefined) {
+        document.getElementById('autoRenew').checked = settings.autoRenew;
+      }
+      if (settings.enableClanCreation !== undefined) {
+        document.getElementById('enableClanCreation').checked = settings.enableClanCreation;
+      }
+    }
+
+    function validateSettings() {
+      const settings = getCurrentSettings();
+      const errors = [];
+      const warnings = [];
+      
+      // Validate SME Preferences
+      if (settings.maxAutoAuthorizeUsd < 100 || settings.maxAutoAuthorizeUsd > 10000) {
+        errors.push('maxAutoAuthorizeUsd must be between 100 and 10000');
+      }
+      
+      if (settings.stepUpThresholdUsd < 500 || settings.stepUpThresholdUsd > 50000) {
+        errors.push('stepUpThresholdUsd must be between 500 and 50000');
+      }
+      
+      if (settings.dailySpendLimitUsd < 1000 || settings.dailySpendLimitUsd > 1000000) {
+        errors.push('dailySpendLimitUsd must be between 1000 and 1000000');
+      }
+      
+      // Validate Clan Leader Controls
+      if (settings.monthlyDuesUsd < 0 || settings.monthlyDuesUsd > 500) {
+        errors.push('monthlyDuesUsd must be between 0 and 500');
+      }
+      
+      if (settings.yearlyDuesUsd < 0 || settings.yearlyDuesUsd > 5000) {
+        errors.push('yearlyDuesUsd must be between 0 and 5000');
+      }
+      
+      if (settings.commitmentTerm < 1 || settings.commitmentTerm > 24) {
+        errors.push('commitmentTerm must be between 1 and 24 months');
+      }
+      
+      if (settings.cancellationNoticeDays < 7 || settings.cancellationNoticeDays > 90) {
+        errors.push('cancellationNoticeDays must be between 7 and 90');
+      }
+      
+      // Check if yearly dues is actually cheaper than monthly * 12
+      const monthlyAnnual = settings.monthlyDuesUsd * 12;
+      if (settings.yearlyDuesUsd >= monthlyAnnual) {
+        warnings.push('yearlyDuesUsd should be less than 12x monthlyDuesUsd for savings');
+      }
+      
+      return { errors, warnings, valid: errors.length === 0 };
+    }
+
+    // ========================================================================
+    // ACTION HANDLERS
+    // ========================================================================
+    
+    function saveSettings() {
+      const validation = validateSettings();
+      
+      if (!validation.valid) {
+        alert('Please fix the following errors:\n\n' + validation.errors.join('\n'));
+        return;
+      }
+      
+      if (validation.warnings.length > 0) {
+        const proceed = confirm('Settings have warnings:\n\n' + validation.warnings.join('\n') + '\n\nProceed anyway?');
+        if (!proceed) return;
+      }
+      
+      const settings = getCurrentSettings();
+      
+      // Send to parent for API call
+      sendToParent('settings.save', settings);
+      
+      // Show success message
+      showNotification('Settings saved successfully', 'success');
+    }
+
+    function resetToDefaults() {
+      if (!confirm('Are you sure you want to reset all settings to defaults?')) return;
+      
+      applySettings({
+        // SME Preferences
+        maxAutoAuthorizeUsd: 1000,
+        stepUpThresholdUsd: 1000,
+        dailySpendLimitUsd: 50000,
+        preferredCurrency: 'USD',
+        registeredAgents: 'agent_austin_artisan_001\nagent_sme_bakery_002\nagent_qwen_escrow_003',
+        enableNotifications: true,
+        
+        // Clan Leader Controls
+        monthlyDuesUsd: 49,
+        yearlyDuesUsd: 499,
+        commitmentTerm: 12,
+        cancellationNoticeDays: 30,
+        autoRenew: true,
+        enableClanCreation: true
+      });
+      
+      showNotification('Settings reset to defaults', 'info');
+    }
+
+    function exportSettings() {
+      const settings = getCurrentSettings();
+      const dataStr = JSON.stringify(settings, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'wholeshare-settings-' + new Date().toISOString().split('T')[0] + '.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      showNotification('Settings exported successfully', 'success');
+    }
+
+    function showNotification(message, type) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        padding: 16px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#0070ba'};
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 200ms cubic-bezier(0.22, 1, 0.36, 1);
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards';
+        setTimeout(() => notification.remove(), 200);
+      }, 3000);
+    }
+
+    // ========================================================================
+    // KEYBOARD SHORTCUTS
+    // ========================================================================
+    
+    document.addEventListener('keydown', function(event) {
+      // Cmd+K or Ctrl+K to summon copilot
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        summonQwenCopilot();
+      }
+      
+      // Escape to close any open modals/drawers (handled by parent)
+      if (event.key === 'Escape') {
+        sendToParent('drawer.close', {});
+      }
+    });
+
+    // ========================================================================
+    // INITIALIZATION
+    // ========================================================================
+    
+    // Notify parent that view is loaded
+    sendToParent('view.loaded', { view: 'settings' });
+    
+    // Load saved settings from localStorage if available
+    const savedSettings = localStorage.getItem('wholeshare-settings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        applySettings(parsed);
+      } catch (e) {
+        console.error('Failed to load saved settings:', e);
+      }
+    }
+    
+    // Auto-save to localStorage on change (for demo purposes)
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      input.addEventListener('change', function() {
+        const settings = getCurrentSettings();
+        localStorage.setItem('wholeshare-settings', JSON.stringify(settings));
+      });
+    });
+    
+    // Add CSS for notification animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

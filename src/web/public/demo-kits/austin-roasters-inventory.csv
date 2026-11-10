@@ -1,0 +1,2 @@
+SKU,Item Name,Category,Current Stock Units,Reorder Threshold Units,Target Restock Units,Historical Unit Cost USD,Canonical Supplier
+sku-food_and_beverage-us-coffee,"Ethiopian Yirgacheffe Grade 1 Green Coffee (60kg Bag)",FOOD_AND_BEVERAGE,6,10,25,480.00,"Lone Star Specialty Importers Inc"

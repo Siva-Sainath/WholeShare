@@ -1,0 +1,327 @@
+/**
+ * WholeShare Master Design Tokens (globals.css)
+ * Stitch Light Palette — WholeShare Unify
+ * Canvas #FAF8F3, Card #FFFFFF, Ink #0F1F2E, Blue #0070BA, Gold #FFC439
+ */
+
+:root {
+  /* ========================================================================
+     SURFACE HIERARCHY — Stitch Light
+     ======================================================================== */
+  
+  /* Canvas: Warm off-white background */
+  --ws-bg-canvas: #FAF8F3;
+  
+  /* Sidebar: White (Stitch sidebar is white) */
+  --ws-bg-sidebar: #FFFFFF;
+  
+  /* Surface: Slightly warm surface */
+  --ws-bg-surface: #F4EFEB;
+  
+  /* Elevated: White card */
+  --ws-bg-elevated: #FFFFFF;
+  
+  /* Card: White */
+  --ws-bg-card: #FFFFFF;
+  
+  /* Subtle: Slightly off-white */
+  --ws-bg-subtle: #F4EFEB;
+  
+  /* Hover: Warm surface hover */
+  --ws-bg-hover: #F6F4EE;
+  
+  /* Active: Pressed state */
+  --ws-bg-active: rgba(0, 112, 186, 0.08);
+  
+  /* Overlay: Modal backdrops */
+  --ws-bg-overlay: rgba(15, 31, 46, 0.5);
+  
+  /* ========================================================================
+     BORDERS — Stitch Light
+     ======================================================================== */
+  
+  /* Subtle border for internal dividers */
+  --ws-border-subtle: #EFECE6;
+  
+  /* Hairline border for cards and panels (1px solid) */
+  --ws-border-hairline: 1px solid #E7E2D8;
+  
+  /* Focus border for interactive elements */
+  --ws-border-focus: #0070BA;
+  
+  /* Strong border for emphasis */
+  --ws-border-strong: #E7E2D8;
+  
+  /* Metallic border for special elements */
+  --ws-border-metallic: 1px solid #E7E2D8;
+  
+  /* ========================================================================
+     TYPOGRAPHY COLORS — Stitch Ink
+     ======================================================================== */
+  
+  /* Primary text - ink #0F1F2E */
+  --ws-text-primary: #0F1F2E;
+  
+  /* Secondary text - slightly lighter ink */
+  --ws-text-secondary: #1C3146;
+  
+  /* Muted text - slate #5C6A79 */
+  --ws-text-muted: #5C6A79;
+  
+  /* Silver text - muted light */
+  --ws-text-silver: #8D9CAE;
+  
+  /* Inverse text - white for dark bg */
+  --ws-text-inverse: #FFFFFF;
+  
+  /* ========================================================================
+     SURFACE TOKENS (Stitch replacements)
+     ======================================================================== */
+  --ws-metallic-surface: #F4EFEB;
+  --ws-metallic-card: #FFFFFF;
+  --ws-metallic-border-gradient: 1px solid #E7E2D8;
+  
+  /* ========================================================================
+     SEMANTIC FINTECH BRAND ACCENTS — Stitch
+     ======================================================================== */
+  
+  /* PayPal Brand Colors — only accent */
+  --ws-accent-paypal: #0070BA;
+  --ws-accent-paypal-subtle: #EBF4FA;
+  --ws-accent-paypal-hover: #005EA6;
+  --ws-accent-paypal-light: #D1E4FF;
+  
+  /* Gold — single primary CTA */
+  --ws-accent-wholesale: #FFC439;
+  --ws-accent-wholesale-subtle: rgba(255, 196, 57, 0.15);
+  --ws-accent-wholesale-hover: #F2B82F;
+  --ws-accent-wholesale-light: rgba(255, 196, 57, 0.1);
+  
+  /* Warning/Amber */
+  --ws-accent-warning: #B45309;
+  --ws-accent-warning-subtle: #FFFBEB;
+  --ws-accent-warning-hover: #92400E;
+  --ws-accent-warning-light: #FEF3C7;
+  
+  /* Error */
+  --ws-accent-dispute: #BA1A1A;
+  --ws-accent-dispute-subtle: rgba(186, 26, 26, 0.1);
+  --ws-accent-dispute-hover: #9B0E0E;
+  --ws-accent-dispute-light: #FFDAD6;
+  
+  /* Neutral */
+  --ws-accent-neutral: #5C6A79;
+  --ws-accent-neutral-subtle: rgba(92, 106, 121, 0.1);
+  --ws-accent-neutral-hover: #0F1F2E;
+  
+  /* Titanium & Platinum (Stitch equivalents) */
+  --ws-titanium: #5C6A79;
+  --ws-platinum: #F4EFEB;
+  
+  /* Status Colors */
+  --ws-status-escrow: #0070BA;
+  --ws-status-amber: #B45309;
+  --ws-status-dispute: #BA1A1A;
+  --ws-status-neutral: #5C6A79;
+  
+  /* ========================================================================
+     TYPOGRAPHY
+     ======================================================================== */
+  
+  /* Geist + JetBrains Mono per Stitch spec */
+  --ws-font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ws-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  
+  /* ========================================================================
+     RADII SCALE (Consistent Border Radius)
+     ======================================================================== */
+  
+  --ws-radius-xs: 4px;
+  --ws-radius-sm: 6px;
+  --ws-radius-md: 8px;
+  --ws-radius-lg: 10px;
+  --ws-radius-xl: 14px;
+  --ws-radius-full: 9999px;
+  
+  /* ========================================================================
+     MOTION & EASING (Emil Kowalski Motion Physics)
+     ======================================================================== */
+  
+  /* Easing Curve: Mechanical Intent */
+  --ws-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ws-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ws-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Duration Scale (Doherty Threshold: < 400ms) */
+  --ws-duration-instant: 60ms;
+  --ws-duration-fast: 120ms;
+  --ws-duration-normal: 200ms;
+  --ws-duration-slow: 350ms;
+  --ws-duration-slower: 500ms;
+  
+  /* ========================================================================
+     SPACING SCALE (2x Hierarchy)
+     ======================================================================== */
+  --ws-spacing-xs: 4px;
+  --ws-spacing-sm: 8px;
+  --ws-spacing-md: 12px;
+  --ws-spacing-lg: 16px;
+  --ws-spacing-xl: 24px;
+  --ws-spacing-2xl: 32px;
+  --ws-spacing-3xl: 48px;
+  
+  /* ========================================================================
+     Z-INDEX SCALE
+     ======================================================================== */
+  --ws-z-dropdown: 100;
+  --ws-z-sticky: 200;
+  --ws-z-drawer: 300;
+  --ws-z-modal-backdrop: 400;
+  --ws-z-modal: 500;
+  --ws-z-toast: 600;
+  --ws-z-tooltip: 700;
+  --ws-z-cmdk: 800;
+  --ws-z-max: 9999;
+}
+
+/* ========================================================================
+   BASE RESET & TEXT RENDERING
+   ======================================================================== */
+
+html {
+  background-color: var(--ws-bg-canvas);
+  color: var(--ws-text-primary);
+  font-family: var(--ws-font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ========================================================================
+   INVARIANT: Tabular Numerics across all financial and metric displays
+   ======================================================================== */
+.ws-tabular-nums,
+[data-tabular] {
+  font-family: var(--ws-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ========================================================================
+   HAIRLINE BORDER UTILITY
+   ======================================================================== */
+.ws-hairline {
+  border: var(--ws-border-hairline);
+}
+
+/* ========================================================================
+   KEYBOARD SHORTCUT BADGE
+   ======================================================================== */
+.ws-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ws-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 3px 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+  color: var(--ws-text-secondary);
+}
+
+/* ========================================================================
+   AG GRID THEME QUARTZ BINDING
+   ======================================================================== */
+.ag-theme-quartz-dark,
+.ag-theme-quartz {
+  --ag-background-color: var(--ws-bg-surface);
+  --ag-header-background-color: var(--ws-bg-canvas);
+  --ag-odd-row-background-color: var(--ws-bg-surface);
+  --ag-row-hover-color: var(--ws-bg-subtle);
+  --ag-border-color: rgba(255, 255, 255, 0.07);
+  --ag-header-foreground-color: var(--ws-text-muted);
+  --ag-foreground-color: var(--ws-text-primary);
+  --ag-data-color: var(--ws-text-primary);
+  --ag-accent-color: var(--ws-accent-wholesale);
+  --ag-font-family: var(--ws-font-sans);
+  --ag-font-size: 12.5px;
+  --ag-grid-size: 6px;
+  --ag-row-height: 42px;
+  --ag-header-height: 38px;
+  --ag-cell-horizontal-padding: 14px;
+}
+
+/* Real-Time Escrow Flash */
+.ag-cell-data-changed {
+  background-color: rgba(16, 185, 129, 0.20) !important;
+  transition: background-color 1.0s var(--ws-ease-out);
+}
+
+/* ========================================================================
+   BRYNTUM SCHEDULER SVALBARD DARK OVERRIDE
+   ======================================================================== */
+.b-scheduler,
+.b-timeline {
+  --b-panel-background: var(--ws-bg-surface) !important;
+  --b-timeline-header-background: var(--ws-bg-canvas) !important;
+  --b-grid-row-background: var(--ws-bg-surface) !important;
+  --b-grid-row-hover-background: var(--ws-bg-subtle) !important;
+  --b-border-color: rgba(255, 255, 255, 0.07) !important;
+  --b-color: var(--ws-text-primary) !important;
+  --b-scheduler-event-background: var(--ws-accent-paypal) !important;
+  --b-font-family: var(--ws-font-sans) !important;
+}
+
+/* ========================================================================
+   VAULT LOGO ANIMATIONS (Emil Kowalski Motion Physics)
+   ======================================================================== */
+
+/* Stroke drawing animation for vault arcs */
+@keyframes wsVaultDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Hexagon reveal animation */
+@keyframes wsVaultHexReveal {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Lock indicator reveal animation */
+@keyframes wsVaultLockReveal {
+  to {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+/* Settlement glow pulse effect */
+@keyframes wsVaultGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.65);
+  }
+}
+
+/* ========================================================================
+   REDUCED MOTION SUPPORT
+   ======================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

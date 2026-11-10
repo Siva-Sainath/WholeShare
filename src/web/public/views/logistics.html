@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WholeShare - Logistics & Disputes</title>
+    <link rel="stylesheet" href="/app.css">
+    <link rel="stylesheet" href="/bryntum.css">
+    <style>
+        /* Logistics View Specific Styles */
+        .ws-logistics-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-canvas, #08090b);
+            color: var(--text-primary, #e2e8f0);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .ws-logistics-topbar {
+            height: 56px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .ws-logistics-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-logistics-breadcrumb span {
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-logistics-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .ws-view-mode-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-elevated, #14171f);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-view-mode-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-view-mode-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-view-mode-btn.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .ws-spend-ceiling-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-export-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-primary, #e2e8f0);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-export-btn:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .ws-summon-qwen-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ffc439 0%, #ffb347 100%);
+            border: none;
+            color: #08090b;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-summon-qwen-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 196, 57, 0.3);
+        }
+
+        .ws-summon-qwen-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Bryntum Timeline Container */
+        .ws-bryntum-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ws-timeline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-timeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            letter-spacing: -0.02em;
+        }
+
+        .ws-timeline-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ws-zoom-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-zoom-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-bryntum-wrapper {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 5-Stage Lifecycle Legend */
+        .ws-stage-legend {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 12px 24px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-stage-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .ws-stage-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .ws-stage-1 { background: #3b82f6; }
+        .ws-stage-2 { background: #8b5cf6; }
+        .ws-stage-3 { background: #ec4899; }
+        .ws-stage-4 { background: #f59e0b; }
+        .ws-stage-5 { background: #10b981; }
+
+        /* Damage Claim Drawer */
+        .ws-claim-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-canvas, #08090b);
+            border-left: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: right 300ms cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: -10px 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .ws-claim-drawer.open {
+            right: 0;
+        }
+
+        .ws-claim-drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--bg-surface, #0d0f14);
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-claim-drawer-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-claim-drawer-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-claim-drawer-close:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-claim-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .ws-claim-section {
+            margin-bottom: 20px;
+        }
+
+        .ws-claim-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .ws-claim-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ws-claim-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ws-claim-field-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-claim-field-input {
+            padding: 10px 12px;
+            background: var(--bg-elevated, #14171f);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            color: var(--text-primary, #e2e8f0);
+            border-radius: 6px;
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-claim-field-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .ws-claim-field-input::placeholder {
+            color: var(--text-secondary, #64748b);
+        }
+
+        /* Photo Proof Dropper */
+        .ws-photo-dropper {
+            border: 2px dashed var(--border-hairline, rgba(255,255,255,0.08));
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+            background: var(--bg-elevated, #14171f);
+        }
+
+        .ws-photo-dropper:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .ws-photo-dropper.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .ws-photo-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            font-size: 24px;
+        }
+
+        .ws-photo-dropper-text {
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+            margin-bottom: 8px;
+        }
+
+        .ws-photo-dropper-hint {
+            font-size: 11px;
+            color: var(--text-tertiary, #64748b);
+        }
+
+        .ws-photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .ws-photo-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--bg-elevated, #14171f);
+        }
+
+        .ws-photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .ws-photo-item-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-photo-item-remove:hover {
+            background: rgba(239, 68, 68, 0.8);
+        }
+
+        /* Pro-Rata Calculator */
+        .ws-prorata-calculator {
+            background: var(--bg-elevated, #14171f);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-prorata-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-hairline, rgba(255,255,255,0.04));
+        }
+
+        .ws-prorata-row:last-child {
+            border-bottom: none;
+        }
+
+        .ws-prorata-label {
+            font-size: 13px;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-prorata-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-prorata-total {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ws-prorata-total-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        .ws-prorata-total-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10b981;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Claim Actions */
+        .ws-claim-actions {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            background: var(--bg-surface, #0d0f14);
+            border-top: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-claim-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ws-claim-btn-secondary {
+            background: var(--bg-elevated, #14171f);
+            color: var(--text-primary, #e2e8f0);
+            border: 1px solid var(--border-hairline, rgba(255,255,255,0.08));
+        }
+
+        .ws-claim-btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .ws-claim-btn-primary {
+            background: linear-gradient(135deg, #ffc439 0%, #ffb347 100%);
+            color: #08090b;
+        }
+
+        .ws-claim-btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 196, 57, 0.3);
+        }
+
+        .ws-claim-btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Inspection Timer */
+        .ws-inspection-timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #f59e0b;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-inspection-timer-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Loading State */
+        .ws-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .ws-loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-hairline, rgba(255,255,255,0.08));
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .ws-claim-drawer {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ws-logistics-topbar {
+                padding: 0 16px;
+            }
+
+            .ws-view-mode-switcher {
+                display: none;
+            }
+
+            .ws-claim-drawer {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ws-claim-drawer {
+            animation: fadeIn 200ms ease-out;
+        }
+
+        /* Qwen Control Integration */
+        .ws-qwen-integration {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="ws-logistics-view">
+        <!-- Top Bar -->
+        <div class="ws-logistics-topbar">
+            <div class="ws-logistics-breadcrumb">
+                <span>Workspace</span>
+                <span>/</span>
+                <span>Logistics & Disputes</span>
+            </div>
+            <div class="ws-logistics-topbar-right">
+                <div class="ws-view-mode-switcher">
+                    <button class="ws-view-mode-btn active" data-mode="timeline">Timeline</button>
+                    <button class="ws-view-mode-btn" data-mode="split">Split View</button>
+                    <button class="ws-view-mode-btn" data-mode="disputes">Disputes</button>
+                </div>
+                <div class="ws-spend-ceiling-badge">$50,000 Ceiling</div>
+                <button class="ws-export-btn">Export Timeline</button>
+                <button class="ws-summon-qwen-btn">Summon Qwen</button>
+            </div>
+        </div>
+
+        <!-- Stage Legend -->
+        <div class="ws-stage-legend">
+            <div class="ws-stage-item">
+                <div class="ws-stage-color ws-stage-1"></div>
+                <span>Soft Auth Hold</span>
+            </div>
+            <div class="ws-stage-item">
+                <div class="ws-stage-color ws-stage-2"></div>
+                <span>Freight Transit</span>
+            </div>
+            <div class="ws-stage-item">
+                <div class="ws-stage-color ws-stage-3"></div>
+                <span>Delivery Confirmation</span>
+            </div>
+            <div class="ws-stage-item">
+                <div class="ws-stage-color ws-stage-4"></div>
+                <span>48h Inspection</span>
+            </div>
+            <div class="ws-stage-item">
+                <div class="ws-stage-color ws-stage-5"></div>
+                <span>Batch Payout</span>
+            </div>
+        </div>
+
+        <!-- Bryntum Timeline Container -->
+        <div class="ws-bryntum-container">
+            <div class="ws-timeline-header">
+                <div class="ws-timeline-title">Escrow & Fulfillment Lifecycle</div>
+                <div class="ws-timeline-controls">
+                    <button class="ws-zoom-btn" data-zoom="in">+ Zoom In</button>
+                    <button class="ws-zoom-btn" data-zoom="out">- Zoom Out</button>
+                    <button class="ws-zoom-btn" data-zoom="fit">Fit All</button>
+                </div>
+            </div>
+            <div class="ws-bryntum-wrapper" id="bryntumTimeline"></div>
+        </div>
+
+        <!-- Damage Claim Drawer -->
+        <div class="ws-claim-drawer" id="claimDrawer">
+            <div class="ws-claim-drawer-header">
+                <div class="ws-claim-drawer-title">File Damage Claim</div>
+                <button class="ws-claim-drawer-close" id="closeClaimDrawer">&times;</button>
+            </div>
+            <div class="ws-claim-drawer-body">
+                <div class="ws-claim-section">
+                    <div class="ws-claim-section-title">Clan & Shipment Details</div>
+                    <div class="ws-claim-form">
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">Clan ID</label>
+                            <input type="text" class="ws-claim-field-input" id="claimClanId" placeholder="e.g., clan_flour_001" readonly>
+                        </div>
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">SKU</label>
+                            <input type="text" class="ws-claim-field-input" id="claimSku" placeholder="e.g., Sourdough Flour 50lb" readonly>
+                        </div>
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">Carrier Tracking</label>
+                            <input type="text" class="ws-claim-field-input" id="claimTracking" placeholder="e.g., UPS 1Z999AA10123456784">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ws-claim-section">
+                    <div class="ws-claim-section-title">Damage Details</div>
+                    <div class="ws-claim-form">
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">Damaged Units</label>
+                            <input type="number" class="ws-claim-field-input" id="claimDamagedUnits" placeholder="0" min="1" value="1">
+                        </div>
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">Total Units Shipped</label>
+                            <input type="number" class="ws-claim-field-input" id="claimTotalUnits" placeholder="0" min="1" value="100">
+                        </div>
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">Reason for Damage</label>
+                            <select class="ws-claim-field-input" id="claimReason">
+                                <option value="crushed">Crushed/Punctured</option>
+                                <option value="water">Water Damage</option>
+                                <option value="temperature">Temperature Exposure</option>
+                                <option value="contamination">Contamination</option>
+                                <option value="shortage">Shortage</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="ws-claim-field">
+                            <label class="ws-claim-field-label">Description</label>
+                            <textarea class="ws-claim-field-input" id="claimDescription" placeholder="Describe the damage in detail..." rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ws-claim-section">
+                    <div class="ws-claim-section-title">Photographic Proof</div>
+                    <div class="ws-photo-dropper" id="photoDropper">
+                        <div class="ws-photo-icon">📷</div>
+                        <div class="ws-photo-dropper-text">Drop photos here or click to browse</div>
+                        <div class="ws-photo-dropper-hint">SHA-256 verified, max 10MB per file</div>
+                        <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
+                    </div>
+                    <div class="ws-photo-preview" id="photoPreview"></div>
+                </div>
+
+                <div class="ws-claim-section">
+                    <div class="ws-claim-section-title">Pro-Rata Mediation Calculator</div>
+                    <div class="ws-prorata-calculator">
+                        <div class="ws-prorata-row">
+                            <span class="ws-prorata-label">Unit Price</span>
+                            <span class="ws-prorata-value" id="prorataUnitPrice">$7.20</span>
+                        </div>
+                        <div class="ws-prorata-row">
+                            <span class="ws-prorata-label">Damaged Units</span>
+                            <span class="ws-prorata-value" id="prorataDamagedUnits">1</span>
+                        </div>
+                        <div class="ws-prorata-row">
+                            <span class="ws-prorata-label">Refund Amount</span>
+                            <span class="ws-prorata-value" id="prorataRefund">$7.20</span>
+                        </div>
+                        <div class="ws-prorata-row">
+                            <span class="ws-prorata-label">Healthy Units</span>
+                            <span class="ws-prorata-value" id="prorataHealthyUnits">99</span>
+                        </div>
+                        <div class="ws-prorata-row">
+                            <span class="ws-prorata-label">Batch Payout</span>
+                            <span class="ws-prorata-value" id="prorataBatchPayout">$712.80</span>
+                        </div>
+                        <div class="ws-prorata-total">
+                            <span class="ws-prorata-total-label">Total Adjustment</span>
+                            <span class="ws-prorata-total-value" id="prorataTotal">$7.20</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ws-claim-actions">
+                <button class="ws-claim-btn ws-claim-btn-secondary" id="cancelClaim">Cancel</button>
+                <button class="ws-claim-btn ws-claim-btn-primary" id="submitClaim">Submit Claim</button>
+            </div>
+        </div>
+
+        <!-- Qwen Control Integration -->
+        <div class="ws-qwen-integration" id="qwenIntegration"></div>
+    </div>
+
+    <script>
+        // Design Tokens
+        const DESIGN_TOKENS = {
+            bgCanvas: '#08090b',
+            bgSurface: '#0d0f14',
+            bgElevated: '#14171f',
+            borderHairline: 'rgba(255,255,255,0.08)',
+            textPrimary: '#e2e8f0',
+            textSecondary: '#94a3b8',
+            textTertiary: '#64748b',
+            paypalGold: '#ffc439',
+            paypalBlue: '#003087',
+            success: '#10b981',
+            warning: '#f59e0b',
+            error: '#ef4444'
+        };
+
+        // Sample Clan Data for Bryntum
+        const sampleClans = [
+            {
+                id: 'clan_flour_001',
+                sku: 'SOURDOUGH_FLOUR_50LB',
+                skuName: 'Organic Sourdough Flour 50lb',
+                category: 'Bakery',
+                supplier: 'Golden Grain Mills',
+                credibilityScore: 99.2,
+                currentUnits: 450,
+                targetUnits: 500,
+                unitPrice: 7.20,
+                discountTier: 28.4,
+                membersCount: 8,
+                stages: [
+                    { stage: 1, start: '2024-01-15T10:00:00', end: '2024-01-15T10:15:00', status: 'completed' },
+                    { stage: 2, start: '2024-01-15T10:15:00', end: '2024-01-16T14:00:00', status: 'completed' },
+                    { stage: 3, start: '2024-01-16T14:00:00', end: '2024-01-16T14:30:00', status: 'completed' },
+                    { stage: 4, start: '2024-01-16T14:30:00', end: '2024-01-18T14:30:00', status: 'active' },
+                    { stage: 5, start: '2024-01-18T14:30:00', end: '2024-01-18T15:00:00', status: 'pending' }
+                ]
+            },
+            {
+                id: 'clan_coffee_002',
+                sku: 'ARABICA_BEANS_60KG',
+                skuName: 'Premium Arabica Coffee Beans 60kg',
+                category: 'Specialty Coffee',
+                supplier: 'Highland Roasters',
+                credibilityScore: 98.7,
+                currentUnits: 320,
+                targetUnits: 400,
+                unitPrice: 125.50,
+                discountTier: 22.1,
+                membersCount: 6,
+                stages: [
+                    { stage: 1, start: '2024-01-14T09:00:00', end: '2024-01-14T09:20:00', status: 'completed' },
+                    { stage: 2, start: '2024-01-14T09:20:00', end: '2024-01-15T16:00:00', status: 'completed' },
+                    { stage: 3, start: '2024-01-15T16:00:00', end: '2024-01-15T16:15:00', status: 'completed' },
+                    { stage: 4, start: '2024-01-15T16:15:00', end: '2024-01-17T16:15:00', status: 'active' },
+                    { stage: 5, start: '2024-01-17T16:15:00', end: '2024-01-17T16:45:00', status: 'pending' }
+                ]
+            },
+            {
+                id: 'clan_electronics_003',
+                sku: 'MOTHERBOARD_ATX',
+                skuName: 'Industrial ATX Motherboard',
+                category: 'Electronics MRO',
+                supplier: 'Tech Components Ltd',
+                credibilityScore: 97.8,
+                currentUnits: 180,
+                targetUnits: 200,
+                unitPrice: 450.00,
+                discountTier: 18.5,
+                membersCount: 4,
+                stages: [
+                    { stage: 1, start: '2024-01-13T11:00:00', end: '2024-01-13T11:30:00', status: 'completed' },
+                    { stage: 2, start: '2024-01-13T11:30:00', end: '2024-01-14T10:00:00', status: 'completed' },
+                    { stage: 3, start: '2024-01-14T10:00:00', end: '2024-01-14T10:30:00', status: 'completed' },
+                    { stage: 4, start: '2024-01-14T10:30:00', end: '2024-01-16T10:30:00', status: 'completed' },
+                    { stage: 5, start: '2024-01-16T10:30:00', end: '2024-01-16T11:00:00', status: 'completed' }
+                ]
+            },
+            {
+                id: 'clan_packaging_004',
+                sku: 'ECO_CORRUGATED_1000',
+                skuName: 'Eco-Friendly Corrugated Boxes',
+                category: 'Eco-Packaging',
+                supplier: 'Green Pack Solutions',
+                credibilityScore: 99.1,
+                currentUnits: 850,
+                targetUnits: 1000,
+                unitPrice: 2.85,
+                discountTier: 30.2,
+                membersCount: 12,
+                stages: [
+                    { stage: 1, start: '2024-01-12T14:00:00', end: '2024-01-12T14:20:00', status: 'completed' },
+                    { stage: 2, start: '2024-01-12T14:20:00', end: '2024-01-13T12:00:00', status: 'completed' },
+                    { stage: 3, start: '2024-01-13T12:00:00', end: '2024-01-13T12:45:00', status: 'completed' },
+                    { stage: 4, start: '2024-01-13T12:45:00', end: '2024-01-15T12:45:00', status: 'active' },
+                    { stage: 5, start: '2024-01-15T12:45:00', end: '2024-01-15T13:15:00', status: 'pending' }
+                ]
+            },
+            {
+                id: 'clan_ceramics_005',
+                sku: 'PORCELAIN_DINNER_SET',
+                skuName: 'Premium Porcelain Dinner Set',
+                category: 'Ceramics',
+                supplier: 'Fine China Co',
+                credibilityScore: 98.5,
+                currentUnits: 250,
+                targetUnits: 300,
+                unitPrice: 85.00,
+                discountTier: 25.0,
+                membersCount: 5,
+                stages: [
+                    { stage: 1, start: '2024-01-10T08:00:00', end: '2024-01-10T08:15:00', status: 'completed' },
+                    { stage: 2, start: '2024-01-10T08:15:00', end: '2024-01-11T15:00:00', status: 'completed' },
+                    { stage: 3, start: '2024-01-11T15:00:00', end: '2024-01-11T15:20:00', status: 'completed' },
+                    { stage: 4, start: '2024-01-11T15:20:00', end: '2024-01-13T15:20:00', status: 'completed' },
+                    { stage: 5, start: '2024-01-13T15:20:00', end: '2024-01-13T15:50:00', status: 'completed' }
+                ]
+            }
+        ];
+
+        // Stage colors for Bryntum
+        const stageColors = {
+            1: '#3b82f6',
+            2: '#8b5cf6',
+            3: '#ec4899',
+            4: '#f59e0b',
+            5: '#10b981'
+        };
+
+        // Initialize Bryntum Timeline
+        let timeline;
+        let currentViewMode = 'timeline';
+
+        function initBryntumTimeline() {
+            if (window.bryntum && window.bryntum.Timeline) {
+                const Timeline = window.bryntum.Timeline;
+                
+                // Configure timeline
+                timeline = new Timeline({
+                    appendTo: 'bryntumTimeline',
+                    licenseKey: 'DEMO',
+                    
+                    // View preset
+                    viewPreset: 'hourAndDay',
+                    
+                    // Columns
+                    columns: [
+                        { type: 'resourceInfo', text: 'Clan', field: 'name', width: 250 }
+                    ],
+                    
+                    // Resource store
+                    resourceStore: {
+                        data: sampleClans.map(clan => ({
+                            id: clan.id,
+                            name: `${clan.skuName} (${clan.id})`,
+                            category: clan.category,
+                            supplier: clan.supplier,
+                            credibility: clan.credibilityScore,
+                            units: `${clan.currentUnits}/${clan.targetUnits}`,
+                            price: `$${clan.unitPrice.toFixed(2)}`,
+                            discount: `${clan.discountTier}%`
+                        }))
+                    },
+                    
+                    // Event store
+                    eventStore: {
+                        data: sampleClans.flatMap(clan => 
+                            clan.stages.map(stage => ({
+                                id: `${clan.id}_stage${stage.stage}`,
+                                resourceId: clan.id,
+                                name: getStageName(stage.stage),
+                                startDate: new Date(stage.start),
+                                endDate: new Date(stage.end),
+                                cls: `stage-${stage.stage}`,
+                                iconCls: getStageIcon(stage.stage),
+                                status: stage.status,
+                                stage: stage.stage
+                            }))
+                        )
+                    },
+                    
+                    // Features
+                    features: {
+                        sort: true,
+                        filter: true,
+                        group: true,
+                        timeRanges: true,
+                        dependencies: false,
+                        eventDrag: {
+                            disabled: true
+                        },
+                        eventResize: {
+                            disabled: true
+                        },
+                        eventTooltip: {
+                            template: ({ eventRecord }) => {
+                                const clan = sampleClans.find(c => c.id === eventRecord.resourceId);
+                                return `
+                                    <div style="padding: 8px; background: #14171f; border-radius: 4px;">
+                                        <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">${clan ? clan.skuName : 'Unknown'}</div>
+                                        <div style="color: #94a3b8; font-size: 12px;">${eventRecord.name}</div>
+                                        <div style="color: #64748b; font-size: 11px; margin-top: 4px;">
+                                            ${new Date(eventRecord.startDate).toLocaleString()}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        },
+                        scheduleTooltip: false,
+                        labels: {
+                            top: {
+                                editor: false
+                            }
+                        },
+                        stripe: false
+                    },
+                    
+                    // Styling
+                    rowHeight: 50,
+                    barMargin: 4,
+                    
+                    // Time axis
+                    timeAxis: {
+                        continuous: true,
+                        maxHeight: 40
+                    },
+                    
+                    // Listeners
+                    listeners: {
+                        eventClick: ({ eventRecord }) => {
+                            if (eventRecord.stage === 4) {
+                                openClaimDrawer(eventRecord.resourceId);
+                            }
+                        },
+                        resourceClick: ({ resourceRecord }) => {
+                            const clan = sampleClans.find(c => c.id === resourceRecord.id);
+                            if (clan) {
+                                // Scroll to the clan's events
+                                timeline.scrollToEvent(clan.id + '_stage1');
+                            }
+                        }
+                    }
+                });
+
+                // Custom styling
+                applyCustomStyling();
+                
+                // Fit all initially
+                timeline.zoomToFit();
+            } else {
+                console.warn('Bryntum Timeline not loaded');
+                // Fallback message
+                document.getElementById('bryntumTimeline').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8;">
+                        <div>
+                            <div>Bryntum Timeline loading...</div>
+                            <div style="font-size: 12px; margin-top: 8px;">Ensure bryntum-timeline.bundle.js is loaded</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function getStageName(stage) {
+            const names = {
+                1: 'Soft Auth Hold',
+                2: 'Freight Transit',
+                3: 'Delivery Confirmation',
+                4: '48h Inspection',
+                5: 'Batch Payout'
+            };
+            return names[stage] || `Stage ${stage}`;
+        }
+
+        function getStageIcon(stage) {
+            const icons = {
+                1: 'b-fa b-fa-lock',
+                2: 'b-fa b-fa-truck',
+                3: 'b-fa b-fa-check-circle',
+                4: 'b-fa b-fa-clock',
+                5: 'b-fa b-fa-dollar-sign'
+            };
+            return icons[stage] || '';
+        }
+
+        function applyCustomStyling() {
+            if (!timeline) return;
+
+            // Apply custom CSS classes to events based on stage
+            timeline.eventStore.forEach(event => {
+                const stage = event.stage;
+                event.cls = `stage-${stage} ${event.status}`;
+            });
+
+            // Add custom CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                .stage-1 { background: ${stageColors[1]}; border-color: ${stageColors[1]}; }
+                .stage-2 { background: ${stageColors[2]}; border-color: ${stageColors[2]}; }
+                .stage-3 { background: ${stageColors[3]}; border-color: ${stageColors[3]}; }
+                .stage-4 { background: ${stageColors[4]}; border-color: ${stageColors[4]}; }
+                .stage-5 { background: ${stageColors[5]}; border-color: ${stageColors[5]}; }
+                
+                .stage-1.completed { opacity: 0.8; }
+                .stage-2.completed { opacity: 0.8; }
+                .stage-3.completed { opacity: 0.8; }
+                .stage-4.active { box-shadow: 0 0 0 2px ${stageColors[4]}; }
+                .stage-5.pending { opacity: 0.6; }
+                
+                .b-timeline .b-grid-header {
+                    background: ${DESIGN_TOKENS.bgSurface};
+                    border-color: ${DESIGN_TOKENS.borderHairline};
+                }
+                
+                .b-timeline .b-grid-cell {
+                    background: ${DESIGN_TOKENS.bgSurface};
+                    color: ${DESIGN_TOKENS.textPrimary};
+                    border-color: ${DESIGN_TOKENS.borderHairline};
+                }
+                
+                .b-timeline .b-timeline-subgrid {
+                    background: ${DESIGN_TOKENS.bgCanvas};
+                }
+                
+                .b-timeline .b-timeline-tick {
+                    color: ${DESIGN_TOKENS.textSecondary};
+                }
+                
+                .b-timeline .b-timeline-header-row {
+                    background: ${DESIGN_TOKENS.bgSurface};
+                    border-color: ${DESIGN_TOKENS.borderHairline};
+                }
+                
+                .b-timeline .b-resource-info-column {
+                    background: ${DESIGN_TOKENS.bgSurface};
+                }
+                
+                .b-timeline .b-timeline-bar {
+                    border-radius: 4px;
+                }
+                
+                .b-timeline .b-timeline-bar-wrapper {
+                    border-radius: 4px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // View Mode Switching
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+            
+            // Update buttons
+            document.querySelectorAll('.ws-view-mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // For now, just timeline view is implemented
+            // Split view and disputes view would require additional implementation
+        }
+
+        // Zoom Controls
+        function handleZoom(zoomAction) {
+            if (!timeline) return;
+
+            switch (zoomAction) {
+                case 'in':
+                    timeline.zoomIn();
+                    break;
+                case 'out':
+                    timeline.zoomOut();
+                    break;
+                case 'fit':
+                    timeline.zoomToFit();
+                    break;
+            }
+        }
+
+        // Claim Drawer Functions
+        let currentClanId = null;
+
+        function openClaimDrawer(clanId) {
+            currentClanId = clanId;
+            const clan = sampleClans.find(c => c.id === clanId);
+            
+            if (!clan) return;
+
+            // Populate form
+            document.getElementById('claimClanId').value = clan.id;
+            document.getElementById('claimSku').value = clan.skuName;
+            document.getElementById('claimDamagedUnits').value = '1';
+            document.getElementById('claimTotalUnits').value = clan.currentUnits;
+            
+            // Update pro-rata calculator
+            updateProrataCalculator();
+
+            // Open drawer
+            document.getElementById('claimDrawer').classList.add('open');
+        }
+
+        function closeClaimDrawer() {
+            document.getElementById('claimDrawer').classList.remove('open');
+            resetClaimForm();
+        }
+
+        function resetClaimForm() {
+            document.getElementById('claimTracking').value = '';
+            document.getElementById('claimDamagedUnits').value = '1';
+            document.getElementById('claimTotalUnits').value = '';
+            document.getElementById('claimReason').value = 'crushed';
+            document.getElementById('claimDescription').value = '';
+            document.getElementById('photoPreview').innerHTML = '';
+            currentClanId = null;
+        }
+
+        function updateProrataCalculator() {
+            const clan = sampleClans.find(c => c.id === currentClanId);
+            if (!clan) return;
+
+            const damagedUnits = parseInt(document.getElementById('claimDamagedUnits').value) || 1;
+            const totalUnits = parseInt(document.getElementById('claimTotalUnits').value) || clan.currentUnits;
+            const unitPrice = clan.unitPrice;
+
+            const refundAmount = damagedUnits * unitPrice;
+            const healthyUnits = totalUnits - damagedUnits;
+            const batchPayout = healthyUnits * unitPrice;
+            const totalAdjustment = refundAmount;
+
+            document.getElementById('prorataUnitPrice').textContent = `$${unitPrice.toFixed(2)}`;
+            document.getElementById('prorataDamagedUnits').textContent = damagedUnits;
+            document.getElementById('prorataRefund').textContent = `$${refundAmount.toFixed(2)}`;
+            document.getElementById('prorataHealthyUnits').textContent = healthyUnits;
+            document.getElementById('prorataBatchPayout').textContent = `$${batchPayout.toFixed(2)}`;
+            document.getElementById('prorataTotal').textContent = `$${totalAdjustment.toFixed(2)}`;
+        }
+
+        // Photo Dropper
+        function setupPhotoDropper() {
+            const dropper = document.getElementById('photoDropper');
+            const input = document.getElementById('photoInput');
+            const preview = document.getElementById('photoPreview');
+
+            dropper.addEventListener('click', () => input.click());
+
+            input.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            dropper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropper.classList.add('dragover');
+            });
+
+            dropper.addEventListener('dragleave', () => {
+                dropper.classList.remove('dragover');
+            });
+
+            dropper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropper.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            function handleFiles(files) {
+                for (let i = 0; i < Math.min(files.length, 5); i++) {
+                    const file = files[i];
+                    if (file.type.startsWith('image/')) {
+                        addPhotoPreview(file);
+                    }
+                }
+            }
+
+            function addPhotoPreview(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'ws-photo-item';
+                    item.appendChild(img);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'ws-photo-item-remove';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = () => {
+                        preview.removeChild(item);
+                    };
+                    
+                    item.appendChild(removeBtn);
+                    preview.appendChild(item);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Submit Claim
+        async function submitClaim() {
+            const clanId = document.getElementById('claimClanId').value;
+            const tracking = document.getElementById('claimTracking').value;
+            const damagedUnits = parseInt(document.getElementById('claimDamagedUnits').value) || 1;
+            const totalUnits = parseInt(document.getElementById('claimTotalUnits').value) || 100;
+            const reason = document.getElementById('claimReason').value;
+            const description = document.getElementById('claimDescription').value;
+
+            // Get photos
+            const photoInputs = document.querySelectorAll('#photoPreview img');
+            const photos = Array.from(photoInputs).map(img => img.src);
+
+            // Calculate pro-rata
+            const clan = sampleClans.find(c => c.id === clanId);
+            const unitPrice = clan ? clan.unitPrice : 7.20;
+            const refundAmount = damagedUnits * unitPrice;
+
+            // Prepare claim data
+            const claimData = {
+                clanId,
+                tracking,
+                damagedUnits,
+                totalUnits,
+                reason,
+                description,
+                photos,
+                refundAmount: refundAmount.toFixed(2),
+                healthyUnits: totalUnits - damagedUnits,
+                batchPayout: ((totalUnits - damagedUnits) * unitPrice).toFixed(2),
+                timestamp: new Date().toISOString()
+            };
+
+            console.log('Submitting claim:', claimData);
+
+            // Here you would typically send to server
+            // For demo purposes, we'll simulate success
+            
+            // Show success message
+            alert(`Damage claim submitted successfully for ${clanId}!\n\nRefund Amount: $${refundAmount.toFixed(2)}\nHealthy Units: ${totalUnits - damagedUnits}\nBatch Payout: $${((totalUnits - damagedUnits) * unitPrice).toFixed(2)}`);
+
+            // Close drawer
+            closeClaimDrawer();
+
+            // In a real implementation, you would:
+            // 1. Upload photos to data/evidence/ with SHA-256 hashing
+            // 2. Call PayPal Customer Disputes v1 API
+            // 3. Update the clan status in the backend
+            // 4. Broadcast SSE event for UI updates
+        }
+
+        // Qwen Control Integration
+        function setupQwenControl() {
+            // Listen for Qwen commands via SSE
+            if (window.qwenBridge) {
+                window.qwenBridge.onAction('logistics.inspect', (data) => {
+                    if (data.clanId) {
+                        openClaimDrawer(data.clanId);
+                    }
+                    if (data.stage) {
+                        // Scroll to specific stage
+                        const clan = sampleClans.find(c => c.id === data.clanId);
+                        if (clan) {
+                            timeline.scrollToEvent(`${data.clanId}_stage${data.stage}`);
+                        }
+                    }
+                });
+
+                window.qwenBridge.onAction('dispute.submit', (data) => {
+                    // Auto-fill claim form from Qwen
+                    if (data.clanId) {
+                        openClaimDrawer(data.clanId);
+                        if (data.damagedUnits) {
+                            document.getElementById('claimDamagedUnits').value = data.damagedUnits;
+                        }
+                        if (data.reason) {
+                            document.getElementById('claimReason').value = data.reason;
+                        }
+                        if (data.description) {
+                            document.getElementById('claimDescription').value = data.description;
+                        }
+                        updateProrataCalculator();
+                    }
+                });
+            }
+
+            // Also listen for direct messages from parent window (app.html)
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'qwen-action') {
+                    const action = event.data.action;
+                    const data = event.data.data;
+
+                    switch (action) {
+                        case 'logistics.inspect':
+                            if (data.clanId) {
+                                openClaimDrawer(data.clanId);
+                            }
+                            break;
+                        case 'dispute.submit':
+                            if (data.clanId) {
+                                openClaimDrawer(data.clanId);
+                                if (data.damagedUnits) {
+                                    document.getElementById('claimDamagedUnits').value = data.damagedUnits;
+                                }
+                                if (data.reason) {
+                                    document.getElementById('claimReason').value = data.reason;
+                                }
+                                updateProrataCalculator();
+                            }
+                            break;
+                    }
+                }
+            });
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            // View mode switcher
+            document.querySelectorAll('.ws-view-mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchViewMode(btn.dataset.mode);
+                });
+            });
+
+            // Zoom controls
+            document.querySelectorAll('.ws-zoom-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    handleZoom(btn.dataset.zoom);
+                });
+            });
+
+            // Claim drawer close
+            document.getElementById('closeClaimDrawer').addEventListener('click', closeClaimDrawer);
+            document.getElementById('cancelClaim').addEventListener('click', closeClaimDrawer);
+            document.getElementById('submitClaim').addEventListener('click', submitClaim);
+
+            // Form input changes
+            document.getElementById('claimDamagedUnits').addEventListener('input', updateProrataCalculator);
+            document.getElementById('claimTotalUnits').addEventListener('input', updateProrataCalculator);
+
+            // Close drawer on outside click
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('claimDrawer').contains(e.target) && 
+                    !e.target.closest('.b-timeline-bar')) {
+                    // Don't close if clicking on timeline events
+                }
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeClaimDrawer();
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply design tokens to document
+            Object.entries(DESIGN_TOKENS).forEach(([key, value]) => {
+                document.documentElement.style.setProperty(`--${key}`, value);
+            });
+
+            // Initialize Bryntum Timeline
+            initBryntumTimeline();
+
+            // Setup photo dropper
+            setupPhotoDropper();
+
+            // Setup Qwen control
+            setupQwenControl();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Notify parent that view is loaded
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'view-loaded', view: 'logistics' }, '*');
+            }
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (timeline) {
+                timeline.destroy();
+            }
+        });
+    </script>
+</body>
+</html>

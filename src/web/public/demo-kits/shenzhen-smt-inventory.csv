@@ -1,0 +1,2 @@
+SKU,Item Name,Category,Current Stock Units,Reorder Threshold Units,Target Restock Units,Historical Unit Cost CNH,Canonical Supplier
+sku-pcb_microelectronics-cn-pcb,"High-Density Multi-Layer PCB Test Panels (500ct Reel)",PCB_MICROELECTRONICS,10,16,40,2850.00,"Guangdong Microelectronics Trade Ltd"

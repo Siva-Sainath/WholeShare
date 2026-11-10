@@ -1,0 +1,2 @@
+SKU,Item Name,Category,Current Stock Units,Reorder Threshold Units,Target Restock Units,Historical Unit Cost BRL,Canonical Supplier
+sku-commercial_solar-br-photovoltaic,"Monocrystalline 550W Tier-1 Solar Panels (Pallet of 30)",COMMERCIAL_SOLAR,3,6,15,7200.00,"Paulista Photovoltaic Distributors"

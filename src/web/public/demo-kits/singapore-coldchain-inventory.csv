@@ -1,0 +1,2 @@
+SKU,Item Name,Category,Current Stock Units,Reorder Threshold Units,Target Restock Units,Historical Unit Cost SGD,Canonical Supplier
+sku-cold_chain-sg-pallet,"Vacuum-Insulated Chilled Temperature Totes (50L PCM)",COLD_CHAIN,6,10,25,380.00,"Malacca Straits Cold Storage Equipment"
