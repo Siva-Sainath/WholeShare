@@ -17,9 +17,9 @@ interface AgentInviteRecord {
   uses: number;
 }
 
-const DEMO_BUSINESS = "Austin Artisan Bakery";
-const DEMO_EMAIL = "purchasing@austinartisanbakery.com";
-const DEMO_CITY = "Austin";
+const DEMO_BUSINESS = "Golden Lotus Kitchen";
+const DEMO_EMAIL = "orders@goldenlotuskitchen.example";
+const DEMO_CITY = "Flushing";
 const DEMO_PAYPAL = "sb-merchant@business.example.com";
 
 function displayOrEmpty(value: string | undefined, demo: string): string {

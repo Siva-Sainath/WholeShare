@@ -3,7 +3,7 @@ import { Badge, Button, Card, Check, Collapse, Count, Field, Meter, Popover, Row
 import { PayPalMark } from '../components/PayPalAttribution'
 import './wholeshare.css'
 
-// WholeShare landing hero: ask Mosaic for coffee, join the group, PayPal holds the funds.
+// WholeShare landing hero: ask Mosaic for takeout containers, join the group, PayPal holds the funds.
 // Real values from the seeded catalog: clan-austin-specialty-grade-002 (base $9.50, tier 22% at 1,300 of 2,000 units).
 
 type S = {
@@ -16,27 +16,27 @@ type S = {
 }
 
 const initial: S = { typed: '', focused: false, filtered: false, sheet: false, units: '', pay: 'idle' }
-const POSTER: S = { typed: 'coffee', focused: false, filtered: true, sheet: true, units: '100', pay: 'held' }
+const POSTER: S = { typed: 'takeout containers', focused: false, filtered: true, sheet: true, units: '10', pay: 'held' }
 
-const UNIT = 7.41
+const UNIT = 28.98
 const CURRENT = 1300
 const TARGET = 2000
 
 type Group = { id: string; name: string; meta: string; price: string; off: string; coffee: boolean; Icon: typeof Coffee }
 const GROUPS: Group[] = [
-  { id: 'pistachio', name: 'Sicilian pistachio paste', meta: 'Austin · 500 of 1,000 units', price: '$33.75', off: '25% off', coffee: false, Icon: Nut },
-  { id: 'specialty', name: 'Ethiopian Yirgacheffe green coffee', meta: 'Austin · 1,300 of 2,000 units', price: '$7.41', off: '22% off', coffee: true, Icon: Coffee },
-  { id: 'amsterdam', name: 'Cold brew coffee concentrate', meta: 'Amsterdam · 596 of 3,000 units', price: '$126.83', off: 'No tier yet', coffee: true, Icon: Coffee },
-  { id: 'olive', name: 'Arbequina extra virgin olive oil', meta: 'Austin · 1,350 of 1,500 units', price: '$10.00', off: '20% off', coffee: false, Icon: Droplets },
-  { id: 'flour', name: 'Stone-ground winter wheat flour', meta: 'Austin · 4,000 of 5,000 units', price: '$0.98', off: '18% off', coffee: false, Icon: Wheat },
-  { id: 'incheon', name: 'Cold brew coffee concentrate', meta: 'Incheon · 127 of 500 units', price: '$117.77', off: '14% off', coffee: true, Icon: Coffee }
+  { id: 'rice', name: 'Jasmine rice 25 lb', meta: 'Flushing · 84 of 120 bags', price: '$21.07', off: '14% off', coffee: false, Icon: Wheat },
+  { id: 'garden', name: 'Kraft takeout containers 32 oz (Garden State)', meta: 'Flushing · 38 of 80 cases', price: '$28.98', off: '8% off', coffee: true, Icon: Boxes },
+  { id: 'gloves', name: 'Nitrile gloves, case of 1,000', meta: 'Flushing · 32 of 60 cases', price: '$58.88', off: '8% off', coffee: false, Icon: LayoutGrid },
+  { id: 'oil', name: 'Soybean cooking oil 35 lb', meta: 'Flushing · 39 of 60 jugs', price: '$43.24', off: '6% off', coffee: false, Icon: Droplets },
+  { id: 'eastern', name: 'Kraft takeout containers 32 oz (Eastern Imports)', meta: 'Flushing · 41 of 80 cases', price: '$22.88', off: '18% off', coffee: true, Icon: Boxes },
+  { id: 'cups', name: 'Clear PET cups 16 oz with lids', meta: 'Flushing · 29 of 50 cases', price: '$54.52', off: '6% off', coffee: false, Icon: Coffee }
 ]
 
 type Joined = { id: string; name: string; meta: string; amount: string; tone: 'neutral' | 'success'; label: string; Icon: typeof Coffee }
 const JOINED: Joined[] = [
-  { id: 'flour', name: 'Golden Fields organic flour', meta: '150 units', amount: '$1,500.00', tone: 'neutral', label: 'Pledged', Icon: Wheat },
-  { id: 'tiles', name: 'Matte porcelain floor tiles', meta: '4 pallets', amount: '$3,400.00', tone: 'neutral', label: 'Pledged', Icon: LayoutGrid },
-  { id: 'boxes', name: 'Kraft shipping boxes', meta: '75 bundles', amount: '$2,047.50', tone: 'success', label: 'Authorized', Icon: Boxes }
+  { id: 'flour', name: 'Jasmine rice 25 lb', meta: '150 bags', amount: '$3,675.00', tone: 'neutral', label: 'Pledged', Icon: Wheat },
+  { id: 'tiles', name: 'Nitrile gloves, case of 1,000', meta: '10 cases', amount: '$640.00', tone: 'neutral', label: 'Pledged', Icon: LayoutGrid },
+  { id: 'boxes', name: 'Clear PET cups 16 oz', meta: '75 cases', amount: '$2,047.50', tone: 'success', label: 'Authorized', Icon: Boxes }
 ]
 
 const money = (n: number) => `$${n.toFixed(2)}`
@@ -46,7 +46,7 @@ async function script(a: Act<S>) {
   await a.wait(700)
   await a.click('ask-field')
   await a.set({ focused: true })
-  await a.type('typed', 'coffee')
+  await a.type('typed', 'takeout containers')
   await a.wait(250)
   await a.click('ask-button')
   await a.set({ focused: false, filtered: true })
@@ -59,7 +59,7 @@ async function script(a: Act<S>) {
   await a.wait(700)
 
   await a.click('units-field')
-  await a.type('units', '100')
+  await a.type('units', '10')
   await a.wait(900)
 
   await a.move({ at: 'pay', x: 0.85, y: 0.8 })
@@ -117,8 +117,8 @@ export function WholeShareHero() {
                 <section className="wh-body">
                   <div className="wh-main">
                     <div className="wh-list-head">
-                      <div className="wh-title">{s.filtered ? 'Coffee groups' : 'Buying groups'}</div>
-                      <Badge tone="accent" dot className="wh-mosaic" data-show={s.filtered ? true : undefined}>Mosaic found 3 coffee groups</Badge>
+                      <div className="wh-title">{s.filtered ? 'Container groups' : 'Buying groups'}</div>
+                      <Badge tone="accent" dot className="wh-mosaic" data-show={s.filtered ? true : undefined}>Mosaic found 2 container groups</Badge>
                     </div>
                     <Card pad="small" gap={0} className="wh-list">
                       {GROUPS.map((g) => (
@@ -159,8 +159,8 @@ export function WholeShareHero() {
                       <Collapse open={held && !s.sheet} reveal="drop">
                         <Row
                           lead={<span className="wh-tile"><Coffee size={18} strokeWidth={1.8} /></span>}
-                          title={<Text>Yirgacheffe green coffee</Text>}
-                          subtitle={<Text>100 units · $741.00</Text>}
+                          title={<Text>Kraft takeout containers 32 oz</Text>}
+                          subtitle={<Text>10 cases · $289.80</Text>}
                         >
                           <Badge tone="success">Authorized</Badge>
                         </Row>
@@ -175,11 +175,11 @@ export function WholeShareHero() {
               <div className="wh-pledge">
                 <div className="wh-copy">
                   <div className="wh-label">Pledge to this group</div>
-                  <Text wrap className="wh-strong">Ethiopian Yirgacheffe green coffee</Text>
+                  <Text wrap className="wh-strong">Kraft takeout containers 32 oz (Garden State)</Text>
                 </div>
                 <Field label="Units" value={s.units} placeholder="0" focused={s.sheet && !s.units} box={{ 'data-target': 'units-field', 'data-cursor': 'ibeam' }} />
                 <div className="wh-sum">
-                  <div className="wh-line"><span>Unit price</span><span className="wh-num">$7.41</span></div>
+                  <div className="wh-line"><span>Unit price</span><span className="wh-num">$28.98</span></div>
                   <div className="wh-line wh-total"><span>PayPal hold</span><Count className="wh-num" value={total} format={money} /></div>
                 </div>
                 <div className="wh-fill">

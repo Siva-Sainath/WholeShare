@@ -6,8 +6,8 @@ import { allowMosaicPermission, askMosaic, MosaicReply } from "../mosaicAgent";
 // One place to say what you want. Mosaic does it and shows the result beside the page.
 
 const EXAMPLES: Array<{ label: string; prompt: string }> = [
-  { label: "Find the best coffee group", prompt: "Find the best open coffee group and show me the options" },
-  { label: "Which Austin groups are filling up?", prompt: "Which Austin groups are closest to filling up?" },
+  { label: "Compare the container groups", prompt: "Compare the two Flushing takeout container groups for 12 cases" },
+  { label: "What can Flushing still join?", prompt: "Which Flushing groups can we still join?" },
   { label: "My open PayPal invoices", prompt: "List my open PayPal invoices" },
   { label: "Show my pledges", prompt: "Show my pledges" },
   { label: "Claims waiting for me", prompt: "Show my claims that are still drafts" },

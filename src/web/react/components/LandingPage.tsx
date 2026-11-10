@@ -21,7 +21,7 @@ interface LandingPageProps {
 
 const HEADLINE: string[][] = [["Pool", "demand."], ["Buy", "with", "clarity."]];
 
-const EXAMPLE_PROMPTS = ["Show me coffee groups", "Find groups in Portland", "What is the status of my escrow?", "Show me the shipments"];
+const EXAMPLE_PROMPTS = ["Show me takeout container groups", "Which Flushing groups can we still join?", "What is the status of my escrow?", "Show me the shipments"];
 
 const FACTS = [
   { title: "PayPal approved", body: "You approve every authorization on PayPal's own site." },
@@ -288,7 +288,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <div className="lp-frame lp-frame--demo" aria-label="Animated demo: ask Mosaic for coffee groups, join one, PayPal holds the funds">
+          <div className="lp-frame lp-frame--demo" aria-label="Animated demo: ask Mosaic for takeout container groups, join one, PayPal holds the funds">
             <WholeShareHero />
           </div>
         </div>
