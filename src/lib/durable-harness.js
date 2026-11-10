@@ -45,6 +45,7 @@ const FOCUSED_TOOL_NAMES = new Set([
   "kernel_read_supplier_site",
   "track_shipment",
   "send_invoice_reminder",
+  "page_tool",
   "find_suppliers",
   "start_group_buy",
   "schedule_move_delivery",
@@ -110,6 +111,7 @@ export const PERMISSION_FOR_TOOL = {
   file_damage_claim: { flag: "allowAutonomousDraftMessages", label: "draft messages and claims" },
   setup_profile: { flag: "allowAutonomousDraftMessages", label: "update your profile" },
   send_invoice_reminder: { flag: "allowAutonomousDraftMessages", label: "send invoice reminders" },
+  page_tool: { flag: "allowAutonomousFilterSort", label: "filter, sort and chart what is on your screen" },
   start_group_buy: { flag: "allowAutonomousDraftMessages", label: "prepare a group buy for you to review" },
   find_suppliers: { flag: "allowAutonomousResearch", label: "find and research suppliers" },
   kernel_research_web_fact: { flag: "allowAutonomousResearch", label: "research suppliers on the web" },
@@ -184,6 +186,7 @@ Policy:
 - Deliveries: use the schedule tools. Pass the user's product words as the shipment, or an id from resolve. Days earlier is negative. If a rule rejects the change, tell the user the allowed range.
 - Disputes: track_shipment first when the question is where something is or whether it is late. file_damage_claim needs the damaged units, a reason and the product words. Photos the user attached are listed in the context. Claims stay drafts for the user to review.
 - PayPal: send_invoice_reminder reminds someone about one open invoice, only when the user asks. ui_open_report page paypal for the overview, query paypal_invoices or ledger for numbers, ui_navigate_view view paypal for invoice and dispute operations. open_paypal_dashboard only when the user asks for PayPal's own website.
+- To change what is on screen (filter, sort, group or chart the table beside the chat, zoom or switch a Bryntum view, edit an AG Studio report) call page_tool with a tool name from page.pageTools. Use the column ids from the grid. Read the result and tell the user what changed. When the user wants to filter, sort, group or chart data, show it as a table first with query show true and view grid. If a page tool says no grid is on screen, do that, then retry.
 - Stay in the chat. Answer questions with query. Navigate (ui_navigate_view, ui_open_group, ui_open_my_group) only when the user asks to go somewhere or open something.
 - If a needed detail is missing or the request is ambiguous, ask one short question and call no tool.
 - All PayPal activity in this app runs in the PayPal sandbox. Say so briefly when you talk about payments, holds, invoices or payouts, and never imply real money moved.
@@ -841,7 +844,7 @@ const TOOL_EFFECT = {
   present: "ui", start_group_buy: "ui", open_paypal_dashboard: "external",
   kernel_research_web_fact: "external", kernel_read_supplier_site: "external", track_shipment: "external", find_suppliers: "external",
   query_escrow_ledger: "read", get_clan_constitution: "read", explain_escrow_document: "read", prepare_pledge_quote: "read",
-  setup_profile: "write", send_invoice_reminder: "external", query: "read", resolve: "read", compare_groups: "read", join_group: "read",
+  setup_profile: "write", send_invoice_reminder: "external", page_tool: "ui", query: "read", resolve: "read", compare_groups: "read", join_group: "read",
   schedule_move_delivery: "write", schedule_extend_inspection: "write", schedule_book_slot: "write", schedule_resolve_conflicts: "write", schedule_undo: "write", file_damage_claim: "write"
 };
 

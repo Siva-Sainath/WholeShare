@@ -1,4 +1,5 @@
 import { applyStepOnce, describeStep } from "./mosaicAgent";
+import { callWebMcpTool } from "./webmcp";
 import type { AgentStep } from "./mosaicAgent";
 
 export interface LiveItem {
@@ -98,6 +99,17 @@ export function startMosaicLive(): void {
   source.addEventListener("AGENT_SESSION_STARTED", () => {
     window.clearTimeout(clearTimer);
     emit({ active: true, items: [], draft: "" });
+  });
+  // The model asked this page to run one of its tools (filter a grid, zoom the Scheduler, edit a Studio report).
+  source.addEventListener("PAGE_TOOL_CALL", (event) => {
+    const parsed = parse(event as MessageEvent<string>);
+    if (!parsed) return;
+    const { callId, tool, args } = parsed.payload as { callId: string; tool: string; args: Record<string, unknown> };
+    void callWebMcpTool(tool, args ?? {})
+      .then((result) => ({ callId, ok: true, result }))
+      .catch((error: unknown) => ({ callId, ok: false, error: error instanceof Error ? error.message : "The page tool failed." }))
+      .then((outcome) => fetch("/api/v1/agent/page-tool-result", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(outcome) }))
+      .catch(() => undefined);
   });
   source.addEventListener("AGENT_TEXT_DELTA", (event) => {
     const parsed = parse(event as MessageEvent<string>);

@@ -130,6 +130,27 @@ export function installGridTools(): void {
     }
   });
   registerWebMcpTool({
+    name: "grid_chart",
+    description: "Draw an AG Charts chart from the grid rows now shown. x is a category column, y one or more number columns. Types: column, bar, line, pie, area. Uses up to 30 rows.",
+    inputSchema: obj({ gridId, chartType: { type: "string", enum: ["column", "bar", "line", "pie", "area"] }, x: { type: "string" }, y: { type: "array", items: { type: "string" } } }, ["x", "y"]),
+    execute: (args) => {
+      const { api } = pick(args.gridId);
+      // Models sometimes send {field: "unitPriceUsd"} instead of the bare id. Accept both.
+      const asId = (value: unknown): string => (value && typeof value === "object" ? String((value as Record<string, unknown>).field ?? (value as Record<string, unknown>).colId ?? (value as Record<string, unknown>).id ?? (value as Record<string, unknown>).name ?? "") : String(value ?? ""));
+      const x = asId(args.x);
+      const y = (Array.isArray(args.y) ? args.y : [args.y]).map(asId).filter(Boolean);
+      const known = new Set((api.getColumns() ?? []).map((column) => column.getColId()));
+      const unknown = [x, ...y].filter((id) => !known.has(id));
+      if (unknown.length > 0) throw new Error(`No column ${unknown.join(", ")}. Call grid_describe for the column ids.`);
+      const kinds: Record<string, string> = { column: "groupedColumn", bar: "groupedBar", line: "line", pie: "pie", area: "area" };
+      const chartType = kinds[String(args.chartType ?? "column")] ?? "groupedColumn";
+      const rows = Math.min(api.getDisplayedRowCount(), 30);
+      if (rows === 0) throw new Error("The grid shows no rows to chart.");
+      api.createRangeChart({ chartType, cellRange: { rowStartIndex: 0, rowEndIndex: rows - 1, columns: [x, ...y] } } as Parameters<GridApi["createRangeChart"]>[0]);
+      return { chart: chartType, rows, x, y };
+    }
+  });
+  registerWebMcpTool({
     name: "grid_export_csv",
     description: "Export what the grid shows as CSV. Returns the text and also saves it for the user.",
     inputSchema: obj({ gridId }),

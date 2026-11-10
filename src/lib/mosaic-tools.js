@@ -66,7 +66,7 @@ export async function runQuery(args = {}) {
   }
   const out = { ...base, shown: rows.length, rows, ...(trimmed ? { trimmed: `${trimmed} more rows matched but were left out to keep this short. Ask for fewer fields or a narrower filter.` } : {}) };
   if (args.show === true && result.rows.length > 0) {
-    const artifact = { kind: sourceId === "groups" ? "groups" : sourceId === "paypal_invoices" ? "invoices" : "grid", title: String(args.title || result.label).slice(0, 80), source: sourceId, filter: Array.isArray(args.filter) ? args.filter : [], sort, limit: Math.min(Math.max(Number(args.panelLimit) || 50, limit), 200), count: result.rows.length, total: result.total };
+    const artifact = { kind: sourceId === "groups" && args.view !== "grid" ? "groups" : sourceId === "paypal_invoices" && args.view !== "grid" ? "invoices" : "grid", title: String(args.title || result.label).slice(0, 80), source: sourceId, filter: Array.isArray(args.filter) ? args.filter : [], sort, limit: Math.min(Math.max(Number(args.panelLimit) || 50, limit), 200), count: result.rows.length, total: result.total };
     actionDispatcher.broadcast("UI_ACTION", { type: "PRESENT", artifact, timestamp: new Date().toISOString() });
     return { ...out, status: "SUCCESS", action: "PRESENT", artifact, panel: "The table is open beside the chat." };
   }

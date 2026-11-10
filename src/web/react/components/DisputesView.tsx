@@ -18,6 +18,7 @@ import { uploadEvidence } from "../api";
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import type { ColDef, ValueFormatterParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
+import { installBryntumTools } from "../bryntumWebMcp";
 import { fetchShipments, submitDamageClaim, fetchClaims, ShipmentRecord, ClaimRecord } from "../api";
 import {
   initBryntumScheduler,
@@ -150,6 +151,7 @@ export const DisputesView: React.FC = () => {
   const [shipments, setShipments] = useState<ShipmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("timeline");
+  useEffect(() => installBryntumTools(setView), []);
   const fillHeight = () => Math.max(520, (typeof window === "undefined" ? 900 : window.innerHeight) - 330);
   const [proofUploading, setProofUploading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);

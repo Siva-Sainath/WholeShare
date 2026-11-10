@@ -102,7 +102,7 @@ const GridArtifact: React.FC<{ rows: Row[]; source?: string }> = ({ rows, source
         theme={wsGridTheme}
         rowData={rows}
         columnDefs={columnDefs}
-        defaultColDef={{ sortable: true, filter: true, resizable: true, enableCellChangeFlash: true }}
+        defaultColDef={{ sortable: true, filter: true, resizable: true, enableCellChangeFlash: true, enableRowGroup: true, enableValue: true }}
         getRowId={(params) => String((params.data as Row).id ?? JSON.stringify(params.data))}
         onGridReady={(event) => { release.current?.(); release.current = registerGrid("canvas", `Side panel: ${source ?? "data"}`, event.api); }}
         onGridPreDestroyed={() => { release.current?.(); release.current = null; }}

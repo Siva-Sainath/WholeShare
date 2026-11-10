@@ -222,6 +222,12 @@ let activeGridInstance: Grid | null = null;
 let activeCalendarInstance: Calendar | null = null;
 let activeTaskBoardInstance: TaskBoard | null = null;
 
+// The Scheduler that is on screen now, if any. Used by the Bryntum WebMCP tools.
+export function getBryntumScheduler(): Scheduler | null {
+  const instances = Array.from(schedulerInstances.values());
+  return instances[instances.length - 1] ?? null;
+}
+
 export function destroyBryntumScheduler(containerId?: string): void {
   const ids = containerId ? [containerId] : Array.from(schedulerInstances.keys());
   for (const id of ids) {

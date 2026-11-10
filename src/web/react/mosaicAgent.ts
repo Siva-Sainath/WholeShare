@@ -1,4 +1,5 @@
 import { getCanvas } from "./canvasStore";
+import { listWebMcpTools } from "./webmcp";
 import type { McpToolDeclaration } from "./api";
 
 export interface AgentStep {
@@ -160,6 +161,11 @@ function describeStepLabel(step: AgentStep): MosaicAction {
     const artifact = step.toolResult?.artifact as { title?: string } | undefined;
     return { label: artifact?.title ? `Showed ${artifact.title}` : `Read ${String(step.toolResult?.label ?? "the data")}${typeof step.toolResult?.matching === "number" ? ` (${step.toolResult.matching} rows)` : ""}`, ok };
   }
+  if (name === "page_tool") {
+    const used = String(step.toolArgs?.tool ?? "");
+    const labels: Record<string, string> = { grid_filter: "Filtered the table", grid_sort: "Sorted the table", grid_group_by: "Grouped the table", grid_chart: "Charted the table", grid_clear_filters: "Cleared the table filters", grid_export_csv: "Exported the table", bryntum_show_view: "Switched the Bryntum view", bryntum_scheduler_zoom: "Zoomed the Scheduler" };
+    return { label: ok ? labels[used] ?? `Used ${used.replace(/_/g, " ")}` : String(step.toolResult?.error ?? "The page could not do that"), ok };
+  }
   if (name === "resolve") return { label: "Matched your words to the real items", ok };
   if (name === "compare_groups") return { label: `Compared ${Array.isArray(step.toolResult?.groups) ? step.toolResult.groups.length : "the"} groups`, ok };
   if (name === "join_group") return { label: ok ? `Prepared your pledge${step.toolResult?.group ? ` for ${String(step.toolResult.group)}` : ""}` : "Could not prepare the pledge", ok };
@@ -267,7 +273,9 @@ function screenContext(): Record<string, unknown> {
   const open = getCanvas().artifact;
   const ids = open?.filter?.find((clause) => clause.field === "id" && Array.isArray(clause.value))?.value as string[] | undefined;
   const panel = open ? { panelOpen: { title: open.title, source: open.source, kind: open.kind, ...(ids ? { rowIds: ids } : {}) } } : {};
-  return { view: hash || "landing", ...panel, ...(window.__wholeshareScreen ?? {}) };
+  // What this page lets the assistant do (grids on screen, the Scheduler, Studio reports). Names only, to keep the prompt short.
+  const pageTools = listWebMcpTools().filter((tool) => /^(grid_|bryntum_|studio_)/.test(tool.name)).map((tool) => ({ name: tool.name, does: String(tool.description).slice(0, 90) }));
+  return { view: hash || "landing", ...panel, ...(pageTools.length ? { pageTools } : {}), ...(window.__wholeshareScreen ?? {}) };
 }
 
 export async function allowMosaicPermission(permission: string): Promise<void> {

@@ -2,6 +2,7 @@ import "../lib/env.js";
 import http from "node:http";
 import { listSources, querySource } from "../lib/data-sources.js";
 import { rebaseStoryShipments } from "../lib/story-clock.js";
+import { resolvePageTool } from "../lib/page-bridge.js";
 import { loadStudioState, saveStudioState } from "../lib/studio-state.js";
 import { bookSlot, extendInspection, getScheduleState, moveDelivery, resolveConflicts, undoLast } from "../lib/schedule-service.js";
 import { buildConnectUrl, completeConnect, disconnectPayPal, connectionStatus } from "../lib/paypal-connect.js";
@@ -1129,6 +1130,16 @@ export function createWebServer() {
         sendJson(res, 200, result);
       } catch (err) {
         sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/agent/page-tool-result" && req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        sendJson(res, 200, { accepted: resolvePageTool(body.callId, body) });
+      } catch (error) {
+        sendJson(res, 400, { error: error instanceof Error ? error.message : "Bad request." });
       }
       return;
     }

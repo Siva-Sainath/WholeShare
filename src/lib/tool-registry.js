@@ -19,6 +19,7 @@ import { getPledgeQuote } from "./paypal-checkout.js";
 import { loadUserSettings } from "./user-settings.js";
 import { SOURCES, querySource, resolveSourceId } from "./data-sources.js";
 import { runQuery, resolveEntity, compareGroups, groupIdFromWords } from "./mosaic-tools.js";
+import { callPageTool } from "./page-bridge.js";
 import { normaliseFulfilment } from "./fulfilment.js";
 import { isCarrierFormatTracking } from "./tracking-format.js";
 import { bookSlot, extendInspection, findShipment, moveDelivery, resolveConflicts, undoLast } from "./schedule-service.js";
@@ -214,7 +215,7 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
     function: {
       name: "query",
       description: "Read facts from any data source so you can answer with real numbers. Sources: groups (buying groups: name, product, category, city, country, status FORMING or LOCKED, currentUnits, targetUnits, fillPct, listPriceUsd, tierDiscountPct, unitPriceUsd, supplier, supplierTrust), ledger (the user's pledges), members, claims, shipments, suppliers, paypal_invoices. Use filter [{field, op: eq|ne|contains|in|gt|gte|lt|lte, value}], sort {field, direction}, groupBy (a field) with aggregate [{field, op: sum|avg|count|min|max}] for totals and breakdowns, fields to pick columns, limit (max 25). Set show true, with a short title, when the user wants to see, browse or list items: it also opens the table beside the chat in the same call. Leave show off for a number or a yes or no. Returns rows or groups plus availableFields.",
-      parameters: { type: "object", properties: { source: { type: "string" }, filter: { type: "array", items: { type: "object" } }, sort: { type: "object" }, groupBy: { type: "string" }, aggregate: { type: "array", items: { type: "object" } }, fields: { type: "array", items: { type: "string" } }, limit: { type: "number" }, show: { type: "boolean" }, title: { type: "string" } }, required: ["source"] }
+      parameters: { type: "object", properties: { source: { type: "string" }, filter: { type: "array", items: { type: "object" } }, sort: { type: "object" }, groupBy: { type: "string" }, aggregate: { type: "array", items: { type: "object" } }, fields: { type: "array", items: { type: "string" } }, limit: { type: "number" }, show: { type: "boolean" }, title: { type: "string" }, view: { type: "string", enum: ["cards", "grid"], description: "With show true: grid opens an AG Grid table the user or page_tool can filter, sort, group and chart. Groups and invoices default to cards." } }, required: ["source"] }
     }
   },
   {
@@ -247,6 +248,14 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
       name: "setup_profile",
       description: "Set up or update the user's business profile from what they said: businessName, city, country, currency (3 letter code such as USD or INR), contactEmail. Pass only the fields the user stated. It saves them, opens the Settings page so the user can review, and returns the previous values so the change can be reversed.",
       parameters: { type: "object", properties: { businessName: { type: "string" }, city: { type: "string" }, country: { type: "string" }, currency: { type: "string" }, contactEmail: { type: "string" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "page_tool",
+      description: "Act on the page the person is looking at, using the tools it offers (listed in page.pageTools in the context). Use it to filter, sort, group, chart or export the table beside the chat (grid_filter, grid_sort, grid_group_by, grid_chart, grid_clear_filters, grid_export_csv), to switch or zoom a Bryntum view (bryntum_show_view, bryntum_scheduler_zoom), or to change an AG Studio report when Insights is open. Pass tool (a name from page.pageTools) and args. Returns what the page reports, such as how many rows are now shown. It never moves money.",
+      parameters: { type: "object", properties: { tool: { type: "string" }, args: { type: "object" } }, required: ["tool"] }
     }
   },
   {
@@ -2106,6 +2115,8 @@ export async function executeTool(toolName, args = {}) {
       const speak = `Saved your ${Object.entries(next).map(([key, value]) => `${labels[key] ?? key} (${value})`).join(", ")}. You can review it in Settings, or ask me to change it back.`;
       return { status: "SUCCESS", action: "PROFILE_UPDATED", updated: next, previous, speak, note: "Saved. The Settings page is open so the user can review it." };
     }
+
+    case "page_tool": return await callPageTool(args.tool, args.args && typeof args.args === "object" ? args.args : {});
 
     case "send_invoice_reminder": {
       const rows = (await querySource("paypal_invoices", { limit: 500 })).rows;
