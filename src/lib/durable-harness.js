@@ -818,6 +818,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
 
   async callModelWithTools(messages, sessionId, forceTool = null) {
     const res = await modelClient.callChat({
+      sessionKey: sessionId,
       onText: this.streamTo(sessionId),
       messages,
       tools: focusedSessions.has(sessionId) ? FOCUSED_TOOL_DECLARATIONS : WHOLESHARE_TOOL_DECLARATIONS,

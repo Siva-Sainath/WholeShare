@@ -105,7 +105,57 @@ export class WholeshareModelClient {
   }
 
   // Same request as _executePost, read as a stream. Text deltas reach onText as they arrive. Tool calls are assembled from their deltas.
-  async _executeStream(endpoint, headers, body, controller, onText) {
+  // Retries transient failures (429, 5xx, dropped connections) before any text has arrived. If MOSAIC_FALLBACK_MODEL is set and
+  // the primary has not answered within MOSAIC_HEDGE_MS, the same request also goes to the fallback and the first to answer wins.
+  async _resilient({ endpoint, headers, body, outer, onText, streaming }) {
+    const fallbackModel = process.env.MOSAIC_FALLBACK_MODEL || "";
+    const hedgeMs = Number(process.env.MOSAIC_HEDGE_MS) || 5000;
+    const gate = { winner: null };
+
+    const run = (model) => {
+      const controller = new AbortController();
+      outer.signal.addEventListener("abort", () => controller.abort(), { once: true });
+      let release;
+      const first = new Promise((resolve) => { release = resolve; });
+      const forward = (delta) => { if (gate.winner === model && onText) onText(delta); };
+      const claim = () => { if (!gate.winner) gate.winner = model; release(); };
+      const done = (async () => {
+        for (let attempt = 0; ; attempt += 1) {
+          try {
+            const result = streaming
+              ? await this._executeStream(endpoint, headers, { ...body, model }, controller, forward, claim)
+              : await this._executePost(endpoint, headers, { ...body, model }, null, controller);
+            claim();
+            return result;
+          } catch (error) {
+            const transient = /HTTP (429|5\d\d)|fetch failed|ECONNRESET|socket|terminated/i.test(String(error?.message));
+            if (!transient || gate.winner || controller.signal.aborted || attempt >= 2) { release(); throw error; }
+            await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+          }
+        }
+      })();
+      done.catch(() => undefined);
+      return { model, controller, first, done };
+    };
+
+    const primary = run(body.model);
+    if (!fallbackModel || fallbackModel === body.model) return primary.done;
+
+    const attempts = [primary];
+    const early = await Promise.race([primary.first.then(() => "answered"), new Promise((resolve) => setTimeout(resolve, hedgeMs, "slow"))]);
+    if (early === "slow" && !gate.winner) attempts.push(run(fallbackModel));
+    await Promise.race(attempts.map((attempt) => attempt.first));
+    const winner = attempts.find((attempt) => attempt.model === gate.winner);
+    if (winner) {
+      attempts.filter((attempt) => attempt !== winner).forEach((attempt) => attempt.controller.abort());
+      return winner.done;
+    }
+    // The first to finish had failed. Fail over to the fallback, or to whichever attempt is still running.
+    if (attempts.length === 1) attempts.push(run(fallbackModel));
+    return Promise.any(attempts.map((attempt) => attempt.done));
+  }
+
+  async _executeStream(endpoint, headers, body, controller, onText, onFirst = null) {
     const hosted = !/127\.0\.0\.1|localhost/.test(endpoint);
     if (hosted) guardBudget();
     const startedAt = Date.now();
@@ -124,12 +174,14 @@ export class WholeshareModelClient {
     let content = "";
     let usage = null;
     const calls = new Map();
+    let firstSeen = false;
     const handle = (line) => {
       if (!line.startsWith("data:")) return;
       const data = line.slice(5).trim();
       if (!data || data === "[DONE]") return;
       let chunk;
       try { chunk = JSON.parse(data); } catch { return; }
+      if (onFirst && !firstSeen) { firstSeen = true; onFirst(); }
       if (chunk.usage) usage = chunk.usage;
       const delta = chunk.choices?.[0]?.delta;
       if (!delta) return;
@@ -167,7 +219,7 @@ export class WholeshareModelClient {
     return { message: { role: "assistant", content, ...(tool_calls.length ? { tool_calls } : {}) }, usage };
   }
 
-  async callChat({ messages, tools = null, temperature = 0.1, maxTokens = 1024, responseFormat = null, toolChoice = "auto", onText = null }) {
+  async callChat({ messages, tools = null, temperature = 0.1, maxTokens = 1024, responseFormat = null, toolChoice = "auto", onText = null, sessionKey = null }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -207,9 +259,15 @@ export class WholeshareModelClient {
             localBody.response_format = responseFormat;
           }
 
-          const localRes = onText && process.env.MOSAIC_STREAM !== "false"
-            ? await this._executeStream(mosaicChatCompletionsUrl(), localHeaders, localBody, controller, onText)
-            : await this._executePost(mosaicChatCompletionsUrl(), localHeaders, localBody, timer, controller);
+          if (sessionKey) localHeaders["x-session-affinity"] = String(sessionKey).slice(0, 64);
+          const localRes = await this._resilient({
+            endpoint: mosaicChatCompletionsUrl(),
+            headers: localHeaders,
+            body: localBody,
+            outer: controller,
+            onText,
+            streaming: Boolean(onText) && process.env.MOSAIC_STREAM !== "false"
+          });
           return {
             model: mosaicModelName(DEFAULT_LOCAL_MODEL),
             provider: "mosaic-model",

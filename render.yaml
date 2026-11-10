@@ -47,6 +47,10 @@ services:
         value: accounts/fireworks/models/minimax-m3p1-flash
       - key: MOSAIC_EXTRA_BODY
         value: '{"reasoning_effort":"none"}'
+      - key: MOSAIC_FALLBACK_MODEL
+        value: accounts/fireworks/models/deepseek-v4p1-flash
+      - key: MOSAIC_HEDGE_MS
+        value: "5000"
       - key: MOSAIC_DEV_BUDGET_USD
         value: "20"
       - key: FIREWORKS_API_KEY
