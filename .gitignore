@@ -63,3 +63,34 @@ data/procured/*
 *.bin
 *.pt
 
+
+# Generated client bundles (contain build-time license keys)
+src/web/public/app.bundle.js
+src/web/public/bryntum.css
+src/web/public/bryntum-timeline.bundle.js
+src/web/public/app.bundle.css
+
+# Runtime and personal state (written while the app runs, never shipped)
+data/user_settings.json
+data/durable_journal.json
+data/proofs/
+data/lake/
+data/processed/
+data/memory/
+.audit/
+public/demo-kits/*.zip
+
+# Installed agent tooling packs (large, not part of the product)
+.agents/
+.claude/
+.kiro/
+.cursor/skills/
+skills/
+
+# Local prompts and one-off scripts that hold private keys
+scripts/build-index-html.py
+scripts/audit-ui-ux.js.backup
+src/web/public/ag-grid-enterprise.min.js
+src/web/public/ag-grid.min.css
+src/web/public/ag-theme-quartz.min.css
+GEMINI_*.md
