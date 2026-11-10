@@ -6,7 +6,8 @@ export type GovernanceRuleType =
   | "VOTING_WEIGHT_STRATEGY"
   | "DISPUTE_ESCALATION_WINDOW_HOURS"
   | "MIN_DISCOUNT_PERCENT"
-  | "META_GOVERNANCE_PROCEDURE";
+  | "META_GOVERNANCE_PROCEDURE"
+  | "SUPPLIER_SELECTION";
 
 export type DamageEvidenceStandard =
   | "PHOTO_ONLY"
@@ -60,7 +61,84 @@ export interface ClanConstitution {
   founderSmeId?: string;
   founderVetoRules?: GovernanceRuleType[];
   metaGovernancePolicy?: MetaGovernancePolicy;
+  templateId?: GovernanceTemplateId;
+  chosenSupplier?: string;
   updatedAt: string;
+}
+
+export type GovernanceTemplateId = "EQUAL_COOP" | "VOLUME_WEIGHTED" | "FOUNDER_LED";
+
+export interface GovernanceTemplate {
+  id: GovernanceTemplateId;
+  name: string;
+  description: string;
+  rules: Partial<ClanConstitutionRules>;
+  founderVetoRules?: GovernanceRuleType[];
+}
+
+export const GOVERNANCE_TEMPLATES: Record<GovernanceTemplateId, GovernanceTemplate> = {
+  EQUAL_COOP: {
+    id: "EQUAL_COOP",
+    name: "Equal co-op",
+    description: "Every member equal, big changes need a supermajority. The default.",
+    rules: {
+      VOTING_WEIGHT_STRATEGY: "ONE_MEMBER_ONE_VOTE",
+      META_GOVERNANCE_PROCEDURE: "DEMOCRATIC_SUPERMAJORITY",
+      INSPECTION_WINDOW_HOURS: 48,
+      MIN_DISCOUNT_PERCENT: 20
+    },
+    founderVetoRules: []
+  },
+  VOLUME_WEIGHTED: {
+    id: "VOLUME_WEIGHTED",
+    name: "Volume-weighted",
+    description: "Bigger pledges carry more weight.",
+    rules: {
+      VOTING_WEIGHT_STRATEGY: "VOLUME_WEIGHTED",
+      META_GOVERNANCE_PROCEDURE: "DEMOCRATIC_SUPERMAJORITY",
+      INSPECTION_WINDOW_HOURS: 48,
+      MIN_DISCOUNT_PERCENT: 20
+    },
+    founderVetoRules: []
+  },
+  FOUNDER_LED: {
+    id: "FOUNDER_LED",
+    name: "Founder-led",
+    description: "The founder approves supplier and rule changes, members vote on the rest.",
+    rules: {
+      VOTING_WEIGHT_STRATEGY: "FOUNDER_VETO",
+      META_GOVERNANCE_PROCEDURE: "FOUNDER_ARBITRATION",
+      INSPECTION_WINDOW_HOURS: 48,
+      MIN_DISCOUNT_PERCENT: 20
+    },
+    founderVetoRules: ["SUPPLIER_SELECTION", "META_GOVERNANCE_PROCEDURE", "VOTING_WEIGHT_STRATEGY"]
+  }
+};
+
+export const CUSTOM_GOVERNANCE_RULE_ORDER: GovernanceRuleType[] = [
+  "VOTING_WEIGHT_STRATEGY",
+  "META_GOVERNANCE_PROCEDURE",
+  "INSPECTION_WINDOW_HOURS",
+  "DAMAGE_EVIDENCE_REQUIREMENT",
+  "STEP_UP_THRESHOLD_USD",
+  "MIN_DISCOUNT_PERCENT",
+  "DISPUTE_ESCALATION_WINDOW_HOURS",
+  "SILENCE_AUTO_CONFIRM_HOURS"
+];
+
+export function createCharterFromTemplate(
+  templateId: GovernanceTemplateId,
+  overrides?: Partial<ClanConstitutionRules>
+): { rules: ClanConstitutionRules; founderVetoRules: GovernanceRuleType[] } {
+  const template = GOVERNANCE_TEMPLATES[templateId] || GOVERNANCE_TEMPLATES.EQUAL_COOP;
+  return {
+    rules: {
+      ...DEFAULT_CLAN_RULES,
+      ...template.rules,
+      ...(overrides || {})
+    },
+    founderVetoRules: template.founderVetoRules ? [...template.founderVetoRules] : []
+  };
 }
 
 export interface CustomClanCharter {
@@ -75,6 +153,8 @@ export interface CustomClanCharter {
   constitution: ClanConstitutionRules;
   founderVetoRules: GovernanceRuleType[];
   metaGovernancePolicy: MetaGovernancePolicy;
+  templateId?: GovernanceTemplateId;
+  chosenSupplier?: string;
   dataSources?: Array<{ type: "URL" | "INVOICE" | "SPREADSHEET"; location: string; verified: boolean }>;
   createdAt: string;
 }
@@ -113,6 +193,7 @@ export interface GovernanceProposal {
   proposedValue: number | string;
   previousValue: number | string;
   rationale: string;
+  briefId?: string;
   status: ProposalStatus;
   createdAt: string;
   votingDeadline: string;
@@ -303,10 +384,39 @@ export function validateProposalBounds(
       break;
     }
 
+    case "SUPPLIER_SELECTION": {
+      if (typeof proposedValue !== "string" || !proposedValue.trim()) {
+        throw new GovernanceError(
+          "VALUE_OUT_OF_BOUNDS",
+          "Supplier selection proposal requires a non-empty vendor URL string."
+        );
+      }
+      const trimmed = proposedValue.trim();
+      if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+        throw new GovernanceError(
+          "VALUE_OUT_OF_BOUNDS",
+          "Supplier selection must specify a valid vendor URL with http or https protocol."
+        );
+      }
+      break;
+    }
+
     default:
       throw new GovernanceError(
         "VALUE_OUT_OF_BOUNDS",
         `Unknown governance rule type: ${ruleType}`
       );
+  }
+}
+
+export function validateCharterRules(rules: Record<string, unknown>): void {
+  for (const [key, val] of Object.entries(rules)) {
+    if (IMMUTABLE_PLATFORM_INVARIANTS.includes(key)) {
+      throw new GovernanceError(
+        "IMMUTABLE_INVARIANT_VIOLATION",
+        `Cannot propose changes to immutable FinTech invariant '${key}'. Core money safety rules cannot be modified.`
+      );
+    }
+    validateProposalBounds(key as GovernanceRuleType, val as number | string);
   }
 }

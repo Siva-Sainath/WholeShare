@@ -223,6 +223,27 @@ export async function authorizeOrderHold({ orderId, idempotencyKey, timeoutMs = 
   };
 }
 
+export async function voidOrderAuthorization({ authorizationId, idempotencyKey, timeoutMs = DEFAULT_TIMEOUT_MS }) {
+  if (!authorizationId) throw new Error("authorizationId is required to void an order authorization.");
+
+  const token = await getPayPalAccessToken(timeoutMs);
+  const requestId = idempotencyKey || `void_${crypto.randomUUID()}`;
+  const response = await executePayPalRequest(
+    `/v2/payments/authorizations/${authorizationId}/void`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "PayPal-Request-Id": requestId
+      }
+    },
+    timeoutMs
+  );
+
+  return { authorizationId, status: response.status, idempotencyKey: requestId, liveMode: true };
+}
+
 export async function captureOrderHold({
   authorizationId,
   amountCents,

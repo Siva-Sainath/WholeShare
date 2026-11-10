@@ -76,6 +76,19 @@ class WholeshareActionDispatcher {
       this.catalog.set(item.sku, item);
     }
 
+    if (!this.catalog.has("organic-flour-50lb")) {
+      this.catalog.set("organic-flour-50lb", {
+        sku: "organic-flour-50lb",
+        name: "Golden Fields Organic Flour (50 lb Bag)",
+        basePriceUsd: 10,
+        tiers: [
+          { tier: 1, minUnits: 100, priceUsd: 10, discountPct: 0 },
+          { tier: 2, minUnits: 500, priceUsd: 7.2, discountPct: 28 },
+          { tier: 3, minUnits: 1000, priceUsd: 5.8, discountPct: 42 }
+        ]
+      });
+    }
+
     for (const p of initialPersonas) {
       this.smes.set(p.id, {
         id: p.id,
@@ -101,6 +114,16 @@ class WholeshareActionDispatcher {
       unitPriceCents: 1000,
       discountTierPct: 0,
       status: "FORMING",
+      leaderId: "sme_austin_01",
+      originPort: "Kansas City Rail Depot",
+      destinationPort: "Austin Logistics Center",
+      subscription: {
+        monthlyDuesUsd: 49,
+        yearlyDuesUsd: 499,
+        commitmentTerm: "1_YEAR",
+        cancellationNoticeDays: 30,
+        updatedAt: new Date().toISOString()
+      },
       members: [
         {
           smeId: "sme_austin_01",
@@ -126,6 +149,215 @@ class WholeshareActionDispatcher {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
+
+    const coffeeSku = "specialty-coffee-green-60kg";
+    const coffeeItem = this.catalog.get(coffeeSku);
+    const coffeeId = "coalition_coffee_02";
+    this.coalitions.set(coffeeId, {
+      id: coffeeId,
+      sku: coffeeSku,
+      skuName: coffeeItem?.name || "Ethiopian Yirgacheffe Grade 1 Green Coffee (60 kg Sack)",
+      targetUnits: 10,
+      currentUnits: 12,
+      unitPriceCents: 40800,
+      discountTierPct: 15,
+      status: "LOCKED",
+      trackingNumber: "1Z9999999999999999",
+      carrier: "UPS",
+      members: [
+        {
+          smeId: "sme_bean_02",
+          name: "Bean & Leaf Coffee Roasters",
+          pledgedUnits: 6,
+          authorizedCents: 244800,
+          status: "AUTHORIZED",
+          stepUpRequired: false,
+          paypalOrderId: "2WW5818956976991R",
+          invoiceQrUrl: null
+        },
+        {
+          smeId: "sme_green_03",
+          name: "GreenLeaf Organics Cafe",
+          pledgedUnits: 6,
+          authorizedCents: 244800,
+          status: "AUTHORIZED",
+          stepUpRequired: false,
+          paypalOrderId: "7GH1234567890123A",
+          invoiceQrUrl: null
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    const tilesSku = "porcelain-matte-tiles-24x24";
+    const tilesItem = this.catalog.get(tilesSku);
+    const tilesId = "coalition_tiles_03";
+    this.coalitions.set(tilesId, {
+      id: tilesId,
+      sku: tilesSku,
+      skuName: tilesItem?.name || "Commercial Grade 4 Matte Porcelain Floor Tiles (Pallet 480 sq ft)",
+      targetUnits: 15,
+      currentUnits: 8,
+      unitPriceCents: 85000,
+      discountTierPct: 0,
+      status: "FORMING",
+      members: [
+        {
+          smeId: "sme_austin_01",
+          name: "Austin Artisan Bakery",
+          pledgedUnits: 4,
+          authorizedCents: 340000,
+          status: "PLEDGED",
+          stepUpRequired: false,
+          paypalOrderId: null,
+          invoiceQrUrl: null
+        },
+        {
+          smeId: "sme_green_03",
+          name: "GreenLeaf Organics Cafe",
+          pledgedUnits: 4,
+          authorizedCents: 340000,
+          status: "PLEDGED",
+          stepUpRequired: false,
+          paypalOrderId: null,
+          invoiceQrUrl: null
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    const boxesSku = "corrugated-boxes-12x12x12";
+    const boxesItem = this.catalog.get(boxesSku);
+    const boxesId = "coalition_boxes_04";
+    this.coalitions.set(boxesId, {
+      id: boxesId,
+      sku: boxesSku,
+      skuName: boxesItem?.name || "Heavy-Duty 200# ECT-32 Kraft Shipping Boxes (Bundle of 25)",
+      targetUnits: 100,
+      currentUnits: 150,
+      unitPriceCents: 2730,
+      discountTierPct: 22,
+      status: "LOCKED",
+      trackingNumber: "9400111899562537628834",
+      carrier: "USPS",
+      members: [
+        {
+          smeId: "sme_austin_01",
+          name: "Austin Artisan Bakery",
+          pledgedUnits: 75,
+          authorizedCents: 204750,
+          status: "AUTHORIZED",
+          stepUpRequired: false,
+          paypalOrderId: "4KL9876543210987B",
+          invoiceQrUrl: null
+        },
+        {
+          smeId: "sme_bean_02",
+          name: "Bean & Leaf Coffee Roasters",
+          pledgedUnits: 75,
+          authorizedCents: 204750,
+          status: "AUTHORIZED",
+          stepUpRequired: false,
+          paypalOrderId: "8MN6543210987654C",
+          invoiceQrUrl: null
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    const hardwareSku = "stainless-fasteners-316";
+    const hardwareItem = this.catalog.get(hardwareSku);
+    const hardwareId = "coalition_hardware_05";
+    this.coalitions.set(hardwareId, {
+      id: hardwareId,
+      sku: hardwareSku,
+      skuName: hardwareItem?.name || "Marine Grade 316 Stainless Hex Bolts & Nuts (Case of 500)",
+      targetUnits: 80,
+      currentUnits: 40,
+      unitPriceCents: 12000,
+      discountTierPct: 0,
+      status: "FORMING",
+      members: [
+        {
+          smeId: "sme_green_03",
+          name: "GreenLeaf Organics Cafe",
+          pledgedUnits: 40,
+          authorizedCents: 480000,
+          status: "PLEDGED",
+          stepUpRequired: false,
+          paypalOrderId: null,
+          invoiceQrUrl: null
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    const vanillaId = "coalition_vanilla_06";
+    this.coalitions.set(vanillaId, {
+      id: vanillaId,
+      sku: "madagascar-vanilla",
+      skuName: "Madagascar Vanilla Syndicate",
+      targetUnits: 250,
+      currentUnits: 0,
+      unitPriceCents: 4500,
+      discountTierPct: 0,
+      status: "FORMING",
+      members: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    // Hydrate 750+ Pre-Seeded Clans & Members from data/processed
+    try {
+      const clansUniversePath = resolve(process.cwd(), "data/processed/clans_universe.json");
+      const membersUniversePath = resolve(process.cwd(), "data/processed/clan_members_universe.json");
+      if (existsSync(clansUniversePath) && existsSync(membersUniversePath)) {
+        const rawClans = JSON.parse(readFileSync(clansUniversePath, "utf-8"));
+        const rawMembers = JSON.parse(readFileSync(membersUniversePath, "utf-8"));
+        const membersByClan = new Map();
+        for (const m of rawMembers) {
+          if (!membersByClan.has(m.clanId)) membersByClan.set(m.clanId, []);
+          membersByClan.get(m.clanId).push({
+            smeId: m.smeId,
+            name: m.smeId,
+            pledgedUnits: m.pledgedUnits,
+            authorizedCents: m.authorizedCents,
+            currency: m.currency,
+            status: m.status,
+            stepUpRequired: m.stepUpRequired,
+            paypalOrderId: m.paypalOrderId || null,
+            invoiceQrUrl: m.qrCodeUrl || null
+          });
+        }
+
+        for (const c of rawClans) {
+          const catItem = this.catalog.get(c.sku);
+          this.coalitions.set(c.id, {
+            id: c.id,
+            sku: c.sku,
+            skuName: catItem?.name || c.sku,
+            targetUnits: c.targetUnits,
+            currentUnits: c.currentUnits,
+            unitPriceCents: c.unitPriceCents,
+            discountTierPct: Number(c.discountTierPct) || 0,
+            status: c.status,
+            leaderId: c.leaderId,
+            corridorId: c.corridorId,
+            industryVertical: c.industryVertical,
+            capacityRatio: c.capacityRatio,
+            members: membersByClan.get(c.id) || [],
+            createdAt: c.createdAt || new Date().toISOString(),
+            updatedAt: c.updatedAt || new Date().toISOString()
+          });
+        }
+      }
+    } catch {
+      // Continue with base demonstration clans
+    }
   }
 
   broadcast(eventType, payload) {
@@ -225,6 +457,17 @@ class WholeshareActionDispatcher {
         "OUTSTANDING_DEBT_BLOCK",
         `Founder ${founderSmeId} has outstanding debts of $${(outstandingDebt / 100).toFixed(2)}. Unsettled liabilities must be resolved via PayPal before creating new clans.`
       );
+    }
+
+    if (!clanId) {
+      const existing = [...this.coalitions.values()].find(
+        c => c.skuName === (skuName || clanName || sku)
+      );
+      if (existing) {
+        let constitution = null;
+        try { constitution = getClanGovernanceAdapter().getConstitution(existing.id); } catch { constitution = null; }
+        return { coalition: existing, constitution, existing: true };
+      }
     }
 
     const newClanId = clanId || `clan_${(sku || "custom").replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
@@ -632,23 +875,36 @@ class WholeshareActionDispatcher {
 
   getLedgerState() {
     const rows = [];
+    const seenIds = new Set();
+    const seenSku = new Set();
     for (const c of this.coalitions.values()) {
+      const skuKey = c.skuName;
+      if (seenIds.has(c.id) || seenSku.has(skuKey)) continue;
+      seenIds.add(c.id);
+      seenSku.add(skuKey);
       const totalEscrowCents = c.members.reduce((sum, m) => sum + (m.authorizedCents || 0), 0);
       rows.push({
         coalitionId: c.id,
+        id: c.id,
         sku: c.sku,
         skuName: c.skuName,
         targetUnits: c.targetUnits,
         currentUnits: c.currentUnits,
+        unitPriceCents: c.unitPriceCents,
         unitPriceUsd: (c.unitPriceCents / 100).toFixed(2),
+        totalEscrowCents,
         totalEscrowUsd: (totalEscrowCents / 100).toFixed(2),
         discountTierPct: c.discountTierPct,
         status: c.status,
         membersCount: c.members.length,
         members: c.members.map(m => ({
+          id: `${c.id}-${m.smeId}`,
+          coalitionId: c.id,
           smeId: m.smeId,
+          memberId: m.smeId,
           name: m.name,
           pledgedUnits: m.pledgedUnits,
+          authorizedCents: m.authorizedCents,
           authorizedUsd: (m.authorizedCents / 100).toFixed(2),
           status: m.status,
           stepUpRequired: m.stepUpRequired,
@@ -658,6 +914,176 @@ class WholeshareActionDispatcher {
       });
     }
     return rows;
+  }
+  updateClanSubscription(clanId, config = {}) {
+    const clan = this.coalitions.get(clanId);
+    if (!clan) {
+      throw new Error(`Clan ID '${clanId}' not found.`);
+    }
+
+    clan.subscription = {
+      monthlyDuesUsd: Number(config.monthlyDuesUsd) || 49,
+      yearlyDuesUsd: Number(config.yearlyDuesUsd) || 499,
+      commitmentTerm: config.commitmentTerm || "1_YEAR",
+      cancellationNoticeDays: Number(config.cancellationNoticeDays) || 30,
+      updatedAt: new Date().toISOString()
+    };
+
+    this.broadcast("CLAN_SUBSCRIPTION_UPDATED", {
+      clanId,
+      subscription: clan.subscription
+    });
+
+    return clan.subscription;
+  }
+
+  async confirmShipmentReceipt(orderId, { photoBase64, conditionStatus, notes, buyerId, coalitionId }) {
+    let targetCoalition = null;
+    let targetMember = null;
+
+    // A named group wins, so a buyer in several groups confirms the right one.
+    const candidates = coalitionId ? [this.coalitions.get(coalitionId)].filter(Boolean) : Array.from(this.coalitions.values());
+    if (coalitionId && candidates.length === 0) {
+      throw new Error(`Group '${coalitionId}' was not found.`);
+    }
+    for (const c of candidates) {
+      const found = c.members.find(m => (orderId && m.paypalOrderId === orderId) || m.smeId === buyerId);
+      if (found) {
+        targetCoalition = c;
+        targetMember = found;
+        break;
+      }
+    }
+    if (coalitionId && !targetMember) {
+      throw new Error("You are not a member of that group.");
+    }
+
+    const timestamp = new Date().toISOString();
+    const photoId = `proof_${Date.now()}`;
+
+    if (conditionStatus === "GOOD_CONDITION") {
+      if (targetCoalition) {
+        targetCoalition.status = "DELIVERED";
+        targetCoalition.deliveredAt = timestamp;
+      }
+      if (targetMember) {
+        targetMember.status = "DELIVERED_CONFIRMED";
+      }
+
+      this.broadcast("SHIPMENT_DELIVERY_CONFIRMED", {
+        orderId,
+        buyerId,
+        coalitionId: targetCoalition?.id,
+        status: "DELIVERED",
+        conditionStatus: "GOOD_CONDITION",
+        photoProofId: photoId,
+        notes,
+        timestamp
+      });
+
+      return {
+        status: "DELIVERY_CONFIRMED",
+        conditionStatus: "GOOD_CONDITION",
+        orderId,
+        coalitionStatus: targetCoalition?.status,
+        inspectionClockHours: 48,
+        message: "Delivery receipt confirmed in good condition. 48-hour inspection dispute clock running before batch capture."
+      };
+    } else {
+      if (targetCoalition) {
+        targetCoalition.status = "DISPUTED";
+      }
+      if (targetMember) {
+        targetMember.status = "DISPUTE_FILED";
+      }
+
+      const claimId = `claim_${Date.now()}`;
+      try {
+        const { getClaimsStorage } = await import("../storage/claims.storage.ts");
+        const claimsStorage = getClaimsStorage();
+        claimsStorage.save({
+          id: claimId,
+          orderId: orderId || "ORD_UNKNOWN",
+          coalitionId: targetCoalition?.id || "coalition_flour_01",
+          buyerId: buyerId || "sme_austin_01",
+          totalAmount: (targetMember?.authorizedCents || 150000) / 100,
+          claimedRefundAmount: Math.round(((targetMember?.authorizedCents || 150000) / 100) * 0.4),
+          status: "DRAFT",
+          evidence: {
+            photoUrls: [photoId],
+            description: notes || "Multimodal damage proof uploaded by buyer."
+          },
+          createdAt: timestamp,
+          updatedAt: timestamp
+        });
+      } catch (err) {
+        console.error("Failed to persist damage claim:", err.message);
+      }
+
+      this.broadcast("ESCROW_DISPUTED", {
+        claimId,
+        orderId,
+        buyerId,
+        coalitionId: targetCoalition?.id,
+        status: "DISPUTED_FROZEN",
+        conditionStatus: "DAMAGED_OR_OUT_OF_SPEC",
+        notes,
+        timestamp
+      });
+
+      return {
+        status: "DISPUTE_REGISTERED",
+        conditionStatus: "DAMAGED_OR_OUT_OF_SPEC",
+        claimId,
+        orderId,
+        frozenHoldCents: targetMember?.authorizedCents,
+        message: "Shipment marked damaged or out of spec. Remaining escrow hold frozen. 48-hour damage ticket intaken for pro-rata dispute triage."
+      };
+    }
+  }
+
+  getMatchmakingSnapshot(filters = {}) {
+    const clans = Array.from(this.coalitions.values()).map(c => {
+      const catalogItem = this.catalog.get(c.sku);
+      const totalEscrowCents = c.members.reduce((sum, m) => sum + (m.authorizedCents || 0), 0);
+      const retailPriceUsd = catalogItem?.basePriceUsd || 10;
+      const wholesalePriceUsd = c.unitPriceCents / 100;
+      const savingsPct = retailPriceUsd > 0 ? Math.round(((retailPriceUsd - wholesalePriceUsd) / retailPriceUsd) * 100) : 0;
+      return {
+        id: c.id,
+        name: c.skuName,
+        sku: c.sku,
+        category: catalogItem?.category || "WHOLESALE_COMMODITY",
+        status: c.status,
+        currentUnits: c.currentUnits,
+        targetUnits: c.targetUnits,
+        progressPct: c.targetUnits > 0 ? Math.min(100, Math.round((c.currentUnits / c.targetUnits) * 100)) : 0,
+        retailPriceUsd,
+        wholesalePriceUsd,
+        savingsPct,
+        totalEscrowUsd: (totalEscrowCents / 100).toFixed(2),
+        membersCount: c.members.length,
+        subscription: c.subscription || {
+          monthlyDuesUsd: 49,
+          yearlyDuesUsd: 499,
+          commitmentTerm: "1_YEAR",
+          cancellationNoticeDays: 30
+        },
+        tradeCorridor: {
+          origin: c.originPort || "US Central Depot",
+          destination: c.destinationPort || "Regional Hub",
+          transitDays: 14
+        }
+      };
+    });
+
+    return {
+      exportedAt: new Date().toISOString(),
+      source: "WholeShare B2B Autonomous Matchmaking Engine",
+      totalClans: clans.length,
+      activeEscrowVolumeUsd: clans.reduce((sum, c) => sum + parseFloat(c.totalEscrowUsd), 0).toFixed(2),
+      clans
+    };
   }
 }
 

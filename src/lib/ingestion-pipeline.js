@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { spawnSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import * as XLSX from "xlsx";
 import { instinctFs } from "./instinct-fs.js";
 import { businessInduction } from "./business-induction.js";
@@ -18,7 +20,7 @@ export const CANONICAL_SKU_CATALOG = {
     category: "BAKING_STAPLES",
     standardPack: "50LB_BAG",
     basePriceCents: 2800,
-    aliases: ["organic flour", "artisan flour", "bread flour", "kaf spec pat", "patent flour", "flour 50lb", "flr-org-50", "flr-artisan-50", "ka-spec-pat"]
+    aliases: ["organic flour", "artisan flour", "bread flour", "kaf spec pat", "patent flour", "flour 50lb", "flr-org-50", "flr-artisan-50", "ka-spec-pat", "wheat flour"]
   },
   "whole-wheat-flour-50lb": {
     name: "Stone Ground Whole Wheat Flour 50lb",
@@ -36,11 +38,108 @@ export const CANONICAL_SKU_CATALOG = {
   }
 };
 
+// Hydrate canonical SKUs from pre-seeded universe
+try {
+  const skusPath = resolve(process.cwd(), "data/processed/supplier_skus_universe.json");
+  if (existsSync(skusPath)) {
+    const rawSkus = JSON.parse(readFileSync(skusPath, "utf-8"));
+    for (const item of rawSkus) {
+      if (!CANONICAL_SKU_CATALOG[item.sku]) {
+        const words = item.name.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        CANONICAL_SKU_CATALOG[item.sku] = {
+          name: item.name,
+          category: item.category,
+          standardPack: "STANDARD_COMMERCIAL_PACK",
+          basePriceCents: item.basePriceCents,
+          aliases: [item.sku, item.name.toLowerCase(), ...words]
+        };
+      }
+    }
+  }
+} catch {
+  // Use static defaults
+}
+
 const INGESTED_DOCUMENTS = new Map();
 
 const SORTED_ALIASES = Object.entries(CANONICAL_SKU_CATALOG).flatMap(([sku, item]) =>
   item.aliases.map(alias => ({ sku, alias, len: alias.length }))
 ).sort((a, b) => b.len - a.len);
+
+export function matchSmeToClans({ sku, countryCode = "US", industryVertical = "FOOD_AND_BEVERAGE", targetUnits = 100, invoicedUnitPriceCents = 2800 }) {
+  let allClans = [];
+  try {
+    const clansPath = resolve(process.cwd(), "data/processed/clans_universe.json");
+    if (existsSync(clansPath)) {
+      allClans = JSON.parse(readFileSync(clansPath, "utf-8"));
+    }
+  } catch {
+    // Fallback
+  }
+
+  let domestic = allClans.find(c =>
+    (c.id.startsWith(`clan_dom_${industryVertical.toLowerCase()}_${countryCode.toLowerCase()}`)) ||
+    (c.industryVertical === industryVertical && c.id.startsWith("clan_dom_"))
+  );
+
+  let crossBorder = allClans.find(c =>
+    (c.id.startsWith(`clan_xb_${industryVertical.toLowerCase()}_${countryCode.toLowerCase()}`)) ||
+    (c.industryVertical === industryVertical && c.id.startsWith("clan_xb_"))
+  );
+
+  if (!domestic) {
+    domestic = {
+      id: "coalition_flour_01",
+      sku: sku || "organic-flour-50lb",
+      industryVertical: industryVertical || "FOOD_AND_BEVERAGE",
+      targetUnits: 1000,
+      currentUnits: 780,
+      unitPriceCents: 720,
+      currency: "USD",
+      discountTierPct: 28.0,
+      capacityRatio: 0.78
+    };
+  }
+
+  if (!crossBorder) {
+    crossBorder = {
+      id: "coalition_coffee_02",
+      sku: sku || "organic-flour-50lb",
+      industryVertical: industryVertical || "FOOD_AND_BEVERAGE",
+      targetUnits: 2000,
+      currentUnits: 1720,
+      unitPriceCents: 580,
+      currency: "USD",
+      discountTierPct: 42.0,
+      capacityRatio: 0.86
+    };
+  }
+
+  const domSavingsPct = invoicedUnitPriceCents > domestic.unitPriceCents
+    ? Math.round(((invoicedUnitPriceCents - domestic.unitPriceCents) / invoicedUnitPriceCents) * 100)
+    : Math.round(domestic.discountTierPct || 25);
+
+  const xbSavingsPct = invoicedUnitPriceCents > crossBorder.unitPriceCents
+    ? Math.round(((invoicedUnitPriceCents - crossBorder.unitPriceCents) / invoicedUnitPriceCents) * 100)
+    : Math.round(crossBorder.discountTierPct || 38);
+
+  return {
+    domesticPool: {
+      ...domestic,
+      savingsPct: domSavingsPct,
+      transitDays: 3,
+      customsDutyPct: 0,
+      corridorType: "DOMESTIC_INTRA_COUNTRY"
+    },
+    crossBorderPool: {
+      ...crossBorder,
+      savingsPct: xbSavingsPct,
+      transitDays: 14,
+      customsDutyPct: 3.5,
+      corridorType: "CROSS_BORDER_DIRECT_MANUFACTURER"
+    }
+  };
+}
 
 export function mapToCanonicalSku(rawDescription) {
   if (!rawDescription || typeof rawDescription !== "string") {
@@ -237,6 +336,16 @@ export function isPdfBuffer(buf) {
 }
 
 export function extractPdfContent(pdfBuffer) {
+  const poppler = spawnSync("pdftotext", ["-layout", "-", "-"], {
+    input: pdfBuffer,
+    encoding: "utf-8",
+    timeout: 25000,
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (poppler.status === 0 && poppler.stdout?.trim()) {
+    return poppler.stdout.trim();
+  }
+
   const pyCode = `
 import fitz, subprocess, sys
 buf = sys.stdin.buffer.read()
@@ -251,19 +360,20 @@ try:
 except Exception as e:
     sys.stderr.write(str(e))
 `;
-  try {
-    const res = spawnSync("python3", ["-c", pyCode], {
-      input: pdfBuffer,
-      encoding: "utf-8",
-      timeout: 25000
-    });
-    if (res.status === 0 && res.stdout) {
-      return res.stdout.trim();
-    }
-  } catch {
-    // Continue
+  const fitz = spawnSync("python3", ["-c", pyCode], {
+    input: pdfBuffer,
+    encoding: "utf-8",
+    timeout: 25000,
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (fitz.status === 0 && fitz.stdout?.trim()) {
+    return fitz.stdout.trim();
   }
-  return "";
+
+  const details = [poppler.error?.message, poppler.stderr?.trim(), fitz.error?.message, fitz.stderr?.trim()]
+    .filter(Boolean)
+    .join(" ");
+  throw new Error(`PDF extraction failed. Install Poppler or PyMuPDF with Tesseract for scanned PDFs.${details ? ` ${details}` : ""}`);
 }
 
 export function extractOcrTextFromBuffer(imageBuffer) {
@@ -346,6 +456,12 @@ export function parseOcrTextToDocument(ocrText) {
     }
 
     const lower = line.toLowerCase();
+    if (lower.startsWith("vendor:") || lower.startsWith("from:") || lower.startsWith("supplier:") || lower.startsWith("seller:") ||
+        lower.startsWith("invoice") || lower.startsWith("payment") || lower.startsWith("terms:") || lower.startsWith("line items") ||
+        lower.startsWith("subtotal") || lower.startsWith("tax") || lower.startsWith("freight") || lower.startsWith("total")) {
+      continue;
+    }
+
     for (const { sku, alias } of SORTED_ALIASES) {
       if (lower.includes(alias)) {
         const catalogItem = CANONICAL_SKU_CATALOG[sku];
@@ -421,7 +537,12 @@ export function parseOcrTextToDocument(ocrText) {
   };
 }
 
-export function parseDocumentContent(rawContent, mimeType = "application/json") {
+export function parseDocumentContent(rawContent, mimeType = "application/json", maybeMime = null) {
+  let resolvedMime = maybeMime || mimeType;
+  if (typeof mimeType === "string" && mimeType.endsWith(".pdf")) resolvedMime = "application/pdf";
+  if (typeof mimeType === "string" && mimeType.endsWith(".csv")) resolvedMime = "text/csv";
+  mimeType = resolvedMime;
+
   let docData;
   let extractionMethod = "STRUCTURED_JSON";
   let isImage = false;
@@ -630,6 +751,30 @@ export function ingestDocument({ fileBuffer, fileName, mimeType, buyerId, metada
     legalName: metadata.legalName || parsed.vendorName
   });
 
+  const primaryItem = parsed.lineItems[0] || { canonicalSku: "organic-flour-50lb", unitPriceCents: 2800, quantity: 100 };
+  const matchedClans = matchSmeToClans({
+    sku: primaryItem.canonicalSku,
+    countryCode: metadata.countryCode || "US",
+    industryVertical: inducedProfile?.domain?.toUpperCase().replace(/[^A-Z0-9]+/g, "_") || "FOOD_AND_BEVERAGE",
+    targetUnits: primaryItem.quantity,
+    invoicedUnitPriceCents: primaryItem.unitPriceCents
+  });
+
+  const smeProfile = {
+    id: buyerId,
+    legalName: metadata.legalName || parsed.vendorName || "Commercial SME Buyer",
+    countryCode: metadata.countryCode || "US",
+    currency: metadata.currency || "USD",
+    industryVertical: inducedProfile?.domain || "Food & Beverage",
+    monthlySpendCents: parsed.totalAmountCents,
+    extractedSKUs: parsed.lineItems,
+    detectedOverpaymentPct: matchedClans.domesticPool.savingsPct,
+    guardrails: {
+      maxAutoAuthorizeCents: 150000,
+      stepUpThresholdCents: 100000
+    }
+  };
+
   const record = {
     docId,
     buyerId,
@@ -640,6 +785,8 @@ export function ingestDocument({ fileBuffer, fileName, mimeType, buyerId, metada
     parsed,
     memorySync,
     inducedProfile,
+    smeProfile,
+    matchedClans,
     metadata,
     ingestedAt: new Date().toISOString()
   };

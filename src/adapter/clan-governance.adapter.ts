@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   type GovernanceRuleType,
   type GovernanceProposal,
@@ -6,12 +9,31 @@ import {
   type ClanConstitution,
   type CustomClanCharter,
   validateProposalBounds,
+  validateCharterRules,
   GovernanceError
 } from "../domain/clan-governance.ts";
 import {
   ClanGovernanceStorage,
   getClanGovernanceStorage
 } from "../storage/clan-governance.storage.ts";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.resolve(__dirname, "../..");
+
+function appendToGovernanceJournal(event: Record<string, unknown>): void {
+  try {
+    const journalPath = path.resolve(ROOT_DIR, "data", "durable_journal.json");
+    const dir = path.dirname(journalPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const entry = JSON.stringify({ ...event, loggedAt: new Date().toISOString() }) + "\n";
+    fs.appendFileSync(journalPath, entry, "utf8");
+  } catch {
+    // Fail-safe journal logging
+  }
+}
 
 export interface CoalitionMemberBrief {
   smeId: string;
@@ -26,6 +48,7 @@ export interface ProposeRuleChangeParams {
   ruleType: GovernanceRuleType;
   proposedValue: number | string;
   rationale: string;
+  briefId?: string;
   votingDurationHours?: number;
   quorumThreshold?: number;
   majorityThreshold?: number;
@@ -66,9 +89,7 @@ export class ClanGovernanceAdapter {
 
   public createCustomCharter(charter: CustomClanCharter): ClanConstitution {
     if (charter.constitution) {
-      for (const [ruleKey, ruleVal] of Object.entries(charter.constitution)) {
-        validateProposalBounds(ruleKey as GovernanceRuleType, ruleVal);
-      }
+      validateCharterRules(charter.constitution as Record<string, unknown>);
     }
 
     const constitution: ClanConstitution = {
@@ -78,6 +99,8 @@ export class ClanGovernanceAdapter {
       founderSmeId: charter.founderSmeId,
       founderVetoRules: charter.founderVetoRules || [],
       metaGovernancePolicy: charter.metaGovernancePolicy,
+      templateId: charter.templateId,
+      chosenSupplier: charter.chosenSupplier,
       updatedAt: new Date().toISOString()
     };
     return this.storage.saveConstitution(constitution);
@@ -90,7 +113,8 @@ export class ClanGovernanceAdapter {
       ruleType,
       proposedValue,
       rationale,
-      votingDurationHours = 24,
+      briefId,
+      votingDurationHours = ruleType === "SUPPLIER_SELECTION" ? 48 : 24,
       quorumThreshold = 0.5,
       majorityThreshold = 0.66,
       members = []
@@ -109,7 +133,9 @@ export class ClanGovernanceAdapter {
     validateProposalBounds(ruleType, proposedValue);
 
     const currentConstitution = this.storage.getConstitution(coalitionId);
-    const previousValue = currentConstitution.rules[ruleType] ?? "NONE";
+    const previousValue = ruleType === "SUPPLIER_SELECTION"
+      ? (currentConstitution.chosenSupplier ?? "NONE")
+      : (currentConstitution.rules[ruleType as keyof typeof currentConstitution.rules] ?? "NONE");
 
     const now = new Date();
     const votingDeadline = new Date(
@@ -118,7 +144,8 @@ export class ClanGovernanceAdapter {
 
     const isVetoProtected =
       currentConstitution.rules.VOTING_WEIGHT_STRATEGY === "FOUNDER_VETO" ||
-      Boolean(currentConstitution.founderVetoRules?.includes(ruleType));
+      Boolean(currentConstitution.founderVetoRules?.includes(ruleType)) ||
+      (ruleType === "SUPPLIER_SELECTION" && currentConstitution.rules.VOTING_WEIGHT_STRATEGY === "FOUNDER_VETO");
 
     const proposal: GovernanceProposal = {
       id: `prop_${coalitionId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -128,6 +155,7 @@ export class ClanGovernanceAdapter {
       proposedValue,
       previousValue,
       rationale: rationale || `Propose change of ${ruleType} to ${proposedValue}`,
+      briefId,
       status: "OPEN",
       createdAt: now.toISOString(),
       votingDeadline,
@@ -137,6 +165,17 @@ export class ClanGovernanceAdapter {
       requiresFounderVetoApproval: isVetoProtected,
       founderApproved: false
     };
+
+    appendToGovernanceJournal({
+      eventType: "GOVERNANCE_PROPOSAL_CREATED",
+      proposalId: proposal.id,
+      coalitionId,
+      proposerSmeId,
+      ruleType,
+      proposedValue,
+      briefId,
+      weightStrategy: proposal.weightStrategy
+    });
 
     return this.storage.saveProposal(proposal);
   }
@@ -203,6 +242,17 @@ export class ClanGovernanceAdapter {
     };
 
     this.storage.saveVote(vote);
+
+    appendToGovernanceJournal({
+      eventType: "CLAN_VOTE_CAST",
+      proposalId,
+      coalitionId,
+      smeId,
+      choice,
+      weight,
+      signature: vote.signature,
+      votedAt: vote.votedAt
+    });
 
     const constitution = this.storage.getConstitution(coalitionId);
     if (constitution.founderSmeId === smeId) {
@@ -326,7 +376,11 @@ export class ClanGovernanceAdapter {
       const constitution = this.storage.getConstitution(proposal.coalitionId);
       const updatedRules = { ...constitution.rules };
       let metaGovernancePolicy = constitution.metaGovernancePolicy;
-      if (proposal.ruleType === "META_GOVERNANCE_PROCEDURE") {
+      let chosenSupplier = constitution.chosenSupplier;
+
+      if (proposal.ruleType === "SUPPLIER_SELECTION") {
+        chosenSupplier = String(proposal.proposedValue);
+      } else if (proposal.ruleType === "META_GOVERNANCE_PROCEDURE") {
         if (metaGovernancePolicy) {
           metaGovernancePolicy = {
             ...metaGovernancePolicy,
@@ -344,10 +398,25 @@ export class ClanGovernanceAdapter {
         founderSmeId: constitution.founderSmeId,
         founderVetoRules: constitution.founderVetoRules,
         metaGovernancePolicy,
+        templateId: constitution.templateId,
+        chosenSupplier,
         updatedAt: now.toISOString()
       };
 
       this.storage.saveConstitution(enactedConstitution);
+
+      appendToGovernanceJournal({
+        eventType: "GOVERNANCE_TALLY_COMPLETED",
+        proposalId,
+        coalitionId: proposal.coalitionId,
+        status: "ENACTED",
+        affirmativeWeight: tally.affirmativeWeight,
+        negativeWeight: tally.negativeWeight,
+        quorumMet: tally.quorumMet,
+        majorityMet: tally.majorityMet,
+        founderVetoSatisfied: tally.founderVetoSatisfied,
+        reason: tally.reason
+      });
 
       return {
         proposal,
@@ -357,6 +426,19 @@ export class ClanGovernanceAdapter {
     } else {
       proposal.status = "REJECTED";
       this.storage.saveProposal(proposal);
+
+      appendToGovernanceJournal({
+        eventType: "GOVERNANCE_TALLY_COMPLETED",
+        proposalId,
+        coalitionId: proposal.coalitionId,
+        status: "REJECTED",
+        affirmativeWeight: tally.affirmativeWeight,
+        negativeWeight: tally.negativeWeight,
+        quorumMet: tally.quorumMet,
+        majorityMet: tally.majorityMet,
+        founderVetoSatisfied: tally.founderVetoSatisfied,
+        reason: tally.reason
+      });
 
       return {
         proposal,
