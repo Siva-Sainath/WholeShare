@@ -400,3 +400,67 @@ export async function researchWebFact({
   }
 }
 
+
+
+// Reads a supplier website across a few pages in a Kernel cloud browser and pulls out price, minimum order and lead time lines.
+// It only reads. It never fills or submits a form.
+export async function readSupplierSite({ website, product = "", maxPages = 3 } = {}) {
+  const url = new URL(website);
+  if (!/^https?:$/.test(url.protocol)) throw new Error("Only http and https pages can be read.");
+  const host = url.hostname.toLowerCase();
+  if (host === "localhost" || /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || host.endsWith(".local") || host.endsWith(".internal")) throw new Error("That address is private and cannot be read.");
+  const script = `
+    const start = ${JSON.stringify(url.href)};
+    const product = ${JSON.stringify(String(product).toLowerCase())};
+    const limit = ${Math.min(Math.max(Number(maxPages) || 3, 1), 4)};
+    const want = /(price|pricing|quote|wholesale|catalog|product|shop|moq|bulk|contact)/i;
+    const extractFn = ({ product }) => {
+      const text = document.body ? document.body.innerText : "";
+      const lines = text.split(/\\n+/).map((l) => l.replace(/\\s+/g, " ").trim()).filter((l) => l.length > 4 && l.length < 260);
+      const pick = (re, n) => lines.filter((l) => re.test(l) && !/(cart|checkout|0 items|\\$0\\.00)/i.test(l)).slice(0, n);
+      const emails = [...new Set((text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g) || []))].slice(0, 3);
+      return {
+        url: location.href,
+        title: document.title,
+        prices: pick(/([$\u20B9\u20AC\u00A3]\\s?\\d|\\d\\s?(usd|inr|eur|rs\\.?)\\b|per (unit|piece|kg|pc|ton))/i, 6),
+        minimumOrder: pick(/(moq|minimum order|min\\.? order|minimum quantity)/i, 3),
+        leadTime: pick(/(lead time|delivery (time|within)|ships? (in|within)|dispatch)/i, 3),
+        productLines: product ? pick(new RegExp(product.split(/\\s+/).filter((w) => w.length > 2).slice(0, 3).join("|"), "i"), 4) : [],
+        emails
+      };
+    };
+    const pages = [];
+    await page.goto(start, { waitUntil: "domcontentloaded", timeout: 30000 });
+    pages.push(await page.evaluate(extractFn, { product }));
+    const words = product.split(/\\s+/).filter((w) => w.length > 2).map((w) => w.replace(/s$/, ""));
+    const links = await page.evaluate(({ origin, wantSrc, words }) => {
+      const re = new RegExp(wantSrc, "i");
+      const skip = /(cart|checkout|login|signin|account|register|privacy|terms|facebook|twitter|linkedin)/i;
+      const seen = new Set();
+      const scored = [];
+      for (const a of document.querySelectorAll("a[href]")) {
+        const href = a.href.split("#")[0];
+        const label = href + " " + a.innerText;
+        if (a.origin !== origin || skip.test(href) || seen.has(href)) continue;
+        const hits = words.filter((w) => label.toLowerCase().includes(w)).length;
+        if (!hits && !re.test(label)) continue;
+        seen.add(href);
+        scored.push({ href, score: hits * 3 + (re.test(label) ? 1 : 0) });
+      }
+      return scored.sort((x, y) => y.score - x.score).map((x) => x.href).slice(0, 6);
+    }, { origin: new URL(start).origin, wantSrc: want.source, words });
+    for (const link of links) {
+      if (pages.length >= limit) break;
+      if (link === start || pages.some((p) => p.url === link)) continue;
+      try { await page.goto(link, { waitUntil: "domcontentloaded", timeout: 20000 }); pages.push(await page.evaluate(extractFn, { product })); } catch (e) {}
+    }
+    return { pages };
+  `;
+  const session = await createBrowserSession({ stealth: true, headless: true, timeoutSeconds: 120 });
+  try {
+    const exec = await executePlaywright(session.sessionId, { code: script });
+    return { success: exec.success, website: url.href, data: exec.result || null, error: exec.error || null };
+  } finally {
+    await deleteBrowserSession(session.sessionId).catch(() => {});
+  }
+}

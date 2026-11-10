@@ -1,6 +1,6 @@
 export const SERVING_TARGET = Object.freeze({
   hfId: "Qwen/Qwen3.5-4B",
-  mlxId: "mlx-community/Qwen3.5-4B-4bit",
+  mlxId: "mlx-community/Qwen3.5-4B-MLX-4bit",
   ollamaTag: "qwen3.5:4b",
   architecture: "Qwen3_5ForCausalLM",
   hiddenSize: 2560,

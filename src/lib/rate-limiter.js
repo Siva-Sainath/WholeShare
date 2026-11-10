@@ -69,9 +69,9 @@ export class TokenBucketRateLimiter {
 }
 
 export const agentRateLimiter = new TokenBucketRateLimiter({
-  capacity: 5,
-  refillRatePerSec: 0.5,
-  maxConcurrency: 2
+  capacity: Number(process.env.AGENT_RATE_CAPACITY) || 5,
+  refillRatePerSec: Number(process.env.AGENT_RATE_REFILL) || 0.5,
+  maxConcurrency: Number(process.env.AGENT_MAX_CONCURRENCY) || 2
 });
 
 export const apiRateLimiter = new TokenBucketRateLimiter({

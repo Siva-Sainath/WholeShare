@@ -1,11 +1,64 @@
+import { mosaicProvider, mosaicChatCompletionsUrl, mosaicHeaders, mosaicModelName, mosaicRequestExtras } from "./mosaic-config.js";
 import "./env.js";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
 import { SERVING_TARGET } from "./serving-target.js";
 
 const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
-const LOCAL_MLX_ENDPOINT = process.env.MLX_SERVER_URL || "http://127.0.0.1:8000/v1/chat/completions";
 
 export const DEFAULT_OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-super-vl:free";
 export const DEFAULT_LOCAL_MODEL = process.env.MLX_MODEL || SERVING_TARGET.mlxId;
+
+const usageTotals = { calls: 0, modelMs: 0, promptTokens: 0, completionTokens: 0, cachedTokens: 0, since: new Date().toISOString() };
+
+// Token totals since the server started. The arena script reads this to price a model from measured use.
+export function getModelUsage() {
+  return { ...usageTotals };
+}
+
+// Development spend guard. Prices are per 1M tokens and overridable by env. Check the Fireworks dashboard for the real balance.
+// The ledger survives restarts. Once the estimate reaches the budget, hosted calls are refused until the budget is raised.
+const SPEND_FILE = resolve(process.cwd(), ".scratch/model-spend.json");
+const PRICE = { input: Number(process.env.MOSAIC_PRICE_INPUT_PER_M) || 0.3, cached: Number(process.env.MOSAIC_PRICE_CACHED_PER_M) || 0.03, output: Number(process.env.MOSAIC_PRICE_OUTPUT_PER_M) || 1.2 };
+
+function readSpend() {
+  try {
+    return JSON.parse(readFileSync(SPEND_FILE, "utf8"));
+  } catch {
+    return { usd: 0, calls: 0, since: new Date().toISOString() };
+  }
+}
+
+export function getModelSpend() {
+  const budget = Number(process.env.MOSAIC_DEV_BUDGET_USD) || 5;
+  const ledger = readSpend();
+  return {
+    estimatedUsd: Math.round(ledger.usd * 10000) / 10000,
+    calls: ledger.calls,
+    since: ledger.since,
+    budgetUsd: budget,
+    remainingUsd: Math.max(0, Math.round((budget - ledger.usd) * 10000) / 10000),
+    priceNote: "Estimated from token counts at conservative rates."
+  };
+}
+
+function guardBudget() {
+  const spend = getModelSpend();
+  if (spend.remainingUsd <= 0) throw new Error(`The development budget of $${spend.budgetUsd} is used up (estimated $${spend.estimatedUsd}). Raise MOSAIC_DEV_BUDGET_USD to continue.`);
+}
+
+function recordSpend(usage) {
+  const prompt = usage.prompt_tokens || 0;
+  const cached = usage.prompt_tokens_details?.cached_tokens || 0;
+  const usd = ((prompt - cached) * PRICE.input + cached * PRICE.cached + (usage.completion_tokens || 0) * PRICE.output) / 1e6;
+  const ledger = readSpend();
+  try {
+    mkdirSync(dirname(SPEND_FILE), { recursive: true });
+    writeFileSync(SPEND_FILE, JSON.stringify({ ...ledger, usd: ledger.usd + usd, calls: ledger.calls + 1 }));
+  } catch {
+    // The ledger is a safety net and never a reason to fail a call.
+  }
+}
 
 export class WholeshareModelClient {
   constructor(options = {}) {
@@ -15,6 +68,9 @@ export class WholeshareModelClient {
   }
 
   async _executePost(endpoint, headers, body, timer, controller) {
+    const hosted = !/127\.0\.0\.1|localhost/.test(endpoint);
+    if (hosted) guardBudget();
+    const startedAt = Date.now();
     const res = await fetch(endpoint, {
       method: "POST",
       headers,
@@ -33,46 +89,138 @@ export class WholeshareModelClient {
       throw new Error("Inference engine returned an empty choices payload.");
     }
 
+    usageTotals.modelMs += Date.now() - startedAt;
+    if (data.usage) {
+      usageTotals.calls += 1;
+      usageTotals.promptTokens += data.usage.prompt_tokens || 0;
+      usageTotals.completionTokens += data.usage.completion_tokens || 0;
+      usageTotals.cachedTokens += data.usage.prompt_tokens_details?.cached_tokens || 0;
+      if (hosted) recordSpend(data.usage);
+    }
+
     return {
       message: choice.message,
       usage: data.usage || null
     };
   }
 
-  async callChat({ messages, tools = null, temperature = 0.1, maxTokens = 1024, responseFormat = null }) {
+  // Same request as _executePost, read as a stream. Text deltas reach onText as they arrive. Tool calls are assembled from their deltas.
+  async _executeStream(endpoint, headers, body, controller, onText) {
+    const hosted = !/127\.0\.0\.1|localhost/.test(endpoint);
+    if (hosted) guardBudget();
+    const startedAt = Date.now();
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...body, stream: true, stream_options: { include_usage: true } }),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Inference engine error HTTP ${res.status}: ${errorText}`);
+    }
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let content = "";
+    let usage = null;
+    const calls = new Map();
+    const handle = (line) => {
+      if (!line.startsWith("data:")) return;
+      const data = line.slice(5).trim();
+      if (!data || data === "[DONE]") return;
+      let chunk;
+      try { chunk = JSON.parse(data); } catch { return; }
+      if (chunk.usage) usage = chunk.usage;
+      const delta = chunk.choices?.[0]?.delta;
+      if (!delta) return;
+      if (typeof delta.content === "string" && delta.content) {
+        content += delta.content;
+        if (onText) onText(delta.content);
+      }
+      for (const part of delta.tool_calls || []) {
+        const index = part.index ?? 0;
+        const current = calls.get(index) || { id: "", type: "function", function: { name: "", arguments: "" } };
+        if (part.id) current.id = part.id;
+        if (part.function?.name) current.function.name += part.function.name;
+        if (part.function?.arguments) current.function.arguments += part.function.arguments;
+        calls.set(index, current);
+      }
+    };
+    for await (const piece of res.body) {
+      buffer += decoder.decode(piece, { stream: true });
+      let newline;
+      while ((newline = buffer.indexOf("\n")) >= 0) {
+        handle(buffer.slice(0, newline).trim());
+        buffer = buffer.slice(newline + 1);
+      }
+    }
+    if (buffer.trim()) handle(buffer.trim());
+    usageTotals.modelMs += Date.now() - startedAt;
+    if (usage) {
+      usageTotals.calls += 1;
+      usageTotals.promptTokens += usage.prompt_tokens || 0;
+      usageTotals.completionTokens += usage.completion_tokens || 0;
+      usageTotals.cachedTokens += usage.prompt_tokens_details?.cached_tokens || 0;
+      if (hosted) recordSpend(usage);
+    }
+    const tool_calls = [...calls.entries()].sort((a, b) => a[0] - b[0]).map(([, call], position) => ({ ...call, id: call.id || `call_${Date.now()}_${position}` }));
+    return { message: { role: "assistant", content, ...(tool_calls.length ? { tool_calls } : {}) }, usage };
+  }
+
+  async callChat({ messages, tools = null, temperature = 0.1, maxTokens = 1024, responseFormat = null, toolChoice = "auto", onText = null }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
-    const tryLocal = this.preferLocal || !this.openRouterKey;
+    let preferLocal = this.preferLocal;
+    try {
+      const { loadUserSettings } = await import("./user-settings.js");
+      const settings = loadUserSettings();
+      if (settings.modelPreferences?.provider === "fast_cloud") {
+        preferLocal = false;
+      } else if (settings.modelPreferences?.provider === "local_qwen" || settings.modelPreferences?.provider === "local_mlx") {
+        preferLocal = true;
+      }
+    } catch {
+      // Fallback to instance configuration
+    }
+
+    const hostedPrimary = mosaicProvider() !== "local";
+    const tryLocal = hostedPrimary || preferLocal || !this.openRouterKey || process.env.MOSAIC_ALLOW_CLOUD_FALLBACK !== "true";
+    const effectiveMaxTokens = process.env.MOSAIC_ENABLE_THINKING === "true" ? Math.max(Number(maxTokens) || 0, 800) : Math.min(Math.max(Number(maxTokens) || 800, 256), 2048);
 
     try {
       if (tryLocal) {
         try {
-          const localHeaders = { "Content-Type": "application/json" };
+          const localHeaders = mosaicHeaders();
           const localBody = {
-            model: DEFAULT_LOCAL_MODEL,
+            model: mosaicModelName(DEFAULT_LOCAL_MODEL),
             messages,
             temperature,
-            max_tokens: maxTokens,
-            tools: tools && tools.length > 0 ? tools : undefined
+            max_tokens: effectiveMaxTokens,
+            ...mosaicRequestExtras()
           };
+          if (tools && tools.length > 0) {
+            localBody.tools = tools;
+            localBody.tool_choice = toolChoice;
+          }
           if (responseFormat) {
             localBody.response_format = responseFormat;
           }
 
-          const localRes = await this._executePost(LOCAL_MLX_ENDPOINT, localHeaders, localBody, timer, controller);
-          clearTimeout(timer);
+          const localRes = onText && process.env.MOSAIC_STREAM !== "false"
+            ? await this._executeStream(mosaicChatCompletionsUrl(), localHeaders, localBody, controller, onText)
+            : await this._executePost(mosaicChatCompletionsUrl(), localHeaders, localBody, timer, controller);
           return {
-            model: DEFAULT_LOCAL_MODEL,
-            provider: "local-mlx",
+            model: mosaicModelName(DEFAULT_LOCAL_MODEL),
+            provider: "mosaic-model",
             message: localRes.message,
             usage: localRes.usage
           };
         } catch (localErr) {
-          if (!this.openRouterKey) {
+          if (!this.openRouterKey || process.env.MOSAIC_ALLOW_CLOUD_FALLBACK !== "true") {
             throw localErr;
           }
-          console.warn(`[ModelClient Notice] Local MLX endpoint at ${LOCAL_MLX_ENDPOINT} unreachable (${localErr.message}). Failing over to OpenRouter ${DEFAULT_OPENROUTER_MODEL}...`);
+          console.warn(`[ModelClient Notice] Model endpoint at ${mosaicChatCompletionsUrl()} unreachable (${localErr.message}). Failing over to OpenRouter ${DEFAULT_OPENROUTER_MODEL}...`);
         }
       }
 
@@ -87,7 +235,7 @@ export class WholeshareModelClient {
         model: DEFAULT_OPENROUTER_MODEL,
         messages,
         temperature,
-        max_tokens: maxTokens,
+        max_tokens: effectiveMaxTokens,
         reasoning: { max_tokens: 0 }
       };
 
@@ -104,7 +252,6 @@ export class WholeshareModelClient {
       const remoteTimer = setTimeout(() => remoteController.abort(), this.timeoutMs);
       try {
         const remoteRes = await this._executePost(OPENROUTER_ENDPOINT, headers, body, remoteTimer, remoteController);
-        clearTimeout(remoteTimer);
         return {
           model: DEFAULT_OPENROUTER_MODEL,
           provider: "openrouter",
@@ -115,8 +262,9 @@ export class WholeshareModelClient {
         clearTimeout(remoteTimer);
       }
     } catch (err) {
-      clearTimeout(timer);
       throw new Error(`Real model inference failed: ${err.message}`);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
