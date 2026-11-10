@@ -36,6 +36,7 @@ function groupRows() {
       listPriceUsd: listCents / 100,
       tierDiscountPct: reached,
       unitPriceUsd: Math.round(listCents * (100 - reached)) / 10000,
+      deliveryDays: clan.estimatedDeliveryDays ?? null,
       shipmentMode: clan.fulfilment?.mode ?? "SINGLE_POINT",
       receivingPoints: clan.fulfilment?.points?.length ?? 1,
       supplier: clan.supplierName ?? "",
@@ -102,6 +103,7 @@ function shipmentRows() {
     .map((record) => ({
       id: record.id,
       groupId: record.clanId,
+      memberId: record.memberId ?? "",
       product: record.product,
       carrier: record.carrierName,
       tracking: record.trackingNumber,

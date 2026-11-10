@@ -46,7 +46,7 @@ function humanize(field: string): string {
 }
 
 const PRESETS: Record<string, string[]> = {
-  groups: ["name", "city", "tierDiscountPct", "unitPriceUsd", "fillPct", "status"],
+  groups: ["name", "unitPriceUsd", "tierDiscountPct", "fillPct", "deliveryDays", "supplier", "supplierTrust", "status"],
   members: ["member", "units", "authorizedUsd", "status"],
   ledger: ["group", "member", "units", "authorizedUsd", "status"],
   claims: ["id", "groupId", "damagedUnits", "claimedUsd", "status", "createdAt"],
