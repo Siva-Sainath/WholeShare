@@ -59,7 +59,7 @@ Fireworks (MiniMax M3.1 Flash, DeepSeek V4.1 Flash as hedge)   Kernel   PayPal s
 - **Reliability.** Transient Fireworks errors retry. If the primary model has not answered in 5 seconds, the same request also goes to a fallback model and the first answer wins. Requests carry a session affinity header for prompt caching (about 76 percent of prompt tokens served from cache).
 - **Spend guard.** A persistent ledger refuses hosted model calls past a budget.
 
-Design notes: `docs/HARNESS.md`, a comparison with other harnesses and WebMCP implementations in `docs/HARNESS_STUDY.md`, and the plan in `docs/MOSAIC_GENERALIZATION_PLAN.md`.
+Design notes: `docs/HARNESS.md`, and a comparison with other harnesses and WebMCP implementations in `docs/HARNESS_STUDY.md`.
 
 ## Sponsors in the product
 

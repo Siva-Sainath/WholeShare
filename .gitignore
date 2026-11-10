@@ -94,3 +94,25 @@ src/web/public/ag-grid-enterprise.min.js
 src/web/public/ag-grid.min.css
 src/web/public/ag-theme-quartz.min.css
 GEMINI_*.md
+
+# Local working notes, plans and generated material kept out of the published repository
+docs/*.md
+!docs/HARNESS.md
+!docs/HARNESS_STUDY.md
+!docs/IMAGE_SOURCES.md
+docs/assets/*
+!docs/assets/mosaic-eval.md
+docs/archive/
+docs/research/
+artifacts/
+diagrams/
+notebooks/
+postman/
+nginx/
+docker-compose.yml
+AGENTS.md
+ARENA_NOTE.md
+GLOSSARY.md
+experiments.tsv
+skills-lock.json
+.scratch/test-webhook-storage/
