@@ -1,8 +1,21 @@
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool, parseToolCallsFromContent } from "./tool-registry.js";
+import { qwenDispatcher } from "./qwen-bridge.js";
 import { actionDispatcher } from "./web-actions.js";
 import { generateFeatureMapPromptContext } from "./feature-map.js";
 import { modelClient } from "./model-client.js";
 import { SERVING_TARGET } from "./serving-target.js";
+
+function buildWebMcpToolDeclarations() {
+  const mcpTools = qwenDispatcher.getWebMcpTools();
+  return mcpTools.map((t) => ({
+    type: "function",
+    function: {
+      name: t.name,
+      description: t.description || `WebMCP action: ${t.name}`,
+      parameters: t.inputSchema || { type: "object", properties: {} }
+    }
+  }));
+}
 
 const MAX_TURNS = 3;
 
@@ -75,6 +88,7 @@ ${featureContext}`
 
     let turn = 0;
     let finalMessage = "";
+    const sessionTools = this.getMergedTools();
 
     const sessionMaxTurns = opts.maxTurns || MAX_TURNS;
     while (turn < sessionMaxTurns) {
@@ -82,7 +96,7 @@ ${featureContext}`
       const stepStartTime = Date.now();
 
       try {
-        const response = await this.callModelWithTools(messages);
+        const response = await this.callModelWithTools(messages, sessionTools);
         const durationMs = Date.now() - stepStartTime;
 
         const assistantMessage = response.message || {};
@@ -130,7 +144,13 @@ ${featureContext}`
             args: toolArgs
           });
 
-          const toolResult = await executeTool(toolName, toolArgs);
+          let toolResult;
+          const isWebMcp = qwenDispatcher.actions && Object.prototype.hasOwnProperty.call(qwenDispatcher.actions, toolName);
+          if (isWebMcp) {
+            toolResult = await qwenDispatcher.executeWebMcpTool(toolName, toolArgs);
+          } else {
+            toolResult = await executeTool(toolName, toolArgs);
+          }
 
           actionDispatcher.broadcast("AGENT_TOOL_RESULT", {
             sessionId,
@@ -188,11 +208,17 @@ ${featureContext}`
     };
   }
 
-  async callModelWithTools(messages) {
+  getMergedTools() {
+    const webMcpTools = buildWebMcpToolDeclarations();
+    return [...WHOLESHARE_TOOL_DECLARATIONS, ...webMcpTools];
+  }
+
+  async callModelWithTools(messages, tools = null) {
+    const sessionTools = tools || this.getMergedTools();
     const res = await modelClient.callChat({
       messages,
-      tools: WHOLESHARE_TOOL_DECLARATIONS,
-      maxTokens: 600
+      tools: sessionTools,
+      maxTokens: 800
     });
     return {
       message: res.message

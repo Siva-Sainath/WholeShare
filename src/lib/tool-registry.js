@@ -1,3 +1,6 @@
+import { loadUserSettings as _loadSettings, updateUserSettings as _updateSettings } from "./user-settings.js";
+import { buildSnapshot } from "./snapshot.js";
+import { searchDirectory, buildLeadSearchUrl, recordLeads, loadLeads } from "./supplier-search.js";
 import { actionDispatcher } from "./web-actions.js";
 import {
   createOrderAuthorization,
@@ -12,6 +15,14 @@ import {
   createSubscription
 } from "./paypal-bridge.js";
 import { interceptToolExecution } from "./interceptor.js";
+import { getPledgeQuote } from "./paypal-checkout.js";
+import { loadUserSettings } from "./user-settings.js";
+import { SOURCES, querySource, resolveSourceId } from "./data-sources.js";
+import { runQuery, resolveEntity, compareGroups, groupIdFromWords } from "./mosaic-tools.js";
+import { normaliseFulfilment } from "./fulfilment.js";
+import { isCarrierFormatTracking } from "./tracking-format.js";
+import { bookSlot, extendInspection, findShipment, moveDelivery, resolveConflicts, undoLast } from "./schedule-service.js";
+import { getAllClans, getClanById, saveClan } from "./matchmaking/clanStore.ts";
 import { instinctFs } from "./instinct-fs.js";
 import {
   ingestDocument,
@@ -22,6 +33,7 @@ import {
   discoverWholesaleTiers,
   executeCustomBrowserTask,
   researchWebFact,
+  readSupplierSite,
   createBrowserSession,
   executePlaywright,
   captureScreenshot,
@@ -33,6 +45,7 @@ import {
   evaluateSupplierCredibility,
   verifyExternalAgentClaim
 } from "./kernel-credibility.js";
+import { kernelResearchService } from "./kernel-service.js";
 import { DeliveryAdapter } from "../adapter/delivery.adapter.ts";
 import { ClaimsAdapter } from "../adapter/claims.adapter.ts";
 import { SettlementAdapter } from "../adapter/settlement.adapter.ts";
@@ -42,6 +55,7 @@ import { executePayPalToolkitAction, getPayPalToolkitToolNames } from "./paypal-
 import { runAccountsReceivableLiquidityCheck } from "./agent-toolkit.ts";
 import { getRepaymentStorage } from "../storage/repayment.storage.ts";
 import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const deliveryAdapter = new DeliveryAdapter();
 const claimsAdapter = new ClaimsAdapter();
@@ -143,6 +157,117 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
   {
     type: "function",
     function: {
+      name: "export_view_snapshot",
+      description: "Freeze one part of WholeShare as a shareable snapshot. Returns the rows plus links to a CSV file and a styled HTML page an external agent can show to its own user. Components: groups, suppliers, claims, claims-board, shipments, schedule, ledger, invoices, members.",
+      parameters: {
+        type: "object",
+        properties: {
+          component: { type: "string", description: "Which view to snapshot." },
+          limit: { type: "number", description: "Maximum rows, up to 500." }
+        },
+        required: ["component"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "start_group_buy",
+      description: "Open the Start a group buy form already filled in for the user to review. It does not publish anything. Pass only details the user gave.",
+      parameters: {
+        type: "object",
+        properties: {
+          product: { type: "string", description: "What the group will buy." },
+          name: { type: "string", description: "Short group title." },
+          city: { type: "string", description: "Delivery city." },
+          targetUnits: { type: "number", description: "Units the group wants." },
+          basePriceUsd: { type: "number", description: "List price per unit in USD, only if stated." },
+          supplierMode: { type: "string", enum: ["VOTE", "URL", "KERNEL"], description: "URL when a supplier site is known, KERNEL to search the web, otherwise VOTE." },
+          vendorUrl: { type: "string", description: "Supplier website, for example the best web lead found." },
+          shipmentMode: { type: "string", enum: ["SINGLE_POINT", "MULTIPLE_POINTS"], description: "SINGLE_POINT when the whole order goes to one address, MULTIPLE_POINTS when several. Only if the user said it." },
+          shipmentPoints: { type: "array", items: { type: "object" }, description: "Receiving points the user named: {label, address, city}. At most 5." }
+        },
+        required: ["product"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_suppliers",
+      description: "Find suppliers for a product. Searches the supplier directory first. If webSearch is true, also opens a live Kernel cloud browser on a public search page and saves unverified web leads. Use webSearch when the user asks for new suppliers or the directory has too few matches.",
+      parameters: {
+        type: "object",
+        properties: {
+          product: { type: "string", description: "What the user wants to buy, for example 'stainless steel nuts M10' or 'cashew kernels'." },
+          country: { type: "string", description: "Optional country name or ISO code to prefer." },
+          certification: { type: "string", description: "Optional certification such as ISO 9001 or FSSAI." },
+          acceptsPayPal: { type: "boolean", description: "Only suppliers that accept PayPal." },
+          webSearch: { type: "boolean", description: "Also source new leads from the web with a Kernel browser." }
+        },
+        required: ["product"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "query",
+      description: "Read facts from any data source so you can answer with real numbers. Sources: groups (buying groups: name, product, category, city, country, status FORMING or LOCKED, currentUnits, targetUnits, fillPct, listPriceUsd, tierDiscountPct, unitPriceUsd, supplier, supplierTrust), ledger (the user's pledges), members, claims, shipments, suppliers, paypal_invoices. Use filter [{field, op: eq|ne|contains|in|gt|gte|lt|lte, value}], sort {field, direction}, groupBy (a field) with aggregate [{field, op: sum|avg|count|min|max}] for totals and breakdowns, fields to pick columns, limit (max 25). Set show true, with a short title, when the user wants to see, browse or list items: it also opens the table beside the chat in the same call. Leave show off for a number or a yes or no. Returns rows or groups plus availableFields.",
+      parameters: { type: "object", properties: { source: { type: "string" }, filter: { type: "array", items: { type: "object" } }, sort: { type: "object" }, groupBy: { type: "string" }, aggregate: { type: "array", items: { type: "object" } }, fields: { type: "array", items: { type: "string" } }, limit: { type: "number" }, show: { type: "boolean" }, title: { type: "string" } }, required: ["source"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "resolve",
+      description: "Turn the user's words into real ids before acting. type is group, shipment, supplier, claim or invoice. text is what the user said (a product, a city, a name). Returns the best candidates with ids. Pass several texts as an array to resolve them in one call. compare_groups and join_group accept words and resolve for you.",
+      parameters: { type: "object", properties: { type: { type: "string", enum: ["group", "shipment", "supplier", "claim", "invoice"] }, text: { type: "string" } }, required: ["type", "text"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "compare_groups",
+      description: "Compare two to four buying groups side by side for the same number of units: price at the units, discount tier and the next tier, fill, delivery days, supplier trust, and whether the user can join. Returns a verdict per factor. Use it for 'which is better', 'help me choose', 'compare'. Pass groups (the user's words for each, such as Austin olive oil) or groupIds. Words are resolved for you. After it, tell the user which factor decides it and what they give up, and which groups you picked.",
+      parameters: { type: "object", properties: { groups: { type: "array", items: { type: "string" } }, groupIds: { type: "array", items: { type: "string" } }, units: { type: "number", description: "Units the user would buy. Default 100." } }, required: [] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "join_group",
+      description: "Price a pledge and open the PayPal approval step. Use it for join, pledge, sign me up, quote, and how much would N units cost. It never pledges or moves money: the user approves on PayPal. Pass group (the user's words) or clanId, and a whole number of units. PayPal checkout works for USD groups only, and the group must still be forming.",
+      parameters: { type: "object", properties: { group: { type: "string" }, clanId: { type: "string" }, units: { type: "number" } }, required: ["units"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "setup_profile",
+      description: "Set up or update the user's business profile from what they said: businessName, city, country, currency (3 letter code such as USD or INR), contactEmail. Pass only the fields the user stated. It saves them, opens the Settings page so the user can review, and returns the previous values so the change can be reversed.",
+      parameters: { type: "object", properties: { businessName: { type: "string" }, city: { type: "string" }, country: { type: "string" }, currency: { type: "string" }, contactEmail: { type: "string" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "track_shipment",
+      description: "Check where a shipment is. Returns what WholeShare recorded (carrier, tracking number, status, expected and delivered dates) and, when the tracking number has a real carrier format, reads the carrier's tracking page in a Kernel cloud browser. Use it for 'where is my shipment', 'is it late', and before a late or damage dispute. Pass the user's product words or a shipment id.",
+      parameters: { type: "object", properties: { shipment: { type: "string", description: "Product words or a shipment id." } }, required: ["shipment"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "kernel_read_supplier_site",
+      description: "Open a supplier's website in a Kernel cloud browser and read up to three of its pages (home, pricing, catalog, contact) for prices, minimum order and lead time. Read only: it never fills or submits a form. Use it when the user wants a quote, a price or terms from a named supplier or a web lead that has a website. Results are unverified until the supplier confirms them.",
+      parameters: { type: "object", properties: { website: { type: "string", description: "The supplier website address, https://..." }, product: { type: "string", description: "The product the user wants priced." } }, required: ["website"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "kernel_research_web_fact",
       description: "Generalized Kernel.sh cloud browser research tool. Deploys an isolated headless browser on standard CPU to research real-time external facts: supplier catalog pricing and stock, regulatory filings and corporate status, real-time forex exchange rates, sanctions checks, and technical specifications.",
       parameters: {
@@ -178,6 +303,57 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
           }
         },
         required: ["targetUrl", "query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "kernel_present_research",
+      description: "Reads the latest background supplier research brief for a clan from durable storage and returns the verified supplier pricing table, MOQ tiers, credibility verdicts, and screenshot proof references in plain language.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanId: {
+            type: "string",
+            description: "The unique identifier of the buying group or coalition to inspect"
+          }
+        },
+        required: ["clanId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "kernel_request_research",
+      description: "Queues an asynchronous Kernel background research task to discover wholesale pricing tiers and evaluate vendor credibility for a clan.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanId: {
+            type: "string",
+            description: "The unique identifier of the buying group"
+          },
+          sku: {
+            type: "string",
+            description: "The product SKU to research"
+          },
+          vendorUrls: {
+            type: "array",
+            items: { type: "string" },
+            description: "Optional list of verified vendor URLs to research"
+          },
+          currency: {
+            type: "string",
+            description: "Currency code (default: USD)"
+          },
+          force: {
+            type: "boolean",
+            description: "Force immediate re-research bypassing the 1-hour rate limit"
+          }
+        },
+        required: ["clanId"]
       }
     }
   },
@@ -1052,10 +1228,479 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
         required: ["action", "parameters"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_user_settings",
+      description: "Update the user's spending boundaries, policy thresholds, model preferences, or profile settings based on their prompts.",
+      parameters: {
+        type: "object",
+        properties: {
+          maxAutoAuthorizeUsd: {
+            type: "number",
+            description: "Maximum dollar amount allowed for automatic soft hold authorizations without step-up approval (max 10,000)."
+          },
+          stepUpThresholdUsd: {
+            type: "number",
+            description: "Threshold above which PayPal Invoicing v2 QR code step-up verification is required."
+          },
+          dailySpendLimitUsd: {
+            type: "number",
+            description: "Maximum cumulative daily spend limit in USD across all clans."
+          },
+          modelProvider: {
+            type: "string",
+            enum: ["fast_cloud", "local_qwen"],
+            description: "AI inference engine: fast_cloud (OpenRouter/OpenAI/Claude) or local_qwen (on-device MLX model)."
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_connected_agent",
+      description: "Connect and register a new external AI agent (e.g. Grok, Muse, WhatsApp Instinct, or custom bot) to the user's WholeShare account with authorized spending boundaries.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Name of the agent to register (e.g. 'Grok Sourcing Bot', 'Instinct Mobile Agent')"
+          },
+          role: {
+            type: "string",
+            description: "Functional responsibility of the agent (e.g. 'Supplier RFQ Scout', 'Delivery Approver')"
+          },
+          protocol: {
+            type: "string",
+            enum: ["WebMCP", "REST", "Webhook", "MCP"],
+            description: "Integration protocol for the agent."
+          },
+          maxSpendUsd: {
+            type: "number",
+            description: "Spending cap in USD assigned to this agent."
+          },
+          autonomousApproval: {
+            type: "boolean",
+            description: "Whether the agent is permitted to execute escrow pledges autonomously without human confirmation."
+          }
+        },
+        required: ["name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "settle_outstanding_dues",
+      description: "Settle outstanding member dues or liabilities via PayPal Sandbox.",
+      parameters: {
+        type: "object",
+        properties: {
+          debtId: {
+            type: "string",
+            description: "ID of the debt liability to settle."
+          }
+        },
+        required: ["debtId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_navigate_view",
+      description: "Switch the active WholeShare view (landing, onboarding, radar, ledger, logistics, leader, subscriptions, settings, paypal for invoices/payments/disputes operations, agents, mosaic).",
+      parameters: {
+        type: "object",
+        properties: {
+          view: {
+            type: "string",
+            enum: ["landing", "onboarding", "radar", "ledger", "logistics", "leader", "subscriptions", "settings", "paypal", "agents", "mosaic"],
+            description: "Target view to display to the user."
+          }
+        },
+        required: ["view"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_open_slide_over",
+      description: "Open right-hand slide-over drawer to display structured cards or checklists.",
+      parameters: {
+        type: "object",
+        properties: {
+          panelType: {
+            type: "string",
+            enum: ["clan_matches", "clan_agreement", "onboarding_checklist", "clan_setup_checklist", "agent_negotiation", "claim_form"],
+            description: "Category of content to render inside the slide-over drawer."
+          },
+          title: {
+            type: "string",
+            description: "Human-readable title displayed in the drawer header."
+          },
+          data: {
+            type: "object",
+            description: "Structured JSON payload to bind to the drawer components."
+          }
+        },
+        required: ["panelType", "title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_trigger_onboarding",
+      description: "Initiate the interactive business onboarding flow with checklist verification.",
+      parameters: {
+        type: "object",
+        properties: {
+          businessName: { type: "string", description: "Legal name of the business entity." },
+          industry: { type: "string", description: "Industry sector or primary procurement commodity." },
+          checklist: { type: "object", description: "Verified checklist attributes collected so far." }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_trigger_clan_setup",
+      description: "Open the Clan Leader setup wizard with required formation checklist.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanName: { type: "string", description: "Name of the new wholesale purchasing clan." },
+          commoditySku: { type: "string", description: "Target procurement SKU." },
+          targetUnits: { type: "number", description: "Target volume in units to unlock wholesale tier." },
+          monthlyDuesUsd: { type: "number", description: "Monthly recurring membership fee in USD." },
+          yearlyDuesUsd: { type: "number", description: "Yearly recurring membership fee in USD." },
+          commitmentTerm: { type: "string", description: "Lock-in commitment term (e.g. 1_YEAR, MONTH_TO_MONTH)." }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_filter_clans",
+      description: "Adjust clan matchmaking search filters and demand parameters in the radar view.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Free-text search over product, group name or city, for example a city such as Portland." },
+          category: { type: "string", description: "Commodity category filter." },
+          minDiscount: { type: "number", description: "Minimum discount percentage threshold." },
+          maxUnitPrice: { type: "number", description: "Maximum acceptable unit price in USD." }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_open_group",
+      description: "Open a buying group's page so the user can review its tiers, members and rules and pledge. Use after finding the right group. Needs a clanId from the catalog.",
+      parameters: {
+        type: "object",
+        properties: { clanId: { type: "string", description: "Buying group ID, for example clan-austin-specialty-grade-002." } },
+        required: ["clanId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "present",
+      description: "Show the user a live table or card list beside the page. Use it to answer 'show me', 'list', 'which' and 'compare' requests. kind 'grid' shows a data table from a source and needs source (claims, shipments, ledger for my pledges, members). kind 'groups' shows buying group cards. kind 'invoices' is only for PayPal invoices and needs no source. kind 'timeline' shows the live delivery schedule (Bryntum Scheduler) for questions about what is arriving, delays and inspection windows. kind 'board' shows the claims workflow board where cards can be dragged to approve or settle. Sources: groups, members, ledger (my pledges), claims, shipments, paypal_invoices. Filter is a list of {field, op, value} where op is eq, ne, contains, in, gt, gte, lt or lte. To show specific rows pass ids (from resolve or query). compare_groups already shows the groups it compared, so do not call present after it.",
+      parameters: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: ["grid", "groups", "invoices", "timeline", "board"], description: "What to show." },
+          title: { type: "string", description: "Short title for the panel." },
+          source: { type: "string", description: "Data source for kind grid." },
+          filter: { type: "array", items: { type: "object" }, description: "Optional filter clauses." },
+          sort: { type: "object", description: "Optional {field, direction}." },
+          ids: { type: "array", items: { type: "string" }, description: "Show exactly these row ids." },
+          limit: { type: "number", description: "Max rows, default 50." }
+        },
+        required: ["kind", "title"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_move_delivery",
+      description: "Move the delivery date of a shipment that is in transit. Give shipment (product words, group id or tracking number) and either days (positive later, negative earlier) or toDate (YYYY-MM-DD). The Scheduler timeline updates live.",
+      parameters: { type: "object", properties: { shipment: { type: "string" }, days: { type: "number" }, toDate: { type: "string" }, reason: { type: "string" } }, required: ["shipment"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_extend_inspection",
+      description: "Set the inspection window, in hours (24 to 96), of a shipment that was already delivered.",
+      parameters: { type: "object", properties: { shipment: { type: "string" }, hours: { type: "number" } }, required: ["shipment", "hours"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_book_slot",
+      description: "Book the receiving dock slot for an in transit shipment. date is YYYY-MM-DD, hour is 6 to 18. One booking per hour per city.",
+      parameters: { type: "object", properties: { shipment: { type: "string" }, date: { type: "string" }, hour: { type: "number" } }, required: ["shipment", "date", "hour"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_resolve_conflicts",
+      description: "Find delivery conflicts (dock overload, deliveries due on weekends) and fix them with the smallest date moves. With apply false it only proposes. With apply true it makes the moves.",
+      parameters: { type: "object", properties: { apply: { type: "boolean" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_undo",
+      description: "Undo the most recent schedule change.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_open_report",
+      description: "Open an AG Studio report page in Insights. page is one of: paypal (PayPal invoices and held funds), demand (groups, units, savings), delivery (shipments and claims), members (pledges by member). Use for 'show me a report', 'my PayPal position', 'how is demand doing'.",
+      parameters: { type: "object", properties: { page: { type: "string", enum: ["paypal", "demand", "delivery", "members"] } }, required: ["page"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_open_my_group",
+      description: "Open the dashboard of a buying group the user has joined, where they confirm delivery, check dues, leave the group or release payouts. Needs the clanId of a joined group (see query_escrow_ledger).",
+      parameters: {
+        type: "object",
+        properties: { clanId: { type: "string", description: "Joined group ID, for example coalition_boxes_04." } },
+        required: ["clanId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "prepare_pledge_quote",
+      description: "Compute a pledge quote for a buying group. Read only. It authorizes nothing and moves no money. If no clanId is given, the first buying group in the catalog is used.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanId: { type: "string", description: "Buying group ID. Optional." },
+          units: { type: "number", description: "Whole number of units to pledge." }
+        },
+        required: ["units"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "open_paypal_dashboard",
+      description: "Prepare a link to a PayPal Sandbox page so the user can bring it to the forefront. Read only. The user clicks the link, so nothing is opened or approved automatically.",
+      parameters: {
+        type: "object",
+        properties: {
+          page: { type: "string", enum: ["developer_dashboard", "sandbox_account", "sandbox_activity"], description: "Which PayPal page to link." }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "file_damage_claim",
+      description: "File a DRAFT damage claim for goods that arrived damaged. Needs the buying group, the number of damaged units and a reason. The user's attached photos are added automatically, so never invent photo links. If a detail is missing, ask the user instead of calling this.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanId: { type: "string", description: "Buying group id, if known" },
+          product: { type: "string", description: "The product words the user used, for example 'corrugated shipping boxes'. Used to find the delivered group when no id is known." },
+          damagedUnits: { type: "integer", description: "Number of damaged units" },
+          reason: { type: "string", enum: ["BROKEN", "WET", "EXPIRED", "MISSING", "WRONG_ITEM", "OTHER"], description: "What is wrong with the goods" },
+          notes: { type: "string", description: "Short description in the user's words" }
+        },
+        required: ["damagedUnits", "reason"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "ui_export_snapshot",
+      description: "Trigger snapshot data export of current clan matchmaking or operations state.",
+      parameters: {
+        type: "object",
+        properties: {
+          targetView: { type: "string", description: "Viewport to snapshot ('radar', 'operations', 'dues')." },
+          format: { type: "string", enum: ["json", "csv"], description: "Export data format." }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "confirm_delivery_receipt_multimodal",
+      description: "Confirm physical receipt of freight delivery using multimodal photo proof or report damage.",
+      parameters: {
+        type: "object",
+        properties: {
+          orderId: { type: "string", description: "PayPal Order ID or shipment tracking reference." },
+          buyerId: { type: "string", description: "SME Buyer ID." },
+          conditionStatus: {
+            type: "string",
+            enum: ["GOOD_CONDITION", "DAMAGED_OR_OUT_OF_SPEC"],
+            description: "Physical inspection condition of received items."
+          },
+          photoBase64: { type: "string", description: "Base64 encoded inspection photo proof." },
+          notes: { type: "string", description: "Inspection remarks or damage description." }
+        },
+        required: ["orderId", "conditionStatus"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_clan_subscription_terms",
+      description: "Update monthly and yearly membership dues and commitment cancellation terms for a Clan.",
+      parameters: {
+        type: "object",
+        properties: {
+          clanId: { type: "string", description: "ID of the clan to configure." },
+          monthlyDuesUsd: { type: "number", description: "Monthly membership subscription rate." },
+          yearlyDuesUsd: { type: "number", description: "Discounted annual membership subscription rate." },
+          commitmentTerm: { type: "string", description: "Minimum commitment duration (1_YEAR or MONTH_TO_MONTH)." },
+          cancellationNoticeDays: { type: "number", description: "Required advance notice days to exit clan." }
+        },
+        required: ["clanId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "agent_onboard_submit",
+      description: "Submit an external agent onboarding profile with an invite token to enter WholeShare buying groups.",
+      parameters: {
+        type: "object",
+        properties: {
+          token: {
+            type: "string",
+            description: "The 32-character URL-safe agent invite token"
+          },
+          businessName: {
+            type: "string",
+            description: "Business name (2 to 120 chars)"
+          },
+          contactEmail: {
+            type: "string",
+            description: "Contact email for approval link and ledger receipts"
+          },
+          product: {
+            type: "string",
+            description: "Product SKU or commodity name wanted (e.g. organic-flour-50lb)"
+          },
+          unitsWanted: {
+            type: "integer",
+            description: "Number of units wanted (must be positive integer)"
+          },
+          city: {
+            type: "string",
+            description: "Operating city for logistics corridor matching"
+          },
+          countryCode: {
+            type: "string",
+            description: "Two-letter ISO country code (e.g. US)"
+          },
+          maxUnitPriceCents: {
+            type: "integer",
+            description: "Optional maximum unit price in USD cents"
+          },
+          targetDeliveryDate: {
+            type: "string",
+            description: "Optional target delivery date in ISO format"
+          },
+          preferredSupplier: {
+            type: "string",
+            description: "Optional preferred supplier name"
+          },
+          notes: {
+            type: "string",
+            description: "Optional notes up to 500 characters"
+          }
+        },
+        required: [
+          "token",
+          "businessName",
+          "contactEmail",
+          "product",
+          "unitsWanted",
+          "city",
+          "countryCode"
+        ]
+      }
+    }
   }
 ];
 
 
+
+
+// Web research opens a cloud browser. The user's switch is enforced here, so every way in (Mosaic, WebMCP, REST) respects it.
+const researchAllowed = () => _loadSettings().agentPermissions?.allowAutonomousResearch === true;
+const RESEARCH_OFF = { error: "Web research is switched off. The user can turn on 'Research suppliers on the web' in Settings.", blocked: true, permission: "allowAutonomousResearch" };
+
+const progress = (toolName, message) => actionDispatcher.broadcast("AGENT_TOOL_PROGRESS", { toolName, message, timestamp: new Date().toISOString() });
+
+// A group a person creates must be a first-class group: it shows in Discover, in queries and in Mosaic's answers.
+function registerInCatalog(coalition, { product, city, countryCode, fulfilment }) {
+  const known = (() => { try { return JSON.parse(readFileSync(resolve(process.cwd(), "data/world-cities.json"), "utf8")); } catch { return []; } })();
+  const place = known.find((entry) => String(entry.city).toLowerCase() === String(city).toLowerCase());
+  const country = countryCode || place?.countryCode || "US";
+  const tiers = Array.isArray(coalition.tiers) ? coalition.tiers : [];
+  saveClan({
+    id: coalition.id,
+    name: coalition.clanName,
+    industryVertical: "OTHER",
+    canonicalSku: String(product || coalition.skuName || coalition.sku),
+    hsCodePrefix: "",
+    city: city || place?.city || "",
+    countryCode: country,
+    settlementCurrency: place?.paypalCurrency || "USD",
+    targetUnits: coalition.targetUnits,
+    currentUnits: 0,
+    baseUnitPriceCents: coalition.unitPriceCents,
+    discountTiers: tiers.map((tier) => ({ minUnits: tier.minUnits, discountPct: tier.discountPct })),
+    estimatedDeliveryDays: 14,
+    supplierId: "",
+    supplierName: "Supplier chosen by the group",
+    supplierTrustScore: 0,
+    lat: place?.lat ?? 0,
+    lng: place?.lng ?? 0,
+    memberCount: 1,
+    status: "FORMING",
+    createdAt: new Date().toISOString(),
+    fulfilment
+  });
+}
 
 export async function executeTool(toolName, args = {}) {
   const interception = interceptToolExecution(toolName, args);
@@ -1355,14 +2000,251 @@ export async function executeTool(toolName, args = {}) {
       });
     }
 
+    case "export_view_snapshot": {
+      const snapshot = await buildSnapshot(String(args.component), { limit: args.limit });
+      const base = `/api/v1/snapshot/${encodeURIComponent(snapshot.component)}`;
+      return { title: snapshot.title, summary: snapshot.summary, columns: snapshot.columns, rows: snapshot.rows.slice(0, 25), links: { json: base, csv: `${base}?format=csv`, html: `${base}?format=html` } };
+    }
+
+    case "start_group_buy": {
+      const product = String(args.product || "").trim();
+      if (!product) return { error: "Say what the group should buy." };
+      const leads = loadLeads().filter((lead) => lead.query && product.toLowerCase().includes(String(lead.query).toLowerCase().split(" ")[0]));
+      const vendorUrl = args.vendorUrl || (leads[0]?.website ?? undefined);
+      const fields = {
+        product,
+        name: args.name || `${args.city ? `${args.city} ` : ""}${product} buyers`.slice(0, 80),
+        city: args.city || undefined,
+        targetUnits: Number(args.targetUnits) > 0 ? Math.round(Number(args.targetUnits)) : undefined,
+        basePriceUsd: Number(args.basePriceUsd) > 0 ? Number(args.basePriceUsd) : undefined,
+        supplierMode: vendorUrl ? "URL" : ["VOTE", "URL", "KERNEL"].includes(args.supplierMode) ? args.supplierMode : "VOTE",
+        vendorUrl,
+        shipmentMode: ["SINGLE_POINT", "MULTIPLE_POINTS"].includes(args.shipmentMode) ? args.shipmentMode : undefined,
+        shipmentPoints: Array.isArray(args.shipmentPoints) && args.shipmentPoints.length ? args.shipmentPoints.slice(0, 5) : undefined
+      };
+      const missing = ["city", "targetUnits", "basePriceUsd"].filter((key) => fields[key] === undefined);
+      return { status: "SUCCESS", action: "START_GROUP_BUY", fields, missing };
+    }
+
+    case "find_suppliers": {
+      const found = searchDirectory({ product: args.product, country: args.country, certification: args.certification, acceptsPayPal: args.acceptsPayPal === true, limit: 8 });
+      let leads = [];
+      let web = null;
+      if (args.webSearch === true && !researchAllowed()) {
+        web = { ok: false, error: "Web research is switched off in Settings, so only the directory was searched." };
+      } else if (args.webSearch === true) {
+        progress("find_suppliers", `Checked the directory (${found.length} matches). Now searching the web in a cloud browser`);
+        const target = buildLeadSearchUrl(args.product, args.country);
+        const research = await researchWebFact({ intent: "SUPPLIER_CATALOG", targetUrl: target.url, query: target.query, captureProof: false });
+        if (research && research.success && research.data) {
+          const snippets = (Array.isArray(research.data.snippets) ? research.data.snippets : []).map((t) => String(t).replace(/\s+/g, " ").trim()).filter(Boolean);
+          leads = recordLeads({ query: args.product, sourceUrl: research.data.currentUrl || target.url, snippets, country: args.country });
+          web = { ok: true, pageTitle: research.data.pageTitle, url: research.data.currentUrl || target.url, snippetsRead: snippets.length, leadsSaved: leads.length };
+        } else {
+          web = { ok: false, error: research?.error || "The browser session did not return a page." };
+        }
+      }
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "PRESENT",
+        artifact: { kind: "grid", title: `Suppliers for ${args.product}`, source: "suppliers", filter: [{ field: "id", op: "in", value: [...found.map((s) => s.id), ...leads.map((l) => l.id)] }], limit: 50 },
+        timestamp: new Date().toISOString()
+      });
+      return {
+        directoryMatches: found.map((s) => ({ id: s.id, name: s.name, city: s.city, country: s.country, leadTimeDays: s.leadTimeDays, minOrderUnits: s.minOrderUnits, acceptsPayPal: s.acceptsPayPal, trustScore: s.trustScore, source: s.source, verification: "sample directory entry, not independently verified" })),
+        webLeads: leads.map((l) => ({ id: l.id, name: l.name, website: l.website, note: l.snippet })),
+        web,
+        note: "Web leads are unverified and must be checked before any pledge."
+      };
+    }
+
+    case "query": return await runQuery(args);
+    case "resolve": return await resolveEntity(args);
+    case "compare_groups": return await compareGroups(args);
+    case "join_group": {
+      const units = Number(args.units);
+      let clanId = typeof args.clanId === "string" ? args.clanId : "";
+      let chose = null;
+      if (!clanId && typeof args.group === "string" && args.group.trim()) {
+        const hit = await groupIdFromWords(args.group);
+        if (!hit) return { error: `No group matches '${args.group}'. Ask the user to say it differently.` };
+        clanId = hit.id;
+        chose = { chose: hit.name, otherMatches: hit.alternatives };
+      }
+      if (!clanId) return { error: "Say which group: pass group (the user's words) or clanId." };
+      try {
+        const quote = getPledgeQuote({ clanId, units });
+        const clan = getClanById(clanId);
+        const dollars = (cents) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        const speak = `PayPal approval is open: ${units} units of ${clan?.name} at ${dollars(quote.unitPriceCents)} each, ${dollars(quote.amountCents)} total${quote.discountPct ? ` after the ${quote.discountPct}% tier discount` : ""}. This runs in the PayPal sandbox, so no real money moves, and nothing is pledged until you approve.${chose?.otherMatches?.length ? ` I picked this group for "${args.group}". Say so if you meant another, such as ${chose.otherMatches.join(" or ")}.` : ""}`;
+        return { status: "SUCCESS", action: "PLEDGE_QUOTE", quote, group: clan?.name, speak, ...(chose ? { resolvedFromWords: chose } : {}), nextStep: "The PayPal approval step is open for the user. Nothing is pledged until they approve on PayPal. This runs in the PayPal sandbox, so no real money moves." };
+      } catch (err) {
+        return { error: `${err.message} No pledge was started.` };
+      }
+    }
+
+    case "setup_profile": {
+      const current = _loadSettings().profile || {};
+      const next = {};
+      const text = (value, max) => (typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null);
+      const fields = { businessName: text(args.businessName, 120), city: text(args.city, 80), country: text(args.country, 80), contactEmail: text(args.contactEmail, 120), currency: text(args.currency, 3)?.toUpperCase() ?? null };
+      if (fields.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.contactEmail)) return { error: "That email address does not look valid. Ask the user to repeat it." };
+      if (fields.currency && !/^[A-Z]{3}$/.test(fields.currency)) return { error: "Currency must be a 3 letter code such as USD or INR." };
+      for (const [key, value] of Object.entries(fields)) if (value !== null && value !== current[key]) next[key] = value;
+      if (Object.keys(next).length === 0) return { error: "Nothing to change. Say which details to set: business name, city, country, currency or contact email." };
+      const previous = Object.fromEntries(Object.keys(next).map((key) => [key, current[key] ?? ""]));
+      _updateSettings({ profile: next });
+      actionDispatcher.broadcast("UI_ACTION", { type: "PROFILE_UPDATED", fields: next, timestamp: new Date().toISOString() });
+      const labels = { businessName: "business name", city: "city", country: "country", currency: "currency", contactEmail: "contact email" };
+      const speak = `Saved your ${Object.entries(next).map(([key, value]) => `${labels[key] ?? key} (${value})`).join(", ")}. You can review it in Settings, or ask me to change it back.`;
+      return { status: "SUCCESS", action: "PROFILE_UPDATED", updated: next, previous, speak, note: "Saved. The Settings page is open so the user can review it." };
+    }
+
+    case "track_shipment": {
+      let rows = (await querySource("shipments", { filter: [{ field: "id", op: "eq", value: String(args.shipment || "") }], limit: 1 })).rows;
+      let chose = null;
+      if (rows.length === 0) {
+        const found = await resolveEntity({ type: "shipment", text: String(args.shipment || "") });
+        if (!found.recommended) return { error: `No shipment matches '${args.shipment}'. Ask the user to say it differently.` };
+        rows = (await querySource("shipments", { filter: [{ field: "id", op: "eq", value: found.recommended }], limit: 1 })).rows;
+        chose = { chose: found.candidates?.[0]?.product, otherMatches: found.candidates.slice(1, 3).map((c) => c.product) };
+      }
+      const row = rows[0];
+      if (!row) return { error: "That shipment is no longer on record." };
+      const recorded = { id: row.id, product: row.product, carrier: row.carrier, tracking: row.tracking, status: row.status, shippedAt: row.shippedAt, expectedAt: row.expectedAt, deliveredAt: row.deliveredAt, inspectionEndsAt: row.inspectionEndsAt };
+      const links = {
+        UPS: (t) => `https://www.ups.com/track?loc=en_US&tracknum=${encodeURIComponent(t)}`,
+        FEDEX: (t) => `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(t)}`,
+        USPS: (t) => `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(t)}`,
+        DHL: (t) => `https://www.dhl.com/global-en/home/tracking/tracking-express.html?submit=1&tracking-id=${encodeURIComponent(t)}`
+      };
+      const build = links[String(row.carrier || "").toUpperCase().replace(/\s+/g, "")];
+      const result = { status: "SUCCESS", recorded, ...(chose ? { resolvedFromWords: chose } : {}) };
+      if (!build || !isCarrierFormatTracking(row.tracking)) return { ...result, carrierPage: null, note: "The recorded tracking number is sample data, so the carrier's site was not asked. Answer from the recorded status and dates." };
+      if (!researchAllowed()) return { ...result, carrierPage: null, note: "Web research is switched off in Settings, so the carrier's page was not read. Answer from the recorded status and dates." };
+      progress("track_shipment", `Opening the ${row.carrier} tracking page in a cloud browser`);
+      const research = await researchWebFact({ intent: "GENERAL_RESEARCH", targetUrl: build(row.tracking), query: "status delivered in transit estimated delivery date location", captureProof: false });
+      if (research?.success && research.data) {
+        const snippets = (Array.isArray(research.data.snippets) ? research.data.snippets : []).map((t) => String(t).replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 5).map((t) => t.slice(0, 220));
+        return { ...result, carrierPage: { url: research.data.currentUrl || build(row.tracking), title: research.data.pageTitle, snippets }, note: "Read from the carrier's public tracking page. If it shows nothing useful, rely on the recorded status." };
+      }
+      return { ...result, carrierPage: null, note: `The carrier page could not be read (${research?.error || "no page returned"}). Answer from the recorded status and dates.` };
+    }
+
+    case "kernel_read_supplier_site": {
+      if (!researchAllowed()) return RESEARCH_OFF;
+      progress("kernel_read_supplier_site", "Starting a cloud browser and opening the supplier site");
+      const result = await readSupplierSite({ website: args.website, product: args.product });
+      const pages = Array.isArray(result?.data?.pages) ? result.data.pages : [];
+      if (result.success && pages.length) {
+        const lines = [];
+        for (const pg of pages) {
+          for (const [label, list] of [["Price", pg.prices], ["Minimum order", pg.minimumOrder], ["Lead time", pg.leadTime], ["Product", pg.productLines]]) for (const text of list || []) lines.push(`${label}: ${text}`);
+        }
+        const emails = [...new Set(pages.flatMap((pg) => pg.emails || []))];
+        if (emails.length) lines.push(`Contact: ${emails.join(", ")}`);
+        actionDispatcher.broadcast("UI_ACTION", {
+          type: "PRESENT",
+          artifact: { kind: "research", title: `Terms read from ${new URL(result.website).hostname}`, url: pages[0].url, query: String(args.product || ""), intent: "SUPPLIER_QUOTE", snippets: (lines.length ? lines : ["No prices, minimum order or lead time were stated on the pages read."]).slice(0, 8).map((t) => t.slice(0, 260)), fetchedAt: new Date().toISOString() },
+          timestamp: new Date().toISOString()
+        });
+        return { status: "SUCCESS", pagesRead: pages.length, pageUrls: pages.map((pg) => pg.url), found: lines.slice(0, 12), note: "Read from the supplier's public pages. Unverified until the supplier confirms in writing." };
+      }
+      return { error: result?.error || "The supplier site did not load in the cloud browser." };
+    }
+
     case "kernel_research_web_fact": {
-      return await researchWebFact({
+      if (!researchAllowed()) return RESEARCH_OFF;
+      progress("kernel_research_web_fact", "Opening the page in a cloud browser and reading it");
+      const research = await researchWebFact({
         intent: args.intent || "GENERAL_RESEARCH",
         targetUrl: args.targetUrl,
         query: args.query,
         script: args.script,
         captureProof: args.captureProof !== false
       });
+      if (research && research.success && research.data) {
+        const snippets = (Array.isArray(research.data.snippets) ? research.data.snippets : []).map((text) => String(text).replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 5).map((text) => text.slice(0, 320));
+        actionDispatcher.broadcast("UI_ACTION", {
+          type: "PRESENT",
+          artifact: { kind: "research", title: research.data.pageTitle || "Web research", url: research.data.currentUrl || args.targetUrl, query: args.query || "", intent: research.intent, snippets, fetchedAt: new Date().toISOString() },
+          timestamp: new Date().toISOString()
+        });
+      }
+      return research;
+    }
+
+    case "kernel_present_research": {
+      const clanId = args.clanId || args.coalitionId;
+      if (!clanId) {
+        throw new Error("clanId parameter is required for kernel_present_research.");
+      }
+      const brief = kernelResearchService.getLatestBrief(clanId);
+      if (!brief) {
+        return {
+          status: "NOT_FOUND",
+          clanId,
+          message: "No supplier research brief on file for this clan yet. Use kernel_request_research to initiate live vendor research.",
+          brief: null
+        };
+      }
+      if (brief.status === "FAILED" || brief.status === "UNAVAILABLE") {
+        return {
+          status: brief.status,
+          clanId,
+          sku: brief.sku,
+          researchedAt: brief.researchedAt,
+          error: brief.error || "Supplier research unavailable",
+          message: `Supplier research unavailable: ${brief.error || "No verified vendor URL on file"}.`,
+          brief
+        };
+      }
+      const suppliers = brief.suppliers || [];
+      const tableRows = suppliers.map((s, idx) => {
+        const tierSummary = Array.isArray(s.tiers) && s.tiers.length > 0
+          ? s.tiers.map(t => Array.isArray(t) ? t.join(" - ") : String(t)).join("; ")
+          : "Standard catalog MOQ";
+        const proofShort = s.proofSha256 ? s.proofSha256.slice(0, 12) : "none";
+        return `Supplier ${idx + 1}: ${s.vendorUrl}\n  MOQ & Pricing Tiers: ${tierSummary}\n  Credibility Verdict: ${s.credibility}\n  Proof File: ${s.proofFile || "screenshot.png"} (SHA-256: ${proofShort})`;
+      });
+
+      const plainTextSummary = `Research Brief for SKU ${brief.sku} in Clan ${clanId}:\nResearched at: ${brief.researchedAt}\n\n${tableRows.join("\n\n")}`;
+
+      return {
+        status: "SUCCESS",
+        clanId,
+        sku: brief.sku,
+        researchedAt: brief.researchedAt,
+        suppliers,
+        forex: brief.forex || null,
+        plainTextSummary,
+        brief
+      };
+    }
+
+    case "kernel_request_research": {
+      const clanId = args.clanId || args.coalitionId;
+      if (!clanId) {
+        throw new Error("clanId parameter is required for kernel_request_research.");
+      }
+      const task = await kernelResearchService.queueResearchTask({
+        clanId,
+        sku: args.sku,
+        vendorUrls: args.vendorUrls,
+        currency: args.currency,
+        force: Boolean(args.force),
+        trigger: "USER_REQUEST"
+      });
+      return {
+        status: "SUCCESS",
+        task: {
+          id: task.id,
+          clanId: task.clanId,
+          sku: task.sku,
+          vendorUrls: task.vendorUrls,
+          status: task.status,
+          createdAt: task.createdAt
+        }
+      };
     }
 
     case "verify_supplier_credibility": {
@@ -1531,6 +2413,7 @@ export async function executeTool(toolName, args = {}) {
         ruleType: args.ruleType || args.ruleKey,
         proposedValue: args.proposedValue,
         rationale: args.rationale,
+        briefId: args.briefId,
         votingDurationHours: args.votingDurationHours,
         members
       });
@@ -1577,6 +2460,10 @@ export async function executeTool(toolName, args = {}) {
       });
 
       if (result.proposal.status === "ENACTED") {
+        if (result.proposal.ruleType === "SUPPLIER_SELECTION" && coalition) {
+          coalition.chosenSupplier = String(result.proposal.proposedValue);
+          coalition.chosenSupplierBriefId = result.proposal.briefId;
+        }
         actionDispatcher.broadcast("GOVERNANCE_RULE_ENACTED", {
           proposal: result.proposal,
           constitution: result.enactedConstitution
@@ -1611,6 +2498,10 @@ export async function executeTool(toolName, args = {}) {
       const targetUnits = args.targetUnits || args.moq || 500;
       const basePriceUsd = args.basePriceUsd || (args.basePriceCents ? args.basePriceCents / 100 : 10);
       const constIn = args.constitution || {};
+      const cityName = typeof args.city === "string" ? args.city.trim().slice(0, 60) : "";
+      const countryCode = typeof args.countryCode === "string" ? args.countryCode.trim().slice(0, 2).toUpperCase() : "";
+      const shipment = normaliseFulfilment(args.fulfilment, cityName, countryCode);
+      if (shipment.error) return { status: "ERROR", error: shipment.error };
       const result = actionDispatcher.createCustomClan({
         clanId: args.clanId,
         clanName,
@@ -1639,6 +2530,11 @@ export async function executeTool(toolName, args = {}) {
         },
         dataSources: args.dataSources
       });
+      if (!result.existing && result.coalition) {
+        result.coalition.city = cityName;
+        result.coalition.fulfilment = shipment.fulfilment;
+        registerInCatalog(result.coalition, { product: args.commodity || args.commoditySku || skuName, city: cityName, countryCode, fulfilment: shipment.fulfilment });
+      }
       return {
         status: "SUCCESS",
         coalition: result.coalition,
@@ -1738,6 +2634,408 @@ export async function executeTool(toolName, args = {}) {
       const params = args.parameters || {};
       const result = await executePayPalToolkitAction(action, params);
       return result;
+    }
+
+    case "update_user_settings": {
+      const { updateUserSettings } = await import("./user-settings.js");
+      const partial = {};
+      if (args.maxAutoAuthorizeUsd !== undefined || args.stepUpThresholdUsd !== undefined || args.dailySpendLimitUsd !== undefined) {
+        partial.policies = {};
+        if (args.maxAutoAuthorizeUsd !== undefined) partial.policies.maxAutoAuthorizeUsd = Number(args.maxAutoAuthorizeUsd);
+        if (args.stepUpThresholdUsd !== undefined) partial.policies.stepUpThresholdUsd = Number(args.stepUpThresholdUsd);
+        if (args.dailySpendLimitUsd !== undefined) partial.policies.dailySpendLimitUsd = Number(args.dailySpendLimitUsd);
+      }
+      if (args.modelProvider) {
+        partial.modelPreferences = { provider: args.modelProvider };
+      }
+      const updated = updateUserSettings(partial);
+      actionDispatcher.broadcast("USER_SETTINGS_UPDATED", updated);
+      return {
+        status: "SETTINGS_UPDATED",
+        policies: updated.policies,
+        modelPreferences: updated.modelPreferences
+      };
+    }
+
+    case "add_connected_agent": {
+      const { addAgentConnection } = await import("./user-settings.js");
+      const newAgent = addAgentConnection({
+        name: args.name,
+        role: args.role,
+        protocol: args.protocol,
+        maxSpendUsd: args.maxSpendUsd,
+        autonomousApproval: args.autonomousApproval
+      });
+      actionDispatcher.broadcast("AGENT_CONNECTED", newAgent);
+      return {
+        status: "AGENT_CONNECTED",
+        agent: newAgent
+      };
+    }
+
+    case "settle_outstanding_dues": {
+      const repaymentStorage = getRepaymentStorage();
+      const settled = repaymentStorage.settleMemberDebt(args.debtId);
+      if (!settled) {
+        return { error: `Debt ID '${args.debtId}' not found.` };
+      }
+      actionDispatcher.broadcast("DEBT_SETTLED", settled);
+      return {
+        status: "DEBT_SETTLED",
+        debt: settled
+      };
+    }
+
+    case "ui_navigate_view": {
+      const validViews = ["landing", "onboarding", "radar", "ledger", "logistics", "leader", "subscriptions", "settings", "paypal", "agents", "mosaic"];
+      if (!validViews.includes(args.view)) {
+        return { error: `Invalid view '${args.view}'. Valid views are ${validViews.join(", ")}.` };
+      }
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "NAVIGATE_VIEW",
+        view: args.view,
+        timestamp: new Date().toISOString()
+      });
+      return {
+        status: "SUCCESS",
+        action: "NAVIGATE_VIEW",
+        view: args.view
+      };
+    }
+
+    case "ui_open_slide_over": {
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "OPEN_SLIDE_OVER",
+        panelType: args.panelType || "clan_matches",
+        title: args.title || "Mosaic recommendations",
+        data: args.data || {},
+        timestamp: new Date().toISOString()
+      });
+      return {
+        status: "SUCCESS",
+        action: "OPEN_SLIDE_OVER",
+        panelType: args.panelType
+      };
+    }
+
+    case "ui_trigger_onboarding": {
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "TRIGGER_ONBOARDING",
+        businessName: args.businessName,
+        industry: args.industry,
+        checklist: args.checklist || {},
+        timestamp: new Date().toISOString()
+      });
+      return {
+        status: "SUCCESS",
+        action: "TRIGGER_ONBOARDING",
+        checklist: args.checklist
+      };
+    }
+
+    case "ui_trigger_clan_setup": {
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "TRIGGER_CLAN_SETUP",
+        config: args,
+        timestamp: new Date().toISOString()
+      });
+      return {
+        status: "SUCCESS",
+        action: "TRIGGER_CLAN_SETUP",
+        config: args
+      };
+    }
+
+    case "ui_filter_clans": {
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "FILTER_CLANS",
+        filters: args,
+        timestamp: new Date().toISOString()
+      });
+      return {
+        status: "SUCCESS",
+        action: "FILTER_CLANS",
+        filters: args
+      };
+    }
+
+    case "schedule_move_delivery":
+    case "schedule_extend_inspection":
+    case "schedule_book_slot":
+    case "schedule_resolve_conflicts":
+    case "schedule_undo": {
+      try {
+        let result;
+        if (toolName === "schedule_move_delivery") result = moveDelivery({ shipment: args.shipment, days: args.days, toDate: args.toDate, actor: "mosaic", reason: args.reason || "Asked in chat" });
+        else if (toolName === "schedule_extend_inspection") result = extendInspection({ shipment: args.shipment, hours: args.hours, actor: "mosaic" });
+        else if (toolName === "schedule_book_slot") result = bookSlot({ shipment: args.shipment, date: args.date, hour: args.hour, actor: "mosaic" });
+        else if (toolName === "schedule_resolve_conflicts") result = resolveConflicts({ apply: args.apply === true, actor: "mosaic" });
+        else result = undoLast({ actor: "mosaic" });
+        actionDispatcher.broadcast("UI_ACTION", { type: "SCHEDULE_VIEW", timestamp: new Date().toISOString() });
+        return { ...result, action: "SCHEDULE_CHANGED", summary: result.change?.summary ?? result.summary ?? (result.proposals ? `${result.proposals.length} proposed moves` : "Schedule updated") };
+      } catch (err) {
+        return { error: err.message };
+      }
+    }
+
+    case "present": {
+      const kind = String(args.kind || "");
+      const source = kind === "groups" ? "groups" : kind === "invoices" ? "paypal_invoices" : resolveSourceId(args.source);
+      if (kind === "timeline" || kind === "board") {
+        const artifact = { kind, title: String(args.title || (kind === "board" ? "Claims board" : "Delivery schedule")).slice(0, 80) };
+        actionDispatcher.broadcast("UI_ACTION", { type: "PRESENT", artifact, timestamp: new Date().toISOString() });
+        return { status: "SUCCESS", action: "PRESENT", artifact };
+      }
+      if (!["grid", "groups", "invoices"].includes(kind)) return { error: `Unknown kind '${kind}'. Use grid, groups, invoices, timeline or board.` };
+      if (!SOURCES[source]) return { error: `Unknown data source '${source}'. Known sources: ${Object.keys(SOURCES).join(", ")}.` };
+      if (Array.isArray(args.ids) && args.ids.length) args = { ...args, filter: [...(Array.isArray(args.filter) ? args.filter : []), { field: "id", op: "in", value: args.ids.map(String) }], limit: args.ids.length };
+      const sort = args.sort && typeof args.sort.field === "string" ? args.sort : kind === "groups" ? { field: "fillPct", direction: "desc" } : null;
+      const limit = Math.min(Number(args.limit) || (kind === "groups" ? 6 : 50), 200);
+      let preview;
+      try {
+        preview = await querySource(source, { filter: args.filter || [], sort, limit });
+      } catch (err) {
+        return { error: err.message };
+      }
+      if (preview.count === 0) return { status: "EMPTY", message: `No rows in ${preview.label} match that filter.` };
+      const artifact = { kind, title: String(args.title || preview.label).slice(0, 80), source, filter: args.filter || [], sort, limit, count: preview.count, total: preview.total, note: preview.description };
+      actionDispatcher.broadcast("UI_ACTION", { type: "PRESENT", artifact, timestamp: new Date().toISOString() });
+      const sample = preview.rows.slice(0, 6).map((row) => Object.fromEntries(Object.entries(row).filter(([, value]) => value !== null && typeof value !== "object").slice(0, 10)));
+      return { status: "SUCCESS", action: "PRESENT", artifact, shown: `${preview.count} of ${preview.total} rows`, sample };
+    }
+
+    case "ui_open_report": {
+      const page = String(args.page || "").toLowerCase();
+      if (!["paypal", "demand", "delivery", "members"].includes(page)) return { error: `Unknown report page '${args.page}'. Use paypal, demand, delivery or members.` };
+      actionDispatcher.broadcast("UI_ACTION", { type: "OPEN_REPORT", page, timestamp: new Date().toISOString() });
+      let sample;
+      try {
+        if (page === "paypal") {
+          const invoices = (await querySource("paypal_invoices", { limit: 500 })).rows;
+          const ledger = (await querySource("ledger", { limit: 2000 })).rows;
+          const money = (n) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          sample = [{ openInvoices: invoices.length, openInvoiceBalance: money(invoices.reduce((t, r) => t + Number(r.dueUsd || 0), 0)), heldOnPayPalAcrossPledges: money(ledger.reduce((t, r) => t + Number(r.authorizedUsd || 0), 0)), pledges: ledger.length, invoiceStatuses: [...new Set(invoices.map((r) => r.status))].join(", ") }];
+        } else if (page === "demand") {
+          const groups = (await querySource("groups", { limit: 1000 })).rows;
+          sample = [{ groups: groups.length, openToJoin: groups.filter((g) => g.status === "FORMING").length, locked: groups.filter((g) => g.status !== "FORMING").length, averageDiscountPct: Math.round(groups.reduce((t, g) => t + Number(g.tierDiscountPct || 0), 0) / Math.max(groups.length, 1)) }];
+        }
+      } catch { sample = undefined; }
+      return { status: "SUCCESS", action: "OPEN_REPORT", page, ...(sample ? { sample } : {}) };
+    }
+
+    case "ui_open_my_group": {
+      const joined = typeof args.clanId === "string" ? actionDispatcher.getLedgerState().find((c) => c.coalitionId === args.clanId) : null;
+      if (!joined) return { error: `No joined group with id '${args.clanId}'. Read the ledger to see your groups.` };
+      actionDispatcher.broadcast("UI_ACTION", { type: "OPEN_MY_GROUP", clanId: joined.coalitionId, timestamp: new Date().toISOString() });
+      return { status: "SUCCESS", action: "OPEN_MY_GROUP", clanId: joined.coalitionId, name: joined.skuName };
+    }
+
+    case "ui_open_group": {
+      const clan = typeof args.clanId === "string" ? getClanById(args.clanId) : null;
+      if (!clan) return { error: `No buying group with id '${args.clanId}'. Search the catalog first.` };
+      actionDispatcher.broadcast("UI_ACTION", { type: "OPEN_GROUP", clanId: clan.id, timestamp: new Date().toISOString() });
+      return { status: "SUCCESS", action: "OPEN_GROUP", clanId: clan.id, name: clan.name };
+    }
+
+    case "prepare_pledge_quote": {
+      const units = Number(args.units);
+      try {
+        if (typeof args.clanId === "string" && args.clanId) {
+          return { status: "SUCCESS", action: "PLEDGE_QUOTE", quote: getPledgeQuote({ clanId: args.clanId, units }) };
+        }
+        for (const clan of getAllClans()) {
+          try {
+            return { status: "SUCCESS", action: "PLEDGE_QUOTE", quote: getPledgeQuote({ clanId: clan.id, units }) };
+          } catch {
+            // This group cannot take the pledge. Try the next one in catalog order.
+          }
+        }
+        return { error: "No buying group can take that many units right now." };
+      } catch (err) {
+        return { error: err.message };
+      }
+    }
+
+    case "open_paypal_dashboard": {
+      const pages = {
+        developer_dashboard: { url: "https://developer.paypal.com/dashboard/", label: "PayPal developer dashboard" },
+        sandbox_account: { url: "https://www.sandbox.paypal.com/myaccount/summary", label: "PayPal Sandbox account" },
+        sandbox_activity: { url: "https://www.sandbox.paypal.com/myaccount/transactions", label: "PayPal Sandbox activity" }
+      };
+      const target = pages[args.page] || pages.developer_dashboard;
+      return { status: "SUCCESS", action: "OPEN_EXTERNAL", url: target.url, label: target.label };
+    }
+
+    case "file_damage_claim": {
+      const photoUrls = Array.isArray(args.photoUrls) ? args.photoUrls : [];
+      if (photoUrls.length === 0) return { error: "Attach at least one photo of the damage first. Claims require photographic proof." };
+      const units = Number(args.damagedUnits);
+      if (!Number.isInteger(units) || units <= 0) return { error: "Damaged units must be a whole number above zero." };
+      if (!getClanById(args.clanId) && !actionDispatcher.coalitions.get(args.clanId) && (args.product || args.clanId)) {
+        try {
+          args.clanId = findShipment(args.product || args.clanId, { needDelivered: true }).clanId;
+        } catch (err) {
+          return { error: err.message };
+        }
+      }
+      const seeded = getClanById(args.clanId);
+      const coalition = actionDispatcher.coalitions.get(args.clanId);
+      if (!seeded && !coalition) return { error: `Buying group '${args.clanId}' was not found.` };
+      let unitPriceCents;
+      if (seeded) {
+        const discount = (seeded.discountTiers || []).reduce((best, tier) => (seeded.currentUnits >= tier.minUnits ? Math.max(best, tier.discountPct) : best), 0);
+        unitPriceCents = Math.round(seeded.baseUnitPriceCents * (100 - discount) / 100);
+      } else {
+        unitPriceCents = coalition.unitPriceCents;
+      }
+      const memberId = loadUserSettings().profile?.smeId || "sme_austin_01";
+      const description = [args.reason, args.notes, args.detectedTracking ? `Tracking in photo: ${args.detectedTracking}` : null].filter(Boolean).join(". ");
+      try {
+        const claim = claimsAdapter.intakeClaim({
+          clanId: args.clanId,
+          memberId,
+          orderId: "local-record",
+          captureId: "local-record",
+          damagedUnits: units,
+          unitPrice: unitPriceCents / 100,
+          orderValue: (unitPriceCents * units) / 100,
+          evidence: { photoUrls, description },
+          autoBuyerApprove: false
+        });
+        return { status: "SUCCESS", action: "CLAIM_FILED", claim: { claimId: claim.claimId, status: claim.status, claimedAmount: claim.claimedAmount ?? (unitPriceCents * units) / 100, unitPriceUsd: unitPriceCents / 100, damagedUnits: units, photos: photoUrls.length } };
+      } catch (err) {
+        return { error: err.message };
+      }
+    }
+
+    case "ui_export_snapshot": {
+      actionDispatcher.broadcast("UI_ACTION", {
+        type: "EXPORT_SNAPSHOT",
+        targetView: args.targetView || "radar",
+        format: args.format || "json",
+        timestamp: new Date().toISOString()
+      });
+      return {
+        status: "SUCCESS",
+        action: "EXPORT_SNAPSHOT",
+        targetView: args.targetView
+      };
+    }
+
+    case "confirm_delivery_receipt_multimodal": {
+      const { orderId, photoBase64, conditionStatus, notes, buyerId } = args;
+      const result = await actionDispatcher.confirmShipmentReceipt(orderId, {
+        photoBase64,
+        conditionStatus: conditionStatus || "GOOD_CONDITION",
+        notes: notes || "Multimodal proof uploaded by buyer.",
+        buyerId: buyerId || "sme_austin_01"
+      });
+      return result;
+    }
+
+    case "update_clan_subscription_terms": {
+      const { clanId, monthlyDuesUsd, yearlyDuesUsd, commitmentTerm, cancellationNoticeDays } = args;
+      const updated = actionDispatcher.updateClanSubscription(clanId, {
+        monthlyDuesUsd,
+        yearlyDuesUsd,
+        commitmentTerm,
+        cancellationNoticeDays
+      });
+      return {
+        status: "SUCCESS",
+        clanId,
+        subscription: updated
+      };
+    }
+
+    case "agent_onboard_submit": {
+      const missingFields = [];
+      if (!args.businessName || typeof args.businessName !== "string" || !args.businessName.trim()) missingFields.push("businessName");
+      if (!args.contactEmail || typeof args.contactEmail !== "string" || !args.contactEmail.trim()) missingFields.push("contactEmail");
+      if (!args.product || typeof args.product !== "string" || !args.product.trim()) missingFields.push("product");
+      if (args.unitsWanted === undefined || args.unitsWanted === null || args.unitsWanted === "") missingFields.push("unitsWanted");
+      if (!args.city || typeof args.city !== "string" || !args.city.trim()) missingFields.push("city");
+      if (!args.countryCode || typeof args.countryCode !== "string" || !args.countryCode.trim()) missingFields.push("countryCode");
+
+      if (missingFields.length > 0) {
+        return {
+          status: "VALIDATION_ERROR",
+          statusCode: 422,
+          error: "Missing required profile fields.",
+          missingFields
+        };
+      }
+
+      const businessName = args.businessName.trim();
+      if (businessName.length < 2 || businessName.length > 120) {
+        return { status: "VALIDATION_ERROR", statusCode: 422, error: "businessName must be between 2 and 120 characters.", field: "businessName" };
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(args.contactEmail.trim())) {
+        return { status: "VALIDATION_ERROR", statusCode: 422, error: "Invalid email format for contactEmail.", field: "contactEmail" };
+      }
+
+      const unitsWanted = Number(args.unitsWanted);
+      if (!Number.isInteger(unitsWanted) || unitsWanted < 1) {
+        return { status: "VALIDATION_ERROR", statusCode: 422, error: "unitsWanted must be an integer greater than 0.", field: "unitsWanted" };
+      }
+
+      const invitesPath = resolve(process.cwd(), ".scratch/agent-invites.json");
+      let invites = [];
+      try {
+        if (existsSync(invitesPath)) {
+          invites = JSON.parse(readFileSync(invitesPath, "utf-8"));
+        }
+      } catch {}
+
+      const invite = invites.find(inv => inv.token === args.token);
+      if (!invite) {
+        return { status: "ERROR", statusCode: 404, error: "Invite token not found." };
+      }
+      if (invite.revoked || new Date(invite.expiresAt).getTime() <= Date.now()) {
+        return { status: "ERROR", statusCode: 410, error: "Invite token has expired or been revoked." };
+      }
+
+      const productInput = args.product.trim();
+      let resolvedSku = productInput;
+      let resolvedName = productInput;
+
+      if (actionDispatcher.catalog.has(productInput)) {
+        const item = actionDispatcher.catalog.get(productInput);
+        resolvedSku = item.sku;
+        resolvedName = item.name;
+      } else {
+        const matches = [];
+        for (const [sku, item] of actionDispatcher.catalog.entries()) {
+          if (sku.toLowerCase().includes(productInput.toLowerCase()) || (item.name && item.name.toLowerCase().includes(productInput.toLowerCase()))) {
+            matches.push({ sku: item.sku, name: item.name });
+          }
+        }
+        if (matches.length > 1) {
+          return {
+            status: "AMBIGUOUS_SKU",
+            statusCode: 422,
+            error: "Ambiguous product name matches multiple SKUs.",
+            matchingSkus: matches
+          };
+        } else if (matches.length === 1) {
+          resolvedSku = matches[0].sku;
+          resolvedName = matches[0].name;
+        }
+      }
+
+      const randomBytes = (await import("node:crypto")).randomBytes;
+      const sessionId = "sess_" + randomBytes(16).toString("hex");
+
+      return {
+        status: "SUCCESS",
+        statusCode: 201,
+        sessionId,
+        product: resolvedSku,
+        productName: resolvedName,
+        summary: `${businessName} onboarded for ${unitsWanted} units of ${resolvedName}. Session ${sessionId} created.`
+      };
     }
 
     default: {

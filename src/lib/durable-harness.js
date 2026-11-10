@@ -1,3 +1,5 @@
+import { querySource } from "./data-sources.js";
+import { findUnsupportedFigures, findUnsupportedNames } from "./reply-check.js";
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool, parseToolCallsFromContent } from "./tool-registry.js";
 import { actionDispatcher } from "./web-actions.js";
 import {
@@ -7,6 +9,10 @@ import {
   loadSessionTrajectory
 } from "./db.js";
 import { interceptToolExecution } from "./interceptor.js";
+import { loadUserSettings } from "./user-settings.js";
+import { getScheduleState } from "./schedule-service.js";
+import { getEvidence } from "./evidence-store.js";
+import { mosaicProvider } from "./mosaic-config.js";
 import { generateInstinctProfileHeader } from "./instinct-profile.js";
 import { generateFeatureMapPromptContext } from "./feature-map.js";
 import { dreamingEngine } from "./dreaming-engine.js";
@@ -24,11 +30,167 @@ const MAX_REFLEXIVE_ATTEMPTS = 2;
 const AGENT_TIMEOUT_MS = 90000;
 const STEP_UP_THRESHOLD_CENTS = 100000;
 
+// Interactive Mosaic surfaces only need the tools that drive the app. Sending all 60 schemas
+// costs about 9,000 prompt tokens per turn, which dominates latency on a small local model.
+const FOCUSED_SOURCES = new Set(["mosaic-deep-work", "workspace-copilot"]);
+const FOCUSED_TOOL_NAMES = new Set([
+  "ui_navigate_view",
+  "query",
+  "resolve",
+  "compare_groups",
+  "join_group",
+  "setup_profile",
+  "present",
+  "kernel_research_web_fact",
+  "kernel_read_supplier_site",
+  "track_shipment",
+  "find_suppliers",
+  "start_group_buy",
+  "schedule_move_delivery",
+  "schedule_extend_inspection",
+  "schedule_book_slot",
+  "schedule_resolve_conflicts",
+  "schedule_undo",
+  "ui_open_group",
+  "ui_open_report",
+  "ui_open_my_group",
+  "query_escrow_ledger",
+  "open_paypal_dashboard",
+  "file_damage_claim",
+  "get_clan_constitution",
+  "explain_escrow_document"
+]);
+// Independent reads can run together. A slow tool gets a deadline so the model can answer with what it has.
+const PARALLEL_SAFE = new Set(["query", "resolve", "compare_groups", "query_escrow_ledger"]);
+const DEADLINES_MS = { track_shipment: 45000, kernel_read_supplier_site: 50000, kernel_research_web_fact: 40000, find_suppliers: 60000 };
+
+function withDeadline(toolName, promise) {
+  const limit = DEADLINES_MS[toolName] ?? 30000;
+  let timer;
+  const late = new Promise((resolveLate) => {
+    timer = setTimeout(() => resolveLate({ error: `That took longer than ${Math.round(limit / 1000)} seconds and was stopped. Answer from what you already have and say what is missing.` }), limit);
+  });
+  return Promise.race([promise, late]).finally(() => clearTimeout(timer));
+}
+
+function parseCallArgs(call) {
+  try {
+    const raw = call.function?.arguments ?? call.arguments ?? {};
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {
+    return {};
+  }
+}
+
+// A browser read takes several seconds. After two pages the model has to answer with what it has.
+function kernelBudget(toolName, count) {
+  if ((toolName !== "kernel_research_web_fact" && toolName !== "kernel_read_supplier_site") || count <= 2) return null;
+  return { error: "Two web pages were already read for this question. Answer now from what they returned, and say what you could not confirm." };
+}
+
+const userText = (messages) => messages.filter((message) => message.role === "user").map((message) => message.content).join(" ");
+
+const PRODUCT_TOOLS = new Set(["find_suppliers", "start_group_buy"]);
+const stem = (word) => (word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word);
+const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 2).map(stem);
+
+// A product must come from the user's own words, never from screen context or the model's memory.
+function productGuard(toolName, toolArgs, messages) {
+  if (!PRODUCT_TOOLS.has(toolName)) return null;
+  const said = new Set(messages.filter((message) => message.role === "user").flatMap((message) => wordsOf(message.content)));
+  const product = wordsOf(toolArgs?.product);
+  if (product.length > 0 && product.some((word) => said.has(word))) return null;
+  return { needsInput: true, question: "What would you like to buy? Tell me the product, and the city and units if you know them. I will search for suppliers and set up the group." };
+}
+
+export const PERMISSION_FOR_TOOL = {
+  ui_filter_clans: { flag: "allowAutonomousFilterSort", label: "search and filter groups" },
+  prepare_pledge_quote: { flag: "allowAutonomousQuotePrep", label: "prepare pledge quotes" },
+  file_damage_claim: { flag: "allowAutonomousDraftMessages", label: "draft messages and claims" },
+  setup_profile: { flag: "allowAutonomousDraftMessages", label: "update your profile" },
+  start_group_buy: { flag: "allowAutonomousDraftMessages", label: "prepare a group buy for you to review" },
+  find_suppliers: { flag: "allowAutonomousResearch", label: "find and research suppliers" },
+  kernel_research_web_fact: { flag: "allowAutonomousResearch", label: "research suppliers on the web" },
+  kernel_read_supplier_site: { flag: "allowAutonomousResearch", label: "research suppliers on the web" },
+  track_shipment: { flag: "allowAutonomousResearch", label: "research suppliers on the web" },
+  schedule_move_delivery: { flag: "allowAutonomousScheduleChanges", label: "change delivery schedules" },
+  schedule_extend_inspection: { flag: "allowAutonomousScheduleChanges", label: "change delivery schedules" },
+  schedule_book_slot: { flag: "allowAutonomousScheduleChanges", label: "change delivery schedules" },
+  schedule_resolve_conflicts: { flag: "allowAutonomousScheduleChanges", label: "change delivery schedules" },
+  schedule_undo: { flag: "allowAutonomousScheduleChanges", label: "change delivery schedules" }
+};
+
+function permissionBlock(toolName) {
+  const rule = PERMISSION_FOR_TOOL[toolName];
+  if (!rule) return null;
+  const allowed = loadUserSettings().agentPermissions?.[rule.flag] === true;
+  return allowed ? null : { status: "BLOCKED", blocked: true, permission: rule.flag, permissionLabel: rule.label, message: `Mosaic is not allowed to ${rule.label} yet. Allow it in Settings or with the Allow button.` };
+}
+
+export const FOCUSED_TOOL_DECLARATIONS = WHOLESHARE_TOOL_DECLARATIONS.filter((tool) => FOCUSED_TOOL_NAMES.has(tool.function?.name));
+const focusedSessions = new Set();
+const sessionEvidence = new Map();
+
+// A vision capable hosted model gets the attached photos itself, so it can describe real damage in the claim notes.
+// The local text-only model never receives images and is told it cannot see them.
+function withVision(messages, evidence) {
+  if (!Array.isArray(evidence) || evidence.length === 0) return messages;
+  if (mosaicProvider() === "local" || process.env.MOSAIC_VISION === "false") return messages;
+  const images = [];
+  for (const item of evidence.slice(0, 3)) {
+    const found = getEvidence(String(item.evidenceId ?? ""));
+    if (found && found.buffer.length <= 3 * 1024 * 1024) images.push({ type: "image_url", image_url: { url: `data:${found.record.mimeType};base64,${found.buffer.toString("base64")}` } });
+  }
+  if (images.length === 0) return messages;
+  const out = messages.map((message) => ({ ...message }));
+  const system = out.find((message) => message.role === "system");
+  if (system) system.content = system.content.replace("You cannot see the photos. Never say what is in a photo.", "You can see the attached photos. Put only what you can actually see in notes, and never claim more than the photo shows.");
+  const last = out[out.length - 1];
+  last.content = [{ type: "text", text: last.content }, ...images];
+  return out;
+}
+
 export class WholeshareDurableHarness {
   constructor(model = null) {
     this.model = model || ((modelClient.preferLocal || !modelClient.openRouterKey)
       ? SERVING_TARGET.mlxId
       : "nvidia/nemotron-3.5-super-vl:free");
+  }
+
+  buildFocusedMessages(prompt, context = {}) {
+    const { evidence: _evidence, history, ...rest } = context ?? {};
+    const priorTurns = Array.isArray(history) ? history.slice(-6).filter((turn) => turn && typeof turn.text === "string" && (turn.role === "user" || turn.role === "assistant")).map((turn) => ({ role: turn.role, content: turn.text.slice(0, 400) })) : [];
+    let profile = {};
+    try {
+      const saved = loadUserSettings().profile ?? {};
+      profile = { businessName: saved.businessName, city: saved.city, country: saved.country, currency: saved.currency };
+    } catch {
+      profile = {};
+    }
+    const screen = JSON.stringify({ page: rest, profile }).slice(0, 2800);
+    return [
+      {
+        role: "system",
+        content: `You are Mosaic, the assistant inside WholeShare, a B2B group buying app on PayPal. You help people find and compare buying groups, join them, start new ones, set up their account, source suppliers, manage deliveries, handle disputes and see their PayPal position.
+Policy:
+- Call independent tools together in one turn, and read data with one query instead of several. Facts come from tools. Never invent groups, prices, ids, totals, dates or shipment facts. To answer a question about data, call query (it returns real rows and totals), then answer from those rows. When the user wants to see, list or browse items, call query with show true and a short title: it opens the table beside the chat in the same call. Use present only for the timeline, the claims board or the PayPal invoice list.
+- Words the user uses for a group, shipment, supplier, claim or invoice are not ids. Call resolve first, then use the id it returns. When several items match equally, use the recommended one and say in your reply which you chose and that the user can switch. Ask which one only when a wrong choice would be costly and nothing in the request or the page points to one. Do not call resolve before compare_groups, join_group, track_shipment, the schedule tools or file_damage_claim, because they match the user's words themselves.
+- Compare groups: call compare_groups with the user's words for each group (it resolves them and shows the groups itself, so do not call present after it), then say which factor decides it and what the user gives up. Join a group: resolve it, then join_group, which opens the PayPal approval step. You never approve payments or move money.
+- Start a group: you need the product. If it is missing, ask one short question and call no tool. Otherwise call find_suppliers with the product and webSearch true, then start_group_buy with what the user said, including shipmentMode and shipmentPoints when they named where the order should arrive (one receiving point or several). The form asks for anything still missing.
+- Set up the account or change profile details: call setup_profile with only the fields the user stated.
+- Suppliers: find_suppliers for options. Directory entries are samples and web leads are unverified, so say so. kernel_read_supplier_site gets prices and minimum order from a supplier website. kernel_research_web_fact checks one fact on the web. Read at most two pages per question.
+- Deliveries: use the schedule tools. Pass the user's product words as the shipment, or an id from resolve. Days earlier is negative. If a rule rejects the change, tell the user the allowed range.
+- Disputes: track_shipment first when the question is where something is or whether it is late. file_damage_claim needs the damaged units, a reason and the product words. Photos the user attached are listed in the context. Claims stay drafts for the user to review.
+- PayPal: ui_open_report page paypal for the overview, query paypal_invoices or ledger for numbers, ui_navigate_view view paypal for invoice and dispute operations. open_paypal_dashboard only when the user asks for PayPal's own website.
+- Stay in the chat. Answer questions with query. Navigate (ui_navigate_view, ui_open_group, ui_open_my_group) only when the user asks to go somewhere or open something.
+- If a needed detail is missing or the request is ambiguous, ask one short question and call no tool.
+- All PayPal activity in this app runs in the PayPal sandbox. Say so briefly when you talk about payments, holds, invoices or payouts, and never imply real money moved.
+- After tools run, reply in one or two plain sentences that name the specifics.
+What the user is looking at and who they are (JSON): ${screen}`
+      },
+      ...priorTurns,
+      { role: "user", content: prompt }
+    ];
   }
 
   buildInitialMessages(prompt, buyerId = "sme_austin_01") {
@@ -63,6 +225,8 @@ Follow this operational protocol for sourcing, verification, and escrow:
 
   async startSession({ prompt, sessionId = `sess_${Date.now()}`, metadata = {}, maxTurns = 3 }) {
     const sessionStartTime = Date.now();
+    if (FOCUSED_SOURCES.has(metadata?.source)) focusedSessions.add(sessionId);
+    if (Array.isArray(metadata?.context?.evidence)) sessionEvidence.set(sessionId, metadata.context.evidence);
     await createAgentSession({
       id: sessionId,
       model: this.model,
@@ -79,7 +243,8 @@ Follow this operational protocol for sourcing, verification, and escrow:
     });
 
     const layaStart = Date.now();
-    const layaDecision = await routeIntent(prompt);
+    // Mosaic turns never use the classifier's answer, and it costs about half a second (four seconds on the first call).
+    const layaDecision = focusedSessions.has(sessionId) ? { intent: "mosaic", confidence: 1, requiresLlm: true, probabilities: {} } : await routeIntent(prompt);
     const layaDurationMs = Date.now() - layaStart;
 
     actionDispatcher.broadcast("AGENT_LAYA_INTENT_ROUTED", {
@@ -134,7 +299,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
       };
     }
 
-    const messages = this.buildInitialMessages(prompt);
+    const messages = FOCUSED_SOURCES.has(metadata?.source) ? withVision(this.buildFocusedMessages(prompt, metadata?.context), metadata?.context?.evidence) : this.buildInitialMessages(prompt);
     return await this.runExecutionLoop({
       sessionId,
       messages,
@@ -259,12 +424,18 @@ Follow this operational protocol for sourcing, verification, and escrow:
     let turn = startStepIndex;
     let finalMessage = "";
     let reflexiveRetries = 0;
+    const kernelCalls = [0, 0];
+    const turnEvidence = [];
+    let toolsRun = 0;
+    let replyChecked = false;
 
+    let forceTool = null;
     while (turn <= maxTurns) {
       const stepStartTime = Date.now();
 
       try {
-        const response = await this.callModelWithTools(messages);
+        const response = await this.callModelWithTools(messages, sessionId, forceTool);
+        forceTool = null;
         const durationMs = Date.now() - stepStartTime;
 
         const assistantMessage = response.message || {};
@@ -274,6 +445,8 @@ Follow this operational protocol for sourcing, verification, and escrow:
         if (toolCalls.length === 0 && content) {
           toolCalls = parseToolCallsFromContent(content);
         }
+        toolCalls = toolCalls.map((call, position) => (call.id ? call : { ...call, id: `call_${Date.now()}_${position}` }));
+        let assistantRecorded = false;
 
         if (thinking) {
           actionDispatcher.broadcast("AGENT_THOUGHT", {
@@ -281,6 +454,18 @@ Follow this operational protocol for sourcing, verification, and escrow:
             stepIndex: turn,
             thought: thinking.substring(0, 300)
           });
+        }
+
+        if (toolCalls.length === 0 && focusedSessions.has(sessionId) && !replyChecked && turnEvidence.length > 0 && content) {
+          replyChecked = true;
+          const unsupported = [...findUnsupportedFigures(content, turnEvidence, userText(messages)), ...findUnsupportedNames(content, turnEvidence, userText(messages))];
+          if (unsupported.length > 0) {
+            messages.push({ role: "assistant", content });
+            messages.push({ role: "user", content: `Your reply stated figures or names that no tool returned: ${unsupported.join(", ")}. Rewrite it using only figures and names from the tool results, or say you do not have them. Do not call tools.` });
+            forceTool = "none";
+            turn++;
+            continue;
+          }
         }
 
         if (toolCalls.length === 0) {
@@ -301,8 +486,25 @@ Follow this operational protocol for sourcing, verification, and escrow:
           break;
         }
 
+        // Start independent reads together so a turn with several of them waits for the slowest, not the sum.
+        const prefetched = new Map();
+        if (toolCalls.length > 1 && focusedSessions.has(sessionId)) {
+          for (const call of toolCalls) {
+            const name = call.function?.name || call.name;
+            if (PARALLEL_SAFE.has(name) && !permissionBlock(name)) prefetched.set(call, withDeadline(name, executeTool(name, parseCallArgs(call)).catch((err) => ({ error: err.message }))));
+          }
+        }
+
         for (const call of toolCalls) {
           const toolName = call.function?.name || call.name;
+          if (toolName === "present" && finalMessage) {
+            if (!assistantRecorded) {
+              assistantRecorded = true;
+              messages.push({ role: "assistant", content: content || "", tool_calls: toolCalls.map((each) => ({ ...each, function: { ...(each.function || { name: each.name }), arguments: JSON.stringify(parseCallArgs(each)) } })) });
+            }
+            messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ skipped: "A table is already on screen for this turn." }) });
+            continue;
+          }
           let toolArgs = {};
           try {
             toolArgs = typeof call.function?.arguments === "string"
@@ -454,7 +656,11 @@ Follow this operational protocol for sourcing, verification, and escrow:
             };
           }
 
-          const toolResult = await executeTool(toolName, toolArgs);
+          if (toolName === "file_damage_claim") {
+            const attached = sessionEvidence.get(sessionId) ?? [];
+            toolArgs = { ...toolArgs, photoUrls: attached.map((item) => item.uri), detectedTracking: attached.flatMap((item) => item.detectedTrackingNumbers ?? [])[0] };
+          }
+          const toolResult = (focusedSessions.has(sessionId) && permissionBlock(toolName)) || productGuard(toolName, toolArgs, messages) || kernelBudget(toolName, (kernelCalls[0] += /^kernel_/.test(toolName) ? 1 : 0)) || await (prefetched.get(call) ?? withDeadline(toolName, executeTool(toolName, toolArgs)));
 
           if (toolResult && toolResult.status === "ERROR") {
             const verifierError = toolResult.error || "Tool execution failed policy invariant.";
@@ -498,17 +704,40 @@ Follow this operational protocol for sourcing, verification, and escrow:
             durationMs: Date.now() - stepStartTime
           });
 
-          messages.push({
-            role: "assistant",
-            content: content || "",
-            tool_calls: [call]
-          });
+          // One assistant message carries every call of the turn, so the model sees that calling several tools together is normal.
+          if (!assistantRecorded) {
+            assistantRecorded = true;
+            messages.push({
+              role: "assistant",
+              content: content || "",
+              tool_calls: toolCalls.map((each) => ({ ...each, function: { ...(each.function || { name: each.name }), arguments: JSON.stringify(each === call ? toolArgs : parseCallArgs(each)) } }))
+            });
+          }
 
+          const toolMessage = toolResult;
           messages.push({
             role: "tool",
-            tool_call_id: call.id || `call_${Date.now()}`,
-            content: JSON.stringify(toolResult)
+            tool_call_id: call.id,
+            content: JSON.stringify(toolMessage)
           });
+          if (toolResult?.needsInput) finalMessage = toolResult.question;
+          // A tool that already says what happened ends the turn without another model call.
+          if (focusedSessions.has(sessionId) && toolCalls.length === 1 && typeof toolResult?.speak === "string" && toolResult.status === "SUCCESS") finalMessage = toolResult.speak;
+          if (focusedSessions.has(sessionId) && toolCalls.length === 1 && /^schedule_/.test(toolName) && toolResult?.status === "SUCCESS" && typeof toolResult.summary === "string") finalMessage = toolResult.summary;
+          if (toolName === "start_group_buy" && toolResult?.status === "SUCCESS") {
+            finalMessage = "Opened the Start a group buy form with what I found. Review it and publish when you are ready.";
+          }
+          if ((toolName === "present" || toolName === "ui_open_report" || (toolName === "query" && toolResult?.action === "PRESENT")) && toolResult?.status === "SUCCESS") forceTool = "none";
+          turnEvidence.push(toolResult);
+          toolsRun += 1;
+          if (focusedSessions.has(sessionId) && toolsRun >= 5) forceTool = "none";
+        }
+        if (finalMessage && focusedSessions.has(sessionId)) {
+          await updateAgentSessionStatus(sessionId, "COMPLETED", {
+            finalMessage,
+            totalDurationMs: Date.now() - sessionStartTime
+          });
+          break;
         }
       } catch (err) {
         actionDispatcher.broadcast("AGENT_FAILURE", {
@@ -524,6 +753,21 @@ Follow this operational protocol for sourcing, verification, and escrow:
       }
 
       turn++;
+    }
+
+    if (!finalMessage && focusedSessions.has(sessionId) && turnEvidence.length > 0) {
+      try {
+        const wrap = await modelClient.callChat({
+          onText: this.streamTo(sessionId),
+          messages: [...messages, { role: "user", content: "Stop calling tools. In one or two plain sentences, tell the user what you found or did, using only the tool results above. If you could not finish, say what is missing." }],
+          tools: FOCUSED_TOOL_DECLARATIONS,
+          maxTokens: 300,
+          toolChoice: "none"
+        });
+        finalMessage = String(wrap.message?.content || "").trim();
+      } catch {
+        finalMessage = "";
+      }
     }
 
     const totalDurationMs = Date.now() - sessionStartTime;
@@ -557,10 +801,26 @@ Follow this operational protocol for sourcing, verification, and escrow:
 
   }
 
-  async callModelWithTools(messages) {
+  // Loads the focused prompt and tool schemas into the model's cache so the first real request is fast.
+  async warmUp() {
+    const messages = this.buildFocusedMessages("hello", {});
+    await modelClient.callChat({ messages, tools: FOCUSED_TOOL_DECLARATIONS, maxTokens: 16 });
+  }
+
+  // Text reaches the browser while the model is still writing. A new model call resets the draft.
+  streamTo(sessionId) {
+    if (!focusedSessions.has(sessionId)) return null;
+    actionDispatcher.broadcast("AGENT_TEXT_DELTA", { sessionId, reset: true, text: "" });
+    return (text) => actionDispatcher.broadcast("AGENT_TEXT_DELTA", { sessionId, text });
+  }
+
+  async callModelWithTools(messages, sessionId, forceTool = null) {
     const res = await modelClient.callChat({
+      onText: this.streamTo(sessionId),
       messages,
-      tools: WHOLESHARE_TOOL_DECLARATIONS
+      tools: focusedSessions.has(sessionId) ? FOCUSED_TOOL_DECLARATIONS : WHOLESHARE_TOOL_DECLARATIONS,
+      maxTokens: focusedSessions.has(sessionId) ? (Number(process.env.MOSAIC_MAX_TOKENS) || (mosaicProvider() === "local" ? 400 : 1200)) : undefined,
+      toolChoice: forceTool === "none" ? "none" : forceTool ? { type: "function", function: { name: forceTool } } : "auto"
     });
     return {
       message: res.message
@@ -570,3 +830,28 @@ Follow this operational protocol for sourcing, verification, and escrow:
 }
 
 export const durableHarness = new WholeshareDurableHarness();
+
+
+// What each focused tool does to the world. A model never sees this, a person integrating a model does.
+const TOOL_EFFECT = {
+  ui_navigate_view: "ui", ui_filter_clans: "ui", ui_open_group: "ui", ui_open_my_group: "ui", ui_open_report: "ui", ui_open_slide_over: "ui", ui_export_snapshot: "ui",
+  present: "ui", start_group_buy: "ui", open_paypal_dashboard: "external",
+  kernel_research_web_fact: "external", kernel_read_supplier_site: "external", track_shipment: "external", find_suppliers: "external",
+  query_escrow_ledger: "read", get_clan_constitution: "read", explain_escrow_document: "read", prepare_pledge_quote: "read",
+  setup_profile: "write", query: "read", resolve: "read", compare_groups: "read", join_group: "read",
+  schedule_move_delivery: "write", schedule_extend_inspection: "write", schedule_book_slot: "write", schedule_resolve_conflicts: "write", schedule_undo: "write", file_damage_claim: "write"
+};
+
+export function describeHarness() {
+  return FOCUSED_TOOL_DECLARATIONS.map((tool) => {
+    const name = tool.function.name;
+    return {
+      name,
+      description: tool.function.description,
+      parameters: tool.function.parameters,
+      effect: TOOL_EFFECT[name] ?? "read",
+      permission: PERMISSION_FOR_TOOL[name]?.flag ?? null,
+      permissionLabel: PERMISSION_FOR_TOOL[name]?.label ?? null
+    };
+  });
+}
