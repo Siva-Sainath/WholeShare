@@ -1,150 +1,106 @@
-# Wholeshare: Autonomous B2B Group Purchasing and Multiparty Escrow Platform
+# WholeShare
 
-Wholeshare is an autonomous agentic commerce platform built on PayPal for Business. It empowers independent small and medium enterprises (SMEs) to pool commercial demand, negotiate wholesale volume tier discounts, and lock multiparty escrow commitments with zero counterparty default risk.
+**Small restaurants pool their orders to reach supplier price tiers. An AI assistant does the legwork. PayPal holds the money until delivery is verified.**
 
----
+WholeShare is a B2B group buying marketplace. Independent businesses that sit on the same street, and cannot reach a supplier's minimum alone, join a *group*. When the group fills, everyone gets the tier price. Mosaic, an AI assistant that lives in the app, finds groups, compares them, joins one, sources suppliers on the live web, moves deliveries and files damage claims. Every change it makes appears on the same screens a person uses.
 
-## 1. The Core Problem: Small Business Procurement Inequality
+> Everything runs in the **PayPal sandbox**. No real money moves anywhere in this project. Groups, members and directory suppliers are generated **sample data**, and the app says so.
 
-Independent bakeries, coffee roasters, craft breweries, and boutique retailers face structural volume disadvantages. 
+## Try it (2 minutes)
 
-An artisan bakery purchasing 20 bags of organic flour pays $34.00 per bag. An industrial bread factory purchasing a full truckload of 500 bags pays $24.80 per bag for the exact same commodity. Over a single year, this pricing spread costs a small bakery more than $16,500 in working capital.
+1. Open the app and finish onboarding. Say what you run in one sentence, for example *We run Golden Lotus Kitchen, a Chinese restaurant in Flushing, Queens.* Mosaic fills the form.
+2. Open **Mosaic** and try, in this order:
+   - `Which Flushing groups can we still join?`
+   - `Compare the two Flushing takeout container groups for 12 cases`
+   - `Join the Garden State container group with 12 cases` (the PayPal approval step opens; approve it in the sandbox, or close it)
+   - `Where is our container shipment and is it late?`
+   - `Move the container delivery up a day`, then `Undo that`
+   - `Our delivered containers arrived crushed, 8 cartons, file a claim` (attach any photo)
+   - `Find new suppliers for jasmine rice on the web` (a Kernel cloud browser searches live)
+3. Watch the sponsor tool rows under each answer, the docked AG Grid beside the chat, and the **Insights**, **Disputes** (Bryntum) and **Agents** pages react to what Mosaic did.
+4. **Settings > Agent and AI** has the permission switches. Turn one off and Mosaic asks before doing that kind of thing.
 
-Traditional group purchasing organizations (GPOs) fail small businesses because:
-1. **Counterparty Default Risk**: If one member defaults on payment after an order is placed, the remaining members or the organizer must cover the loss.
-2. **Locked Working Capital**: Small businesses cannot afford to wire cash into escrow weeks before delivery.
-3. **Manual Coordination Friction**: Tracking purchase orders, specification requirements, and delivery milestones across independent businesses requires prohibitive administrative effort.
+PayPal sandbox buyer login for the approval step: see the testing instructions on the submission page.
 
----
+## What Mosaic can do
 
-## 2. The Solution: Autonomous Syndicates on Native PayPal Primitives
+| Job | How it works |
+|---|---|
+| Find and rank groups | `query` reads any data source with filters, sorting, grouping and totals, and answers from the rows |
+| Compare like for like | `compare_groups` prices the same units in each group, with the tier you would reach, delivery days, supplier trust and a verdict per factor |
+| Join through PayPal | `join_group` prices the pledge and opens the PayPal approval step. It never pledges or moves money. The person approves |
+| Start a group | `start_group_buy` opens the form filled in, including one or several receiving points |
+| Set up the account | `setup_profile` fills the profile from one sentence |
+| Source suppliers | `find_suppliers` checks the directory, then a **Kernel** cloud browser searches the web. `kernel_read_supplier_site` reads a supplier's pages for price, minimum order and lead time (read only, never submits a form). Web leads are labelled unverified |
+| Track and dispute | `track_shipment`, `file_damage_claim` (a draft for human review) and the claims board |
+| Change the schedule | `schedule_move_delivery`, extend inspection, book a dock slot per receiving point, resolve conflicts, undo. Dragging a **Bryntum** bar calls the same endpoints |
+| PayPal | position report, invoice list, `send_invoice_reminder` (sandbox) |
 
-Wholeshare solves collective procurement through autonomous agents and native PayPal financial primitives chained together.
+## How it works
 
 ```
-+-------------------------------------------------------------------------------------------------+
-|                                     Wholeshare Platform Flow                                    |
-|                                                                                                 |
-|   [ Ingestion Pipeline ] ---> [ Autonomous Negotiation ] ---> [ Zero-Default PayPal Escrow ]    |
-|   - Invoices & POs             - Demand Aggregation           - Orders v2 Soft Holds            |
-|   - Spec Sheets (Protein %)    - Volume Discount Tiers        - Atomic Batch Capture            |
-|   - Google Drive Import        - ACP Shared Tokens            - Invoicing v2 QR Step-Up         |
-|   - Instinct Memory Graph      - Policy Sandwich Interceptor  - Shipment Tracking Verification  |
-+-------------------------------------------------------------------------------------------------+
+Browser (React, Astryx, AG Grid, AG Studio, Bryntum)
+   |  POST /api/v1/agent/chat                  ^  SSE /api/v1/events
+   v                                           |  text deltas, tool calls, tool results, UI actions
+Server (Node)                                  |
+   durable-harness: model call -> tool calls -> checks -> model call
+   |  1. permission switch for the tool         (user settings)
+   |  2. server side argument validation        (interceptor)
+   |  3. tool runs, with a deadline             (tool-registry, mosaic-tools)
+   |  4. reply figures and names checked        (reply-check)
+   v
+Fireworks (MiniMax M3.1 Flash, DeepSeek V4.1 Flash as hedge)   Kernel   PayPal sandbox
 ```
 
-### Chained PayPal Financial Rails
+- **One code path.** Mosaic and a person go through the same server validation. Results stream to every open screen, so the grids, the Scheduler and the Studio reports update live.
+- **The model cannot move money.** None of its tools pledge, capture or pay out. Writes sit behind user permission switches the model cannot change.
+- **Replies are fact checked.** Figures and names in a reply must appear in that turn's tool results. A mismatch triggers one rewrite.
+- **Streaming and parallel reads.** Text streams while the model writes. Independent reads run together, slow tools have deadlines, and a turn is capped at five tool calls.
+- **Reliability.** Transient Fireworks errors retry. If the primary model has not answered in 5 seconds, the same request also goes to a fallback model and the first answer wins. Requests carry a session affinity header for prompt caching (about 76 percent of prompt tokens served from cache).
+- **Spend guard.** A persistent ledger refuses hosted model calls past a budget.
 
-1. **PayPal Orders v2 Soft Escrow Holds (`intent: "AUTHORIZE"`)**:
-   Members authorize their individual allocation through PayPal Orders v2 with authorization intent. Funds remain in the buyer account for up to 29 days without cash deduction until the coalition reaches 100 percent of its target volume.
+Design notes: `docs/HARNESS.md`, a comparison with other harnesses and WebMCP implementations in `docs/HARNESS_STUDY.md`, and the plan in `docs/MOSAIC_GENERALIZATION_PLAN.md`.
 
-2. **Atomic Batch Capture**:
-   When the target volume is reached and supplier terms are locked, Wholeshare triggers atomic batch captures across all authorizations. If any single authorization fails, no funds are captured.
+## Sponsors in the product
 
-3. **Invoicing v2 and QR Code Step-Up KYC**:
-   When an autonomous agent allocates spend exceeding a buyer pre-set threshold, Wholeshare automatically generates a PayPal Invoicing v2 draft with a base64 QR code. The business owner must scan and authorize the transaction on their mobile device before spend locks.
+- **AG Grid Enterprise**: the docked results panel (status bar, side bar, grouping, integrated charts, CSV export, cell flash), the ledger and member grids. Registered through `AllEnterpriseModule` and `IntegratedChartsModule`.
+- **AG Studio**: live reports on PayPal, demand, delivery and members from the unified data registry, with transactions for live updates and the Studio AI assistant through a server side proxy. WebMCP tools come from `api.getAiTools()`.
+- **Bryntum**: Scheduler (drag and resize call the same schedule service Mosaic uses, with undo and an audit log), Calendar, TaskBoard claims board and Grid.
+- **PayPal (sandbox)**: Orders v2 authorization holds, Invoicing v2, Disputes, Shipment Tracking, Payouts, Billing and Log in with PayPal. Money only moves after the person approves on PayPal.
+- **Kernel**: cloud browsers for supplier search, supplier site reading and carrier tracking, with a visible tool row while they run.
+- **Fireworks**: MiniMax M3.1 Flash with reasoning off, streamed, with a hedged fallback model.
 
-4. **Shipment Tracking and Escrow Settlement**:
-   Wholeshare registers carrier tracking numbers with the PayPal Trackers API. Escrow releases to the wholesale supplier only after the carrier confirms package transit and delivery.
+## Evidence
 
-5. **Customer Dispute Mediation**:
-   If an SME receives damaged goods, Wholeshare calculates pro-rata refund claims and coordinates resolution through the PayPal Customer Disputes API.
+- A 100 prompt eval across 10 jobs (compare, join, start a group, set up an account, research, quote, schedule, dispute, PayPal, find) with 30 prompts held out and never tuned against: **97 percent, 97 percent on the held out set**. Median 5 to 8 seconds per answer for one person, about 2.9 model calls per prompt, about $0.13 per full run. Results and method: `docs/assets/mosaic-eval.md`.
+- `npm run eval:mosaic` reruns it. `npm run verify:ui` loads every screen at two widths and fails on clipped or overlapping controls, broken images, test data and console errors. `npm run test:unit` runs 204 unit tests. `npm run verify-webmcp` runs 54 WebMCP cases.
 
----
+## Run it
 
-## 3. Product Architecture and Core Subsystems
+Needs Node 24 or newer.
 
-### A. Business Data and Document Ingestion Pipeline
-Wholeshare establishes each buyer procurement baseline from real operational records:
-- **Multi-Format Ingress**: Drag-and-drop web dropzone and API routes accepting PDF invoices, scanned receipts, CSV price sheets, and JSON order histories.
-- **Cloud Connectors**: Direct integration with Google Drive using OAuth2 tokens and file identifiers.
-- **Multimodal Extraction**: Layout-aware table extraction using Docling and Unstructured, normalizing raw vendor line items into canonical commodity SKUs and exact integer cents.
-- **Instinct Memory Graph**: Indexes procurement baselines into Git-tracked Markdown entity files under `data/memory/entities/`. Agents query historical moving average prices, delivery cadences, and protein specifications.
-
-### B. Agentic Commerce Protocol (ACP) and Security Interceptor
-All agent operations execute inside mathematical security boundaries:
-- **Shared Payment Tokens**: Delegated buyer mandates issued as HMAC-SHA256 signed tokens binding immutable buyer IDs, target SKUs, and spend caps.
-- **Policy Sandwich Interceptor**: Pure TypeScript policy engine enforcing 10 non-negotiable financial invariants prior to any PayPal API call. It rejects floating-point cents, negative volumes, and direct capture intents.
-- **Token Bucket Rate Limiting Gateway**: Protects agent reasoning endpoints against denial-of-service and compute exhaustion.
-
-### C. Financial Command Center and Interactive Workbench
-The browser interface provides real-time visibility into all commercial actions:
-- **AG Grid Financial Ledger**: Displays active syndicates, member pledges, escrow states, and PayPal transaction IDs with cell flash animations.
-- **One-Shot Agent Workbench**: Interactive console for driving the local Qwen 3.5 9B model across full commerce cycles, spend cap tests, and carrier tracking.
-- **Server-Sent Events (SSE)**: Live telemetry stream broadcasting FSM state transitions and transaction confirmations.
-
----
-
-## 4. Quickstart: Running Wholeshare Locally
-
-### Prerequisites
-- Node.js version 20 or higher.
-- PayPal Developer account with Sandbox credentials.
-- Local Ollama running `qwen3.5:9b` (optional for local inference).
-
-### Setup and Verification
-
-1. Clone the repository and install dependencies:
 ```bash
-git clone https://github.com/Siva-Sainath/WholeShare.git
-cd WholeShare
-npm install
+npm ci
+cp .env.example .env        # then fill in the keys below
+npm run build               # bundles the client and bakes the licence keys in
+npm start                   # http://localhost:3000
 ```
 
-2. Configure environment variables:
-```bash
-cp .env.example .env
-```
-Edit `.env` and provide your PayPal Sandbox Client ID and Secret:
-```ini
-PAYPAL_MODE=sandbox
-PAYPAL_CLIENT_ID="your_sandbox_client_id"
-PAYPAL_CLIENT_SECRET="your_sandbox_client_secret"
-```
+| Variable | Purpose |
+|---|---|
+| `PAYPAL_MODE=sandbox`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_BASE_URL`, `PAYPAL_KEY_RETENTION_HOURS`, `MAX_PENDING_RECHECK_COUNT`, `AUTHORIZATION_VALIDITY_DAYS` | PayPal sandbox. The server refuses to start without them rather than faking a gateway |
+| `FIREWORKS_API_KEY`, `MOSAIC_PROVIDER=fireworks`, `MOSAIC_MODEL_NAME`, `MOSAIC_EXTRA_BODY` | Mosaic model. Any OpenAI compatible endpoint with tool calling works |
+| `MOSAIC_FALLBACK_MODEL`, `MOSAIC_HEDGE_MS`, `MOSAIC_DEV_BUDGET_USD` | Hedge model and spend guard |
+| `KERNEL_API_KEY` | Kernel cloud browsers |
+| `AG_LICENSE_KEY`, `AG_STUDIO_LICENSE_KEY`, `BRYNTUM_LICENSE_KEY` | UI licences, read at build time |
+| `APP_URL` | Public address, for the PayPal connect callback |
 
-3. Run the environment doctor check:
-```bash
-npm run doctor
-```
+Deploy on Render with `render.yaml` (one Node service and a persistent disk, no database). `scripts/render-start.sh` keeps the app's JSON state on the disk.
 
-4. Run the automated test suite (81 tests executing against live PayPal Sandbox):
-```bash
-npm test
-```
+## Limits, stated plainly
 
-5. Start the web command center:
-```bash
-npm run dev
-```
-Open `http://localhost:3000` in your browser.
-
----
-
-## 5. API Reference and Route Directory
-
-### Business Data Ingestion
-- `POST /api/v1/ingest/upload`: Upload PDF, CSV, or JSON invoice records.
-- `POST /api/v1/ingest/google-drive`: Import procurement contracts directly from Google Drive.
-- `POST /api/v1/ingest/agent-dispatch`: Cryptographically signed HMAC ingress for external AI agents.
-- `GET /api/v1/ingest/documents`: Retrieve ingested records and historical pricing baselines.
-
-### Coalition Negotiation and Escrow Execution
-- `POST /api/v1/sme/spawn`: Onboard an SME with an ACP mandate and spend cap.
-- `POST /api/v1/coalition/negotiate`: Run price discovery and volume discount calculations.
-- `POST /api/v1/coalition/lock`: Authorize member escrow soft holds via PayPal Orders v2.
-- `POST /api/v1/autopilot`: Execute a complete autonomous procurement cycle with local Qwen 3.5 9B.
-
-### Telemetry and Webhooks
-- `GET /api/v1/events`: Server-Sent Events stream for real-time frontend telemetry.
-- `GET /api/v1/ledger`: Query active syndicate coalitions and member escrow statuses.
-- `POST /api/v1/paypal/webhook`: Ingest dispute and payment capture events from PayPal.
-- `GET /.well-known/agentic-commerce.json`: Agentic Commerce Protocol discovery manifest.
-
----
-
-## 6. Verification and Quality Standards
-
-Wholeshare enforces strict automated quality gates:
-- **Zero Simulation Standard**: All PayPal Developer API operations execute against live sandbox endpoints with zero mocked tokens.
-- **Feature Map Synchronization**: 20 feature maps cataloged under `.cursor/skills/` and `.agents/skills/`. Verified via `npm run lint:features`.
-- **Code Linter**: Codebase verified against deslop standards via `npm run lint`.
+- Groups, members and directory suppliers are **generated sample data**. Web leads from Kernel are real pages but unverified. PayPal invoices and orders are real sandbox objects.
+- PayPal runs in the sandbox only. Captures and payouts exist in code and have not been run live.
+- Mosaic can be wrong about a photo: it tends to agree with what the user says about damage. Claims stay drafts for human review.
+- A reply takes 5 to 8 seconds, with spikes when the hosted model is slow. Web research steps can take 20 seconds or more.
+- The app is built for a laptop screen. Phone widths are not supported.
