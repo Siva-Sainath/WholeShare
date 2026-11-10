@@ -1,5 +1,222 @@
 [
   {
+    "country": "United States",
+    "countryCode": "US",
+    "certifications": [
+      "FDA food contact compliant"
+    ],
+    "capabilities": [
+      "Case and pallet pricing",
+      "Next day Queens delivery windows"
+    ],
+    "yearsInBusiness": 14,
+    "employees": 60,
+    "paymentTerms": "Net 30",
+    "acceptsPayPal": true,
+    "website": "https://www.brooklyn-cup.example",
+    "contact": {
+      "name": "Sales desk",
+      "email": "sales@brooklyn-cup.example"
+    },
+    "source": "simulated",
+    "id": "sup-flushing-brooklyn-cup",
+    "name": "Brooklyn Cup & Lid Co.",
+    "city": "Brooklyn",
+    "state": "NY",
+    "categories": [
+      "PACKAGING_MATERIALS"
+    ],
+    "products": [
+      "Clear PET Cups 16 oz with Dome Lids"
+    ],
+    "leadTimeDays": 5,
+    "minOrderUnits": 10,
+    "trustScore": 0.88,
+    "onTimeRatePct": 93,
+    "defectRatePct": 2.1
+  },
+  {
+    "country": "United States",
+    "countryCode": "US",
+    "certifications": [
+      "FDA food contact compliant"
+    ],
+    "capabilities": [
+      "Case and pallet pricing",
+      "Next day Queens delivery windows"
+    ],
+    "yearsInBusiness": 14,
+    "employees": 60,
+    "paymentTerms": "Net 30",
+    "acceptsPayPal": true,
+    "website": "https://www.queens-foodservice.example",
+    "contact": {
+      "name": "Sales desk",
+      "email": "sales@queens-foodservice.example"
+    },
+    "source": "simulated",
+    "id": "sup-flushing-queens-foodservice",
+    "name": "Queens Foodservice Distributors",
+    "city": "Long Island City",
+    "state": "NY",
+    "categories": [
+      "FOOD_AND_BEVERAGE"
+    ],
+    "products": [
+      "Soybean Cooking Oil 35 lb Jug"
+    ],
+    "leadTimeDays": 4,
+    "minOrderUnits": 20,
+    "trustScore": 0.9,
+    "onTimeRatePct": 95,
+    "defectRatePct": 1.4
+  },
+  {
+    "country": "Thailand",
+    "countryCode": "TH",
+    "certifications": [
+      "FDA food contact compliant"
+    ],
+    "capabilities": [
+      "Case and pallet pricing",
+      "Next day Queens delivery windows"
+    ],
+    "yearsInBusiness": 14,
+    "employees": 60,
+    "paymentTerms": "Net 30",
+    "acceptsPayPal": true,
+    "website": "https://www.bangkok-rice.example",
+    "contact": {
+      "name": "Sales desk",
+      "email": "sales@bangkok-rice.example"
+    },
+    "source": "simulated",
+    "id": "sup-flushing-bangkok-rice",
+    "name": "Bangkok Rice Exporters Co.",
+    "city": "Bangkok",
+    "state": "",
+    "categories": [
+      "FOOD_AND_BEVERAGE"
+    ],
+    "products": [
+      "Jasmine Rice Hom Mali 25 lb Bag"
+    ],
+    "leadTimeDays": 24,
+    "minOrderUnits": 40,
+    "trustScore": 0.95,
+    "onTimeRatePct": 94,
+    "defectRatePct": 0.9
+  },
+  {
+    "country": "United States",
+    "countryCode": "US",
+    "certifications": [
+      "FDA food contact compliant"
+    ],
+    "capabilities": [
+      "Case and pallet pricing",
+      "Next day Queens delivery windows"
+    ],
+    "yearsInBusiness": 14,
+    "employees": 60,
+    "paymentTerms": "Net 30",
+    "acceptsPayPal": true,
+    "website": "https://www.hudson-safety.example",
+    "contact": {
+      "name": "Sales desk",
+      "email": "sales@hudson-safety.example"
+    },
+    "source": "simulated",
+    "id": "sup-flushing-hudson-safety",
+    "name": "Hudson Safety Supply",
+    "city": "Jersey City",
+    "state": "NJ",
+    "categories": [
+      "RESTAURANT_EQUIPMENT"
+    ],
+    "products": [
+      "Nitrile Exam Gloves Powder Free"
+    ],
+    "leadTimeDays": 7,
+    "minOrderUnits": 10,
+    "trustScore": 0.94,
+    "onTimeRatePct": 96,
+    "defectRatePct": 1.2
+  },
+  {
+    "country": "United States",
+    "countryCode": "US",
+    "certifications": [
+      "FDA food contact compliant"
+    ],
+    "capabilities": [
+      "Case and pallet pricing",
+      "Next day Queens delivery windows"
+    ],
+    "yearsInBusiness": 14,
+    "employees": 60,
+    "paymentTerms": "Net 30",
+    "acceptsPayPal": true,
+    "website": "https://www.eastern-wholesale-imports.example",
+    "contact": {
+      "name": "Sales desk",
+      "email": "sales@eastern-wholesale-imports.example"
+    },
+    "source": "simulated",
+    "id": "sup-flushing-eastern-wholesale-imports",
+    "name": "Eastern Wholesale Packaging Imports",
+    "city": "Newark",
+    "state": "NJ",
+    "categories": [
+      "PACKAGING_MATERIALS"
+    ],
+    "products": [
+      "Kraft Takeout Container 32 oz with Lid"
+    ],
+    "leadTimeDays": 12,
+    "minOrderUnits": 20,
+    "trustScore": 0.86,
+    "onTimeRatePct": 91,
+    "defectRatePct": 2.9
+  },
+  {
+    "country": "United States",
+    "countryCode": "US",
+    "certifications": [
+      "FDA food contact compliant"
+    ],
+    "capabilities": [
+      "Case and pallet pricing",
+      "Next day Queens delivery windows"
+    ],
+    "yearsInBusiness": 14,
+    "employees": 60,
+    "paymentTerms": "Net 30",
+    "acceptsPayPal": true,
+    "website": "https://www.garden-state-packaging.example",
+    "contact": {
+      "name": "Sales desk",
+      "email": "sales@garden-state-packaging.example"
+    },
+    "source": "simulated",
+    "id": "sup-flushing-garden-state-packaging",
+    "name": "Garden State Paper & Packaging",
+    "city": "Edison",
+    "state": "NJ",
+    "categories": [
+      "PACKAGING_MATERIALS"
+    ],
+    "products": [
+      "Kraft Takeout Container 32 oz with Lid",
+      "Clear PET Cups 16 oz with Dome Lids"
+    ],
+    "leadTimeDays": 5,
+    "minOrderUnits": 10,
+    "trustScore": 0.97,
+    "onTimeRatePct": 98,
+    "defectRatePct": 0.8
+  },
+  {
     "id": "sup-ludhiana-venkatesh-forge-industries",
     "name": "Venkatesh Forge Industries",
     "country": "India",

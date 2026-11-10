@@ -1,6 +1,7 @@
 import "../lib/env.js";
 import http from "node:http";
 import { listSources, querySource } from "../lib/data-sources.js";
+import { rebaseStoryShipments } from "../lib/story-clock.js";
 import { loadStudioState, saveStudioState } from "../lib/studio-state.js";
 import { bookSlot, extendInspection, getScheduleState, moveDelivery, resolveConflicts, undoLast } from "../lib/schedule-service.js";
 import { buildConnectUrl, completeConnect, disconnectPayPal, connectionStatus } from "../lib/paypal-connect.js";
@@ -2731,6 +2732,8 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
   server.listen(PORT, () => {
     console.log(`=== Wholeshare Web Command Center running at http://localhost:${PORT} ===`);
     void Promise.all(["groups", "shipments", "ledger", "claims", "suppliers"].map((id) => querySource(id, { limit: 1 }))).catch(() => undefined);
+    try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
+    setInterval(() => { try { rebaseStoryShipments(); } catch { /* next hour */ } }, 3600 * 1000).unref();
     durableHarness.warmUp().then(() => console.log("[mosaic] model warmed")).catch((error) => console.warn(`[mosaic] warm-up skipped: ${error.message}`));
   });
 }

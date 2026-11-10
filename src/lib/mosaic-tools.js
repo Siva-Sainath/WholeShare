@@ -123,12 +123,21 @@ export async function compareGroups(args = {}) {
   let ids = (Array.isArray(args.groupIds) ? args.groupIds : []).map(String).filter(Boolean);
   const chosen = [];
   if (ids.length === 0 && Array.isArray(args.groups)) {
+    // Each phrase takes its best match that was not already taken, so "the two container groups" becomes two different groups.
+    let firstCandidates = [];
     for (const words of args.groups.slice(0, 4)) {
-      const hit = await groupIdFromWords(words);
-      if (!hit) return { error: `No group matches '${words}'. Ask the user to say it differently.` };
-      ids.push(hit.id);
-      chosen.push({ asked: words, chose: hit.name, otherMatches: hit.alternatives });
+      const found = await resolveEntity({ type: "group", text: String(words) });
+      if (firstCandidates.length === 0) firstCandidates = found.candidates ?? [];
+      const pick = (found.candidates ?? []).find((candidate) => !ids.includes(candidate.id));
+      if (!pick) continue;
+      ids.push(pick.id);
+      chosen.push({ asked: words, chose: pick.name, otherMatches: (found.candidates ?? []).filter((c) => c.id !== pick.id).slice(0, 2).map((c) => c.name) });
     }
+    for (const candidate of firstCandidates) {
+      if (ids.length >= 2) break;
+      if (!ids.includes(candidate.id)) { ids.push(candidate.id); chosen.push({ asked: String(args.groups[0]), chose: candidate.name, otherMatches: [] }); }
+    }
+    if (ids.length < 2) return { error: "Could not find two different groups for that. Ask the user which groups to compare." };
   }
   if (ids.length < 2 || ids.length > 4) return { error: "Give two to four group ids. Use resolve first to find them." };
   const units = Math.min(Math.max(Math.round(Number(args.units)) || 100, 1), 10000);

@@ -39,6 +39,20 @@ try {
   ];
 }
 
+const STORY_LEDGER = {
+  coalition_flour_01: { skuName: "Jasmine Rice 25 lb Bag", unitPriceCents: 2450 },
+  coalition_coffee_02: { skuName: "Clear PET Cups 16 oz with Dome Lids (case of 1,000)", unitPriceCents: 5800 },
+  coalition_tiles_03: { skuName: "Nitrile Gloves Powder Free (case of 1,000)", unitPriceCents: 6400 },
+  coalition_boxes_04: { skuName: "Paper Napkins 2-ply (case of 3,000)", unitPriceCents: 2730 },
+  coalition_hardware_05: { skuName: "Soybean Cooking Oil 35 lb Jug", unitPriceCents: 4600 },
+  coalition_vanilla_06: { skuName: "Toasted Sesame Oil 5 L Tin", unitPriceCents: 4500 }
+};
+const STORY_PEOPLE = {
+  "Austin Artisan Bakery": "Golden Lotus Kitchen",
+  "Bean & Leaf Coffee Roasters": "Jade Garden Noodle Bar",
+  "GreenLeaf Organics Cafe": "Sweet Pearl Bubble Tea"
+};
+
 class WholeshareActionDispatcher {
   constructor() {
     this.smes = new Map();
@@ -357,6 +371,23 @@ class WholeshareActionDispatcher {
       }
     } catch {
       // Continue with base demonstration clans
+    }
+    this.applyStoryLedger();
+  }
+
+  // The seeded pledges tell the Flushing story: independent restaurants pooling orders. Ids and SKUs stay as they are.
+  applyStoryLedger() {
+    for (const [id, story] of Object.entries(STORY_LEDGER)) {
+      const coalition = this.coalitions.get(id);
+      if (!coalition) continue;
+      Object.assign(coalition, story);
+      for (const member of coalition.members || []) {
+        if (STORY_PEOPLE[member.name]) member.name = STORY_PEOPLE[member.name];
+        member.authorizedCents = Math.round((member.pledgedUnits || 0) * story.unitPriceCents);
+      }
+    }
+    for (const sme of this.smes.values()) {
+      if (STORY_PEOPLE[sme.name]) sme.name = STORY_PEOPLE[sme.name];
     }
   }
 
