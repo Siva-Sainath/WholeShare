@@ -114,7 +114,7 @@ switch (command) {
     break;
   default:
     console.log(`
-Usage: node cdp-harness.mjs [inspect|screenshot] [options]
+Usage: node cdp-harness.js [inspect|screenshot] [options]
 Options:
   --port <number>   CDP remote debugging port (default: 9222)
   --url <string>    Target URL to inspect (default: http://localhost:3000)

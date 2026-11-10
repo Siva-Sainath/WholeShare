@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Feature Map Linter (scripts/lint-features.mjs)
+ * Feature Map Linter (scripts/lint-features.js)
  * Implements principle-encode-lessons-in-structure.
  * Strictly asserts that all feature documents adhere to the pstack 4-header specification.
  */
@@ -41,8 +41,8 @@ function lintFeatureFile(filePath, fileName) {
 
   // Check driving section quality
   if (content.includes('## Driving it with')) {
-    if (!content.includes('control-syndicate.mjs') && !content.includes('control-paypal.js') && !content.includes('control-ingestion.js') && !content.includes('control-datalake.js')) {
-      errors.push('Driving section must cite control-syndicate.mjs, control-paypal.js, control-ingestion.js, or control-datalake.js command');
+    if (!content.includes('control-syndicate.js') && !content.includes('control-syndicate.mjs') && !content.includes('control-wholeshare.js') && !content.includes('control-paypal.js') && !content.includes('control-ingestion.js') && !content.includes('control-datalake.js')) {
+      errors.push('Driving section must cite control-syndicate.js, control-wholeshare.js, control-paypal.js, control-ingestion.js, or control-datalake.js command');
     }
     if (!content.toLowerCase().includes('proof')) {
       errors.push('Driving section must define explicit Proof standards');

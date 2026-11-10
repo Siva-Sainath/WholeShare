@@ -609,7 +609,7 @@ async function runSimulateDelivery() {
   );
 
   if (!fs.existsSync(clanStatePath)) {
-    throw new Error("No demo Clan state found. Run 'node scripts/control-syndicate.mjs seed-demo' first.");
+    throw new Error("No demo Clan state found. Run 'node scripts/control-syndicate.js seed-demo' first.");
   }
 
   const clanState = JSON.parse(fs.readFileSync(clanStatePath, "utf8"));
@@ -1544,7 +1544,7 @@ if (command === "doctor-escrow") {
     process.exit(1);
   });
 } else {
-  console.log("Usage: node scripts/control-syndicate.mjs <command>");
+  console.log("Usage: node scripts/control-syndicate.js <command>");
   console.log("\nAvailable commands:");
   console.log("  doctor-escrow          Run read-only escrow readiness diagnostics");
   console.log("  seed-demo              Seed demo Clans and member commitments");

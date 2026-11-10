@@ -25,8 +25,9 @@ function scanDir(dir) {
         scanDir(fullPath);
       }
     } else if (entry.isFile() && EXTENSIONS.some((ext) => entry.name.endsWith(ext))) {
-      // Don't scan the check-no-mocks script itself
-      if (entry.name === "check-no-mocks.mjs") continue;
+      // Don't scan the check-no-mocks script itself or compiled bundles
+      if (entry.name === "check-no-mocks.js" || entry.name === "check-no-mocks.mjs") continue;
+      if (entry.name.endsWith(".bundle.js") || entry.name.endsWith(".min.js")) continue;
 
       const content = fs.readFileSync(fullPath, "utf8");
       const lines = content.split("\n");

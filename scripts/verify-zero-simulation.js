@@ -196,12 +196,12 @@ async function main() {
   console.log("7. Verifying live local Qwen MLX native function calling...");
   const toolStart = Date.now();
   const probeTools = WHOLESHARE_TOOL_DECLARATIONS.filter(t =>
-    ["inspect_commercial_inventory", "discover_wholesale_catalog", "authorize_escrow_hold"].includes(t.function?.name)
+    ["discover_wholesale_catalog", "authorize_paypal_escrow", "query_escrow_ledger"].includes(t.function?.name)
   );
   const toolRes = await modelClient.callChat({
     messages: [
-      { role: "system", content: "You are the Wholeshare autonomous procurement agent. When asked to inspect inventory, call the inspect_commercial_inventory tool." },
-      { role: "user", content: "Inspect inventory for SKU-FLOUR-01 at warehouse WH-EAST-01." }
+      { role: "system", content: "You are the Wholeshare autonomous procurement agent. When asked to inspect inventory or discover wholesale items, call the discover_wholesale_catalog tool." },
+      { role: "user", content: "Inspect wholesale catalog inventory for SKU-FLOUR-01." }
     ],
     tools: probeTools,
     temperature: 0.0,
@@ -213,11 +213,11 @@ async function main() {
     throw new Error("Zero-Simulation Violation: Model failed to emit tool call on live prompt.");
   }
   const firstTool = toolCalls[0];
-  if (firstTool.function?.name !== "inspect_commercial_inventory") {
+  if (firstTool.function?.name !== "discover_wholesale_catalog") {
     throw new Error(`Zero-Simulation Violation: Unexpected tool called: ${firstTool.function?.name}`);
   }
   const toolArgs = JSON.parse(firstTool.function.arguments || "{}");
-  if (!toolArgs.sku || !toolArgs.sku.includes("FLOUR")) {
+  if (!toolArgs.sku || !toolArgs.sku.toUpperCase().includes("FLOUR")) {
     throw new Error(`Zero-Simulation Violation: Invalid tool arguments generated: ${firstTool.function.arguments}`);
   }
   console.log(`[PASS] Live function calling verified in ${toolDurationMs}ms (Tool: ${firstTool.function.name}, SKU: ${toolArgs.sku}).`);

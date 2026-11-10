@@ -1,0 +1,1102 @@
+[
+ {
+  "job": "find_groups",
+  "prompt": "Which Austin groups are closest to filling up?",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "Show me groups in Pune that I can still join",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "What coffee groups are open right now?",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "List the groups with the biggest discount",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "Any fastener groups in India?",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "Which groups are almost full?",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "Show open electronics groups",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "find_groups",
+  "prompt": "I need packaging groups near Chicago",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "find_groups",
+  "prompt": "Which group has the most members?",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "find_groups",
+  "prompt": "What groups in Surat are forming?",
+  "any": [
+   "present",
+   "query"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Compare the Austin Cold-Pressed Olive Oil group with the Austin Yirgacheffe coffee group",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Which is better value, the corrugated boxes group in Miami or the one in Chicago?",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Help me choose between the two Austin flour groups",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Compare the cheapest two stainless fastener groups",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Is the olive oil group or the PLA film group a better deal for 200 units?",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Put the Pune and Mumbai spice groups side by side",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Which of the two coffee groups delivers sooner?",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "I cannot decide between the boxes group and the tiles group, weigh them for me",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Compare Stuttgart cap screws and Ningbo self-tapping screws groups",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "compare_groups",
+  "prompt": "Should I join the vanilla group or the pistachio group?",
+  "any": [
+   "compare_groups"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "join_group",
+  "prompt": "I want to join the Austin olive oil group with 50 units",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "Pledge 20 units to the Yirgacheffe coffee group",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "Sign me up for the corrugated boxes group in Miami, 100 units",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "How much would 30 units cost in the Austin pistachio group?",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "Get me a quote for 10 units of the Austin PLA film group",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "Join the cheapest Austin group for 5 units",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "Put me in the stone-ground flour group, 40 units",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "join_group",
+  "prompt": "Quote 25 units of the Austin solar module group",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": true
+ },
+ {
+  "job": "join_group",
+  "prompt": "I'd like to commit to 60 units of the olive oil group",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": true
+ },
+ {
+  "job": "join_group",
+  "prompt": "What would I pay for 15 units of the vanilla group?",
+  "any": [
+   "join_group",
+   "prepare_pledge_quote"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": true
+ },
+ {
+  "job": "start_group",
+  "prompt": "I want to start a group to buy cotton canvas in Surat, 800 units",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "Start a buying group for stainless steel M10 nuts in Mumbai, 2000 units",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "Create a clan for LED street lights in Hyderabad",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "Set up a group buy for kraft shipping boxes in Denver, 500 units",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "I need to pool an order of cashew kernels in Kochi",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "Open a new group for aluminum billet stock in Pune",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "Let me start a group purchase of thermal printer rolls in Austin, 1000 units",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "start_group",
+  "prompt": "Form a group to buy organic wheat flour in Detroit",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "start_group",
+  "prompt": "Make a group buy for resistors and capacitors in Bengaluru, 5000 units",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "start_group",
+  "prompt": "Start a clan for ceramic floor tiles in Jaipur",
+  "any": [
+   "start_group_buy"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Set up my account: I run a bakery called Sunrise Breads in Detroit, my email is sunrise@example.org",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Update my business name to Blue Ridge Coffee and my city to Asheville",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Change my country to India and currency to INR",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "My business is a restaurant in Pune called Spice Route, set up my profile",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Fill in my profile: Delta Hardware, Houston, USD",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Set my contact email to buyer@deltahardware.example",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "I am a small electronics shop in Bengaluru named Volt Mart, create my profile",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Update my profile city to Chicago",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Rename my business to Harbor Foods",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "setup_profile",
+  "prompt": "Set me up as a textile buyer in Surat called Loom and Co",
+  "any": [
+   "setup_profile"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Find me suppliers for stainless steel M10 nuts in India",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Source new suppliers for cashew kernels from the web",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Who supplies cotton canvas in Surat?",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Search the web for LED street light manufacturers",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Look for suppliers of thermal shrink film",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Find electronics component distributors in Bengaluru",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Check the supplier for the Yirgacheffe coffee on the web",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "I need aluminum extrusion suppliers, search online",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Find me more suppliers for kraft boxes",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "research_supplier",
+  "prompt": "Is Bronte Pistacchio Consorzio a real supplier? Check the web",
+  "any": [
+   "find_suppliers",
+   "kernel_research_web_fact"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Read boltdepot.com and tell me the price and minimum order for stainless steel hex nuts",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Open fastenal.com and find me pricing for M10 nuts",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Check uline.com for kraft shipping box prices and minimums",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Get the lead time and minimum order from digikey.com for resistors",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "What does mcmaster.com charge for aluminum bar stock?",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Browse the supplier site boltdepot.com for hex bolts pricing",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Go to uline.com and tell me the MOQ for corrugated boxes",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Read the pricing pages of digikey.com for 10k ohm resistors",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Look up minimum order quantities on fastenal.com for zinc screws",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "supplier_quote",
+  "prompt": "Visit mcmaster.com and get a price for 316 stainless nuts",
+  "any": [
+   "kernel_read_supplier_site"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Move the corrugated boxes delivery up two days",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Push back the olive oil delivery by 3 days",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Extend the inspection window for the olive oil by 24 hours",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Book a receiving slot for the boxes shipment tomorrow at 10",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Fix any overlapping deliveries",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Undo the last schedule change",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Delay the cotton delivery one day",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Give me more time to inspect the delivered olive oil",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Reserve a dock slot for the corrugated boxes on Friday at 9",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "delivery_change",
+  "prompt": "Resolve schedule conflicts for me",
+  "any": [
+   "schedule_move_delivery",
+   "schedule_extend_inspection",
+   "schedule_book_slot",
+   "schedule_resolve_conflicts",
+   "schedule_undo"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "dispute",
+  "prompt": "My corrugated boxes arrived crushed, file a claim",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "The olive oil shipment came damaged, 10 units broken, raise a dispute",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "Show me my open disputes",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "What happened with my claims?",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "Check where my boxes shipment is and whether it is late",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "I want to dispute the late delivery of the cotton",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "Which of my claims are still drafts?",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": false
+ },
+ {
+  "job": "dispute",
+  "prompt": "Help me file a damage claim for the delivered olive oil",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "dispute",
+  "prompt": "Show the claims board",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "dispute",
+  "prompt": "Is my olive oil shipment past the 48 hour dispute window?",
+  "any": [
+   "file_damage_claim",
+   "draft_claim",
+   "track_shipment",
+   "query",
+   "present"
+  ],
+  "forbid": [],
+  "heldOut": true
+ },
+ {
+  "job": "paypal",
+  "prompt": "Show me my PayPal position",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "How much do I have held in escrow?",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "List my open PayPal invoices",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "Which invoices are unpaid?",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "What is my total open invoice balance?",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "Open my PayPal dashboard",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "Show my pledges",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": false
+ },
+ {
+  "job": "paypal",
+  "prompt": "How much have I pledged across all groups?",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": true
+ },
+ {
+  "job": "paypal",
+  "prompt": "What is the status of my escrow ledger?",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": true
+ },
+ {
+  "job": "paypal",
+  "prompt": "Show invoice status breakdown",
+  "any": [
+   "ui_open_report",
+   "query",
+   "query_escrow_ledger",
+   "present",
+   "open_paypal_dashboard",
+   "send_invoice_reminder"
+  ],
+  "forbid": [
+   "schedule_move_delivery"
+  ],
+  "heldOut": true
+ }
+]

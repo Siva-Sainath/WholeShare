@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Wholeshare Multi-Language Code Quality & Style Verifier (scripts/verify-code-quality.mjs)
+ * Wholeshare Multi-Language Code Quality & Style Verifier (scripts/verify-code-quality.js)
  * Implements poteto-mode standards, boundary discipline, and comment hygiene across languages.
  * Validates TypeScript, JavaScript, Python, Markdown, and JSON files against strict quality invariants.
  */
@@ -23,6 +23,7 @@ const IGNORE_PATTERNS = [
   '.git',
   'SYNDICATE_SPEC.html',
   'SYNDICATE_SPEC.md',
+  'verify-code-quality.js',
   'verify-code-quality.mjs',
   'poteto-mode',
   'statechart'

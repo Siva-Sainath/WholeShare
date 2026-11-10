@@ -4,11 +4,17 @@ import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../src/lib/tool-regis
 import { WholeshareAgentHarness } from "../src/lib/agent-harness.js";
 import { actionDispatcher } from "../src/lib/web-actions.js";
 
-test("WHOLESHARE_TOOL_DECLARATIONS registers 45 distinct tools with JSON schemas", () => {
-  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 45);
+test("WHOLESHARE_TOOL_DECLARATIONS registers 74 distinct tools with JSON schemas", () => {
+  assert.equal(WHOLESHARE_TOOL_DECLARATIONS.length, 74);
   const toolNames = WHOLESHARE_TOOL_DECLARATIONS.map(t => t.function.name);
 
   assert.ok(toolNames.includes("discover_wholesale_catalog"));
+  assert.ok(toolNames.includes("prepare_pledge_quote"));
+  assert.ok(toolNames.includes("open_paypal_dashboard"));
+  assert.ok(toolNames.includes("file_damage_claim"));
+  assert.ok(toolNames.includes("ui_open_group"));
+  assert.ok(toolNames.includes("ui_open_my_group"));
+  for (const name of ["present", "ui_open_report", "schedule_move_delivery", "schedule_extend_inspection", "schedule_book_slot", "schedule_resolve_conflicts", "schedule_undo"]) assert.ok(toolNames.includes(name), name);
   assert.ok(toolNames.includes("discover_wholesale_supplier_tiers"));
   assert.ok(toolNames.includes("kernel_scrape_wholesale_tiers"));
   assert.ok(toolNames.includes("kernel_execute_browser_task"));
@@ -53,6 +59,14 @@ test("WHOLESHARE_TOOL_DECLARATIONS registers 45 distinct tools with JSON schemas
   assert.ok(toolNames.includes("settle_member_debt"));
   assert.ok(toolNames.includes("check_buyer_liquidity_and_ar"));
   assert.ok(toolNames.includes("paypal_execute_toolkit_action"));
+  assert.ok(toolNames.includes("ui_navigate_view"));
+  assert.ok(toolNames.includes("ui_open_slide_over"));
+  assert.ok(toolNames.includes("ui_trigger_onboarding"));
+  assert.ok(toolNames.includes("ui_trigger_clan_setup"));
+  assert.ok(toolNames.includes("ui_filter_clans"));
+  assert.ok(toolNames.includes("ui_export_snapshot"));
+  assert.ok(toolNames.includes("confirm_delivery_receipt_multimodal"));
+  assert.ok(toolNames.includes("update_clan_subscription_terms"));
 
   for (const tool of WHOLESHARE_TOOL_DECLARATIONS) {
     assert.equal(tool.type, "function");

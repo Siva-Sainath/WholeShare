@@ -50,3 +50,17 @@ test("authorizeEscrow locks member authorizations and transitions to LOCKED", as
   assert.ok(coalition.members.every(m => m.status === "AUTHORIZED"));
   assert.ok(coalition.members.every(m => Boolean(m.paypalOrderId)));
 });
+
+test("confirmShipmentReceipt confirms only the named group", async () => {
+  actionDispatcher.resetState();
+  const groups = Array.from(actionDispatcher.coalitions.values()).filter((c) => c.members.some((m) => m.smeId === "sme_austin_01"));
+  assert.ok(groups.length >= 2, "seed has the buyer in more than one group");
+  const [first, second] = groups;
+  const before = second.status;
+  const result = await actionDispatcher.confirmShipmentReceipt(null, { conditionStatus: "GOOD_CONDITION", buyerId: "sme_austin_01", coalitionId: first.id });
+  assert.equal(result.status, "DELIVERY_CONFIRMED");
+  assert.equal(first.status, "DELIVERED");
+  assert.equal(second.status, before);
+  await assert.rejects(() => actionDispatcher.confirmShipmentReceipt(null, { conditionStatus: "GOOD_CONDITION", buyerId: "sme_not_here", coalitionId: first.id }), /not a member/);
+  actionDispatcher.resetState();
+});

@@ -181,7 +181,7 @@ async function main() {
 
   if (!targetOrderId) {
     console.error(`${FAIL_TAG} No order ID specified and no demo-clan-state.json found.`);
-    console.error("Usage: node scripts/approve-sandbox-order.mjs [orderId]");
+    console.error("Usage: node scripts/approve-sandbox-order.js [orderId]");
     process.exit(1);
   }
 
