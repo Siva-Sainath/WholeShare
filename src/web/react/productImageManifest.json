@@ -1,0 +1,231 @@
+{
+ "almond": [
+  "almond",
+  "almond-3"
+ ],
+ "aluminum": [
+  "aluminum",
+  "aluminum-2"
+ ],
+ "basmati": [
+  "basmati-2",
+  "basmati-3"
+ ],
+ "battery": [
+  "battery",
+  "battery-2"
+ ],
+ "bearing": [
+  "bearing"
+ ],
+ "bolts": [
+  "bolts",
+  "bolts-2"
+ ],
+ "bottles": [
+  "bottles",
+  "bottles-2"
+ ],
+ "boxes": [
+  "boxes",
+  "boxes-2"
+ ],
+ "cardamom": [
+  "cardamom",
+  "cardamom-2",
+  "cardamom-3"
+ ],
+ "cashew": [
+  "cashew",
+  "cashew-2"
+ ],
+ "cement": [
+  "cement",
+  "cement-2",
+  "cement-3"
+ ],
+ "chocolate": [
+  "chocolate",
+  "chocolate-3"
+ ],
+ "coffee": [
+  "coffee",
+  "coffee-2"
+ ],
+ "container": [
+  "container",
+  "container-2",
+  "container-3"
+ ],
+ "dates": [
+  "dates",
+  "dates-2",
+  "dates-3"
+ ],
+ "denim": [
+  "denim",
+  "denim-2",
+  "denim-3"
+ ],
+ "flour": [
+  "flour"
+ ],
+ "geothermal": [
+  "geothermal",
+  "geothermal-2",
+  "geothermal-3"
+ ],
+ "glassware": [
+  "glassware",
+  "glassware-2",
+  "glassware-3"
+ ],
+ "gloves": [
+  "gloves",
+  "gloves-2",
+  "gloves-3"
+ ],
+ "heat": [
+  "heat",
+  "heat-2",
+  "heat-3"
+ ],
+ "honey": [
+  "honey",
+  "honey-2",
+  "honey-4"
+ ],
+ "induction": [
+  "induction",
+  "induction-2",
+  "induction-3"
+ ],
+ "inverter": [
+  "inverter-2"
+ ],
+ "janitorial": [
+  "janitorial",
+  "janitorial-2",
+  "janitorial-3"
+ ],
+ "jute": [
+  "jute",
+  "jute-2",
+  "jute-3"
+ ],
+ "kitchen": [
+  "kitchen",
+  "kitchen-2",
+  "kitchen-3"
+ ],
+ "led": [
+  "led",
+  "led-2"
+ ],
+ "lumber": [
+  "lumber"
+ ],
+ "mask": [
+  "mask",
+  "mask-2",
+  "mask-3"
+ ],
+ "microcontroller": [
+  "microcontroller",
+  "microcontroller-2",
+  "microcontroller-3"
+ ],
+ "neem": [
+  "neem",
+  "neem-2",
+  "neem-3"
+ ],
+ "olive-oil": [
+  "olive-oil",
+  "olive-oil-2",
+  "olive-oil-3"
+ ],
+ "pallet": [
+  "pallet",
+  "pallet-2"
+ ],
+ "pcb": [
+  "pcb",
+  "pcb-3"
+ ],
+ "pepper": [
+  "pepper",
+  "pepper-2",
+  "pepper-3"
+ ],
+ "pistachio": [
+  "pistachio",
+  "pistachio-2",
+  "pistachio-3"
+ ],
+ "plastic": [
+  "plastic-2",
+  "plastic-3"
+ ],
+ "pump": [
+  "pump",
+  "pump-2"
+ ],
+ "resistor": [
+  "resistor",
+  "resistor-2",
+  "resistor-3"
+ ],
+ "rice": [
+  "rice",
+  "rice-2",
+  "rice-3"
+ ],
+ "saffron": [
+  "saffron",
+  "saffron-2",
+  "saffron-3"
+ ],
+ "solar": [
+  "solar",
+  "solar-2",
+  "solar-3"
+ ],
+ "spice": [
+  "spice",
+  "spice-2",
+  "spice-3"
+ ],
+ "stone": [
+  "stone-3"
+ ],
+ "street-light": [
+  "street-light",
+  "street-light-3"
+ ],
+ "tea": [
+  "tea",
+  "tea-3",
+  "tea-4"
+ ],
+ "tiles": [
+  "tiles",
+  "tiles-2"
+ ],
+ "tool": [
+  "tool"
+ ],
+ "vanilla": [
+  "vanilla"
+ ],
+ "walnut": [
+  "walnut",
+  "walnut-2"
+ ],
+ "welding": [
+  "welding"
+ ],
+ "wire": [
+  "wire-2"
+ ]
+}
