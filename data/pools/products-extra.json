@@ -1,0 +1,521 @@
+{
+  "DISCRETE_MANUFACTURING": [
+    {
+      "name": "Hex Bolt M8x40 Zinc Plated Grade 8.8",
+      "unit": "box of 500",
+      "priceLowCents": 4200,
+      "priceHighCents": 6800,
+      "supplier": "Venkatesh Forge Industries"
+    },
+    {
+      "name": "Stainless Steel A2 Hex Nut M10",
+      "unit": "box of 1,000",
+      "priceLowCents": 3800,
+      "priceHighCents": 6200,
+      "supplier": "Jiangnan Fasteners Co., Ltd"
+    },
+    {
+      "name": "Flat Washer M12 Hot Dip Galvanized",
+      "unit": "carton of 2,000",
+      "priceLowCents": 2900,
+      "priceHighCents": 4700,
+      "supplier": "Hongda Precision Co., Ltd"
+    },
+    {
+      "name": "Self-Tapping Screw 4.8x38 Phillips Zinc",
+      "unit": "box of 1,000",
+      "priceLowCents": 1800,
+      "priceHighCents": 3200,
+      "supplier": "Maruti Forge Enterprises"
+    },
+    {
+      "name": "Wedge Anchor Bolt 12x120 Carbon Steel",
+      "unit": "box of 100",
+      "priceLowCents": 3600,
+      "priceHighCents": 5800,
+      "supplier": "Mahalaxmi Electro Enterprises"
+    },
+    {
+      "name": "Socket Head Cap Screw M6x20 Grade 12.9",
+      "unit": "box of 500",
+      "priceLowCents": 4500,
+      "priceHighCents": 7200,
+      "supplier": "Anand Electro Traders"
+    },
+    {
+      "name": "Threaded Rod M12 Class 8.8 1m Zinc",
+      "unit": "bundle of 50",
+      "priceLowCents": 5200,
+      "priceHighCents": 8400,
+      "supplier": "Zhongke Fasteners Co., Ltd"
+    },
+    {
+      "name": "Nyloc Lock Nut M8 Stainless",
+      "unit": "box of 1,000",
+      "priceLowCents": 3100,
+      "priceHighCents": 5200,
+      "supplier": "Shenhua Precision Manufacturing"
+    },
+    {
+      "name": "Deep Groove Ball Bearing 6204-2RS",
+      "unit": "box of 100",
+      "priceLowCents": 9800,
+      "priceHighCents": 15400,
+      "supplier": "Zhongke Fasteners Co., Ltd"
+    },
+    {
+      "name": "Tungsten Carbide Drill Bit Set 19-piece",
+      "unit": "case of 20",
+      "priceLowCents": 12800,
+      "priceHighCents": 19600,
+      "supplier": "Bharat Precision Industries"
+    },
+    {
+      "name": "Welding Electrodes E6013 3.15mm 5kg",
+      "unit": "case of 40",
+      "priceLowCents": 14800,
+      "priceHighCents": 22400,
+      "supplier": "Zhongke Fasteners Co., Ltd"
+    },
+    {
+      "name": "Hydraulic Bottle Jack 5 Ton",
+      "unit": "case of 10",
+      "priceLowCents": 22400,
+      "priceHighCents": 33800,
+      "supplier": "Jiangnan Fasteners Co., Ltd"
+    },
+    {
+      "name": "Angle Grinder 125mm 900W",
+      "unit": "case of 12",
+      "priceLowCents": 28800,
+      "priceHighCents": 43200,
+      "supplier": "Shree Mills Exports"
+    },
+    {
+      "name": "Pneumatic Quick Coupling Set 1/4in",
+      "unit": "carton of 100",
+      "priceLowCents": 7200,
+      "priceHighCents": 11800,
+      "supplier": "Patel Mills Mills"
+    },
+    {
+      "name": "Industrial Epoxy Adhesive 2-Part 400ml",
+      "unit": "case of 24",
+      "priceLowCents": 11800,
+      "priceHighCents": 18400,
+      "supplier": "Venkatesh Forge Industries"
+    },
+    {
+      "name": "Brass Ball Valve 1/2in BSP",
+      "unit": "carton of 50",
+      "priceLowCents": 13400,
+      "priceHighCents": 20800,
+      "supplier": "Om Sai Precision Traders"
+    }
+  ],
+  "ELECTRICAL": [
+    {
+      "name": "ESP32 Development Board 38-pin WiFi Bluetooth",
+      "unit": "box of 50",
+      "priceLowCents": 18500,
+      "priceHighCents": 29500,
+      "supplier": "Sai Electro Industries"
+    },
+    {
+      "name": "Arduino Uno R3 Compatible Board",
+      "unit": "box of 50",
+      "priceLowCents": 14200,
+      "priceHighCents": 23800,
+      "supplier": "Maruti Industries Traders"
+    },
+    {
+      "name": "10k Ohm 1% Metal Film Resistor Reel 5,000pc",
+      "unit": "reel",
+      "priceLowCents": 1900,
+      "priceHighCents": 3400,
+      "supplier": "Hongda Precision Co., Ltd"
+    },
+    {
+      "name": "100uF 25V Electrolytic Capacitor Reel 2,000pc",
+      "unit": "reel",
+      "priceLowCents": 3200,
+      "priceHighCents": 5400,
+      "supplier": "Sakura Seiki Co., Ltd"
+    },
+    {
+      "name": "SMD LED 0603 Warm White Reel 4,000pc",
+      "unit": "reel",
+      "priceLowCents": 2600,
+      "priceHighCents": 4600,
+      "supplier": "Pearl River Tech Co., Ltd"
+    },
+    {
+      "name": "USB-C to USB-C Cable 1m 100W PD",
+      "unit": "box of 100",
+      "priceLowCents": 24000,
+      "priceHighCents": 38000,
+      "supplier": "Shenhua Precision Manufacturing"
+    },
+    {
+      "name": "18650 Li-ion Cell 3000mAh 3.7V",
+      "unit": "box of 100",
+      "priceLowCents": 52000,
+      "priceHighCents": 78000,
+      "supplier": "Huaxin Tech Electronics Co., Ltd"
+    },
+    {
+      "name": "DHT22 Temperature Humidity Sensor",
+      "unit": "box of 100",
+      "priceLowCents": 21000,
+      "priceHighCents": 34000,
+      "supplier": "Huaxin Tech Electronics Co., Ltd"
+    },
+    {
+      "name": "5V 4-Channel Relay Module Optocoupled",
+      "unit": "box of 100",
+      "priceLowCents": 16500,
+      "priceHighCents": 27500,
+      "supplier": "Tirupati Industries Industries"
+    },
+    {
+      "name": "0.96in OLED Display I2C 128x64",
+      "unit": "box of 100",
+      "priceLowCents": 33000,
+      "priceHighCents": 52000,
+      "supplier": "Shree Industries Pvt Ltd"
+    },
+    {
+      "name": "LiFePO4 Battery Pack 12.8V 20Ah",
+      "unit": "pallet of 20",
+      "priceLowCents": 189000,
+      "priceHighCents": 276000,
+      "supplier": "Seoul Star Systems Co., Ltd"
+    },
+    {
+      "name": "Solder Wire 63/37 0.8mm 500g Rosin Core",
+      "unit": "case of 20",
+      "priceLowCents": 18400,
+      "priceHighCents": 28600,
+      "supplier": "Mahalaxmi Electro Enterprises"
+    },
+    {
+      "name": "True RMS Digital Multimeter 6000 Count",
+      "unit": "case of 20",
+      "priceLowCents": 44000,
+      "priceHighCents": 68000,
+      "supplier": "Bharat Electro Pvt Ltd"
+    },
+    {
+      "name": "Terminal Block Connector 5.08mm 4-Pin",
+      "unit": "box of 500",
+      "priceLowCents": 12500,
+      "priceHighCents": 19800,
+      "supplier": "Evergreen Tech Manufacturing"
+    },
+    {
+      "name": "Single-Board Computer Module 4GB Industrial",
+      "unit": "box of 20",
+      "priceLowCents": 98000,
+      "priceHighCents": 148000,
+      "supplier": "Hanbit Systems Co., Ltd"
+    },
+    {
+      "name": "LED Panel Light 18W 600x600 Warm White",
+      "unit": "carton of 10",
+      "priceLowCents": 24500,
+      "priceHighCents": 39500,
+      "supplier": "Maruti Industries Traders"
+    },
+    {
+      "name": "Copper Wire 2.5mm FR PVC House Wire 90m",
+      "unit": "carton of 20",
+      "priceLowCents": 78000,
+      "priceHighCents": 112000,
+      "supplier": "Hindustan Electronics Mills"
+    }
+  ],
+  "FOOD_AND_BEVERAGE": [
+    {
+      "name": "Cashew Kernels W320 Premium Whole",
+      "unit": "25 kg carton",
+      "priceLowCents": 21500,
+      "priceHighCents": 29800,
+      "supplier": "Navjot Traders Exports"
+    },
+    {
+      "name": "Raw Almonds Nonpareil 27/30",
+      "unit": "25 kg carton",
+      "priceLowCents": 17800,
+      "priceHighCents": 24800,
+      "supplier": "Sai Spice Pvt Ltd"
+    },
+    {
+      "name": "Walnut Halves Light Extra 25kg",
+      "unit": "25 kg carton",
+      "priceLowCents": 15400,
+      "priceHighCents": 22600,
+      "supplier": "Venkatesh Traders Pvt Ltd"
+    },
+    {
+      "name": "Roasted Hazelnut Kernels 11-13mm",
+      "unit": "25 kg carton",
+      "priceLowCents": 23800,
+      "priceHighCents": 34600,
+      "supplier": "Venkatesh Traders Pvt Ltd"
+    },
+    {
+      "name": "Basmati Rice 1121 Extra Long Grain",
+      "unit": "50 kg sack",
+      "priceLowCents": 5800,
+      "priceHighCents": 8400,
+      "supplier": "Sai Estates Pvt Ltd"
+    },
+    {
+      "name": "Darjeeling First Flush Tea FTGFOP1",
+      "unit": "5 kg chest",
+      "priceLowCents": 21500,
+      "priceHighCents": 38500,
+      "supplier": "Sri Lakshmi Traders Traders"
+    },
+    {
+      "name": "Assam CTC Tea BP1 Strong",
+      "unit": "25 kg sack",
+      "priceLowCents": 9800,
+      "priceHighCents": 14800,
+      "supplier": "Shree Estates Mills"
+    },
+    {
+      "name": "Kashmiri Saffron Grade 1 Threads",
+      "unit": "1 kg tin",
+      "priceLowCents": 118000,
+      "priceHighCents": 186000,
+      "supplier": "Anand Spice Exports"
+    },
+    {
+      "name": "Green Cardamom 8mm Bold Alleppey",
+      "unit": "5 kg bag",
+      "priceLowCents": 31500,
+      "priceHighCents": 46800,
+      "supplier": "Ganga Traders Industries"
+    },
+    {
+      "name": "Malabar Black Pepper 550 GL",
+      "unit": "25 kg sack",
+      "priceLowCents": 19500,
+      "priceHighCents": 28500,
+      "supplier": "Sai Spice Pvt Ltd"
+    },
+    {
+      "name": "Turmeric Powder Curcumin 5% Polished",
+      "unit": "25 kg sack",
+      "priceLowCents": 6200,
+      "priceHighCents": 9400,
+      "supplier": "Shree Estates Mills"
+    },
+    {
+      "name": "Whole Cumin Seeds Europe Grade",
+      "unit": "25 kg sack",
+      "priceLowCents": 8800,
+      "priceHighCents": 13600,
+      "supplier": "Ganga Traders Industries"
+    },
+    {
+      "name": "Pistachio Kernels Raw Sorted",
+      "unit": "10 kg carton",
+      "priceLowCents": 17500,
+      "priceHighCents": 26500,
+      "supplier": "Venkatesh Traders Pvt Ltd"
+    },
+    {
+      "name": "Medjool Dates Jumbo",
+      "unit": "5 kg box",
+      "priceLowCents": 6800,
+      "priceHighCents": 10400,
+      "supplier": "Venkatesh Traders Pvt Ltd"
+    }
+  ],
+  "TEXTILES_APPAREL": [
+    {
+      "name": "Organic Cotton Combed Knit Fabric 180 GSM",
+      "unit": "roll of 100 m",
+      "priceLowCents": 38000,
+      "priceHighCents": 58000,
+      "supplier": "Venkatesh Textiles Industries"
+    },
+    {
+      "name": "Banarasi Silk Brocade Fabric Heritage Weave",
+      "unit": "roll of 50 m",
+      "priceLowCents": 112000,
+      "priceHighCents": 184000,
+      "supplier": "Navjot Stone Pvt Ltd"
+    },
+    {
+      "name": "Handloom Jute Hessian Cloth 10oz",
+      "unit": "roll of 100 m",
+      "priceLowCents": 21000,
+      "priceHighCents": 33000,
+      "supplier": "Viet Star Export JSC"
+    },
+    {
+      "name": "Cotton Canvas Duck 12oz Natural",
+      "unit": "roll of 50 m",
+      "priceLowCents": 24500,
+      "priceHighCents": 37500,
+      "supplier": "Navjot Textiles Traders"
+    },
+    {
+      "name": "Polyester Mesh Sportswear Fabric 130 GSM",
+      "unit": "roll of 100 m",
+      "priceLowCents": 18800,
+      "priceHighCents": 28800,
+      "supplier": "Saigon Export JSC"
+    },
+    {
+      "name": "Block-Printed Cotton Voile Jaipur",
+      "unit": "roll of 60 m",
+      "priceLowCents": 26400,
+      "priceHighCents": 40800,
+      "supplier": "Venkatesh Stone Industries"
+    }
+  ],
+  "PACKAGING_MATERIALS": [
+    {
+      "name": "Corrugated Mailer Box 12x9x4 Kraft",
+      "unit": "bundle of 200",
+      "priceLowCents": 21000,
+      "priceHighCents": 33000,
+      "supplier": "Venkatesh Chemicals Pvt Ltd"
+    },
+    {
+      "name": "Biodegradable Courier Bag 12x16 Compostable",
+      "unit": "carton of 1,000",
+      "priceLowCents": 17800,
+      "priceHighCents": 27800,
+      "supplier": "Om Sai Chemicals Enterprises"
+    },
+    {
+      "name": "Food Grade PET Jar 500ml with Lid",
+      "unit": "carton of 300",
+      "priceLowCents": 14400,
+      "priceHighCents": 22400,
+      "supplier": "Andaman Packaging Co., Ltd"
+    }
+  ],
+  "PROCESS_BATCH_PRODUCTION": [
+    {
+      "name": "Neem Cold-Pressed Oil Cosmetic Grade",
+      "unit": "20 L drum",
+      "priceLowCents": 12800,
+      "priceHighCents": 19800,
+      "supplier": "Sri Lakshmi Traders Traders"
+    },
+    {
+      "name": "Guar Gum Powder 200 Mesh Food Grade",
+      "unit": "25 kg bag",
+      "priceLowCents": 14200,
+      "priceHighCents": 21800,
+      "supplier": "Venkatesh Traders Pvt Ltd"
+    },
+    {
+      "name": "Castor Oil BSS Grade Pale",
+      "unit": "200 L drum",
+      "priceLowCents": 31000,
+      "priceHighCents": 46000,
+      "supplier": "Sai Spice Pvt Ltd"
+    }
+  ],
+  "CONSTRUCTION": [
+    {
+      "name": "Kota Stone Polished Slab 20mm",
+      "unit": "pallet of 40",
+      "priceLowCents": 62000,
+      "priceHighCents": 96000,
+      "supplier": "Kaveri Stone Enterprises"
+    },
+    {
+      "name": "Ceramic Floor Tile 600x600 Glazed Vitrified",
+      "unit": "pallet of 48",
+      "priceLowCents": 88000,
+      "priceHighCents": 134000,
+      "supplier": "Venkatesh Stone Industries"
+    },
+    {
+      "name": "TMT Rebar Fe500D 12mm 12m",
+      "unit": "bundle of 40",
+      "priceLowCents": 96000,
+      "priceHighCents": 144000,
+      "supplier": "Aztec Industrial S.A. de C.V."
+    }
+  ],
+  "CLEANTECH_ENERGY": [
+    {
+      "name": "Monocrystalline Solar Panel 550W Mono PERC",
+      "unit": "pallet of 31",
+      "priceLowCents": 148000,
+      "priceHighCents": 214000,
+      "supplier": "Daehan Systems Co., Ltd"
+    },
+    {
+      "name": "String Inverter 10kW Three Phase",
+      "unit": "pallet of 8",
+      "priceLowCents": 168000,
+      "priceHighCents": 254000,
+      "supplier": "Navjot Precision Enterprises"
+    },
+    {
+      "name": "Solar Street Light 60W All-in-One",
+      "unit": "carton of 6",
+      "priceLowCents": 94000,
+      "priceHighCents": 142000,
+      "supplier": "Om Sai Precision Traders"
+    }
+  ],
+  "JANITORIAL": [
+    {
+      "name": "Concentrated Floor Cleaner Lemon 5L",
+      "unit": "case of 4",
+      "priceLowCents": 4800,
+      "priceHighCents": 8200,
+      "supplier": "Patriot Distribution Supply Co"
+    },
+    {
+      "name": "Microfiber Cleaning Cloth 40x40 Pack of 12",
+      "unit": "carton of 50",
+      "priceLowCents": 22000,
+      "priceHighCents": 34000,
+      "supplier": "Maruti Industries Traders"
+    }
+  ],
+  "MEDICAL_SUPPLIES": [
+    {
+      "name": "Nitrile Examination Gloves Powder-Free M",
+      "unit": "case of 1,000",
+      "priceLowCents": 6400,
+      "priceHighCents": 10400,
+      "supplier": "Ganga Traders Industries"
+    },
+    {
+      "name": "Surgical Face Mask 3-Ply Type IIR",
+      "unit": "case of 2,000",
+      "priceLowCents": 5800,
+      "priceHighCents": 9400,
+      "supplier": "Sri Lakshmi Traders Traders"
+    }
+  ],
+  "RESTAURANT_EQUIPMENT": [
+    {
+      "name": "Stainless Steel Prep Table 1.5m with Shelf",
+      "unit": "unit",
+      "priceLowCents": 24800,
+      "priceHighCents": 39800,
+      "supplier": "Reiter Technik GmbH"
+    },
+    {
+      "name": "Commercial Induction Cooktop 3.5kW",
+      "unit": "unit",
+      "priceLowCents": 31800,
+      "priceHighCents": 49800,
+      "supplier": "Colombo Meccanica S.p.A."
+    }
+  ]
+}
