@@ -1,5 +1,11 @@
 // Loaded before the unit tests (node --import). The gateway refuses to start without PayPal configuration, so the tests
 // supply harmless sandbox placeholders when no .env is present. They never reach PayPal: the tests inject their own clients.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // No .env on a fresh clone. The placeholders below are used.
+}
+
 const defaults = {
   PAYPAL_MODE: "sandbox",
   PAYPAL_CLIENT_ID: "test-client-id",
