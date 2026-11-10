@@ -1,0 +1,134 @@
+/* Bryntum CSS setup. Stockholm light theme plus Stitch token variables. */
+@import "@bryntum/core-enterprise/fontawesome/css/fontawesome.css";
+@import "@bryntum/core-enterprise/fontawesome/css/solid.css";
+@import "@bryntum/scheduler-enterprise/scheduler.css";
+@import "@bryntum/grid-enterprise/grid.css";
+@import "@bryntum/calendar-enterprise/calendar.css";
+@import "@bryntum/taskboard-enterprise/taskboard.css";
+@import "@bryntum/scheduler-enterprise/svalbard.css";
+
+:root {
+  color-scheme: light;
+}
+
+/* WholeShare surface for every Bryntum product on the page: Astryx-matching light theme. */
+.b-scheduler,
+.b-grid,
+.b-calendar,
+.b-taskboard,
+.b-popup,
+.b-menu {
+  --b-primary: #0070BA;
+  --b-font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --b-panel-background: #FFFFFF;
+  --b-widget-background: #FFFFFF;
+  --b-grid-row-background: #FFFFFF;
+  --b-grid-row-background-alt: #FFFFFF;
+  --b-timeline-header-background: #FAF8F3;
+  --b-timeline-header-text-color: #5C6A79;
+  --b-grid-header-background: #FAF8F3;
+  --b-grid-border-color: #EDE9DF;
+  --b-timeaxis-tick-color: #EDE9DF;
+  --b-scheduler-event-background: #0070BA;
+  --b-scheduler-event-color: #FFFFFF;
+  --b-scheduler-event-border-radius: 8px;
+  --b-calendar-event-border-radius: 8px;
+  --b-button-border-radius: 8px;
+  --b-editor-border-radius: 12px;
+  color: #0F1F2E;
+  background: #FFFFFF;
+}
+
+.b-scheduler,
+.b-grid,
+.b-calendar,
+.b-taskboard {
+  border-radius: 12px;
+  border: 1px solid #EDE9DF;
+  overflow: hidden;
+}
+
+.b-grid-header,
+.b-sch-header-timeaxis-cell,
+.b-calendar-cell-header,
+.b-cal-day-header {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.b-grid-row:hover,
+.b-grid-row.b-hover { background-color: rgba(0, 112, 186, 0.045); }
+.b-grid-cell { font-size: 13px; }
+
+.b-calendar .b-cal-cell-today,
+.b-calendar .b-day-view .b-today { background-color: rgba(0, 112, 186, 0.06); }
+
+.b-sch-event {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 31, 46, 0.12);
+  font-weight: 500;
+}
+
+.b-toolbar,
+.b-calendar .b-toolbar { background: #FFFFFF; border-bottom: 1px solid #EDE9DF; }
+.b-button.b-raised.b-blue,
+.b-button.b-blue { background: #0070BA; border-radius: 8px; }
+
+/* TaskBoard columns and cards as Astryx-style cards. */
+.b-taskboard { background: #FAF8F3; }
+.b-task-board-column { background: transparent; }
+.b-task-board-column-header { font-weight: 600; color: #0F1F2E; }
+.b-task-board-card {
+  background: #FFFFFF;
+  border: 1px solid #EDE9DF;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 31, 46, 0.06);
+}
+.b-task-board-card:hover { box-shadow: 0 6px 18px rgba(15, 31, 46, 0.1); }
+
+/* Inspection window events use gold. Ink text keeps the label readable. */
+.b-sch-event.ws-inspection-event,
+.b-cal-event.ws-inspection-event {
+  background-color: #FFC439;
+  color: #0F1F2E;
+}
+
+.b-sch-event.ws-inspection-event .b-sch-event-content,
+.b-cal-event.ws-inspection-event .b-cal-event-body {
+  color: #0F1F2E;
+}
+
+#bryntumTimelineContainer {
+  width: 100%;
+  height: 480px;
+  position: relative;
+}
+
+/* Shipment timeline: status coded bars. */
+.b-scheduler .b-sch-event.ws-ev-transit { background: #0070BA; color: #FFFFFF; border-radius: 8px; }
+.b-scheduler .b-sch-event.ws-ev-delayed { background: #BA1A1A; color: #FFFFFF; border-radius: 8px; }
+.b-scheduler .b-sch-event.ws-ev-delivered { background: #D9E0E7; color: #0F1F2E; border-radius: 8px; }
+.b-scheduler .b-sch-event.ws-ev-inspection { background: #FFC439; color: #0F1F2E; border-radius: 8px; }
+.b-scheduler .b-sch-event .b-sch-event-content { color: inherit; padding: 0 8px; }
+.ws-ev-label { display: flex; flex-direction: column; justify-content: center; height: 100%; line-height: 1.2; min-width: 0; overflow: hidden; }
+.ws-ev-label b { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ws-ev-label small { font-size: 11px; opacity: 1; white-space: nowrap; color: inherit; }
+.b-scheduler .b-sch-event.ws-ev-transit .ws-ev-label small, .b-scheduler .b-sch-event.ws-ev-delayed .ws-ev-label small { color: rgba(255,255,255,0.92); }
+.b-scheduler .b-grid-header { font-weight: 600; }
+
+/* Stage colors on the claims board. Cards keep the cream surface and gain a colored edge. */
+.b-task-board-column { border-radius: 14px; padding: 4px; }
+.b-task-board-column-header { padding: 10px 12px; font-size: 13px; letter-spacing: 0.01em; }
+.b-task-board-card { border-left: 4px solid var(--b-task-board-card-accent, #0070BA); }
+.b-task-board-column:nth-child(1) { --b-primary: #E0A100; --col-bg: #FFF8E6; }
+.b-task-board-column:nth-child(2) { --b-primary: #0070BA; --col-bg: #EEF6FB; }
+.b-task-board-column:nth-child(3) { --b-primary: #2FA66A; --col-bg: #EDF8F2; }
+.b-task-board-column:nth-child(4) { --b-primary: #F2545B; --col-bg: #FEF0F0; }
+.b-task-board-column { background: var(--col-bg, transparent); }
+.b-task-board-column-header { border-top: 3px solid var(--b-primary); border-radius: 10px 10px 0 0; }
+.b-task-board-column .b-task-board-card { border-left-color: var(--b-primary); }
+.b-task-board-card .b-task-board-card-header { white-space: normal; line-height: 1.3; font-size: 14px; font-weight: 600; }
+.b-task-board-card .b-task-board-body-item, .b-task-board-card .b-description { font-size: 12px !important; line-height: 1.45 !important; color: #5C6A79; }
+.b-task-board-card .b-task-board-card-header, .b-task-board-card .b-taskboard-card-header { font-size: 14px; font-weight: 600; }
+.b-task-board-card .b-task-board-body-item, .b-task-board-card .b-description { font-size: 12.5px; line-height: 1.45; color: #5C6A79; }

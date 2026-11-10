@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 36" width="200" height="36" fill="none">
+  <!-- Mark (32x32 scaled to 28x28 at x=2, y=4) -->
+  <g transform="translate(2, 2) scale(0.95)">
+    <!-- Top-Left Share -->
+    <path d="M 16 3 A 13 13 0 0 0 3 16 L 9 16 A 7 7 0 0 1 16 9 Z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- Top-Right Share -->
+    <path d="M 16 3 A 13 13 0 0 1 29 16 L 23 16 A 7 7 0 0 0 16 9 Z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- Bottom-Left Share -->
+    <path d="M 3 16 A 13 13 0 0 0 16 29 L 16 23 A 7 7 0 0 1 9 16 Z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- Bottom-Right Share (PayPal Blue Accent) -->
+    <path d="M 29 16 A 13 13 0 0 1 16 29 L 16 23 A 7 7 0 0 0 23 16 Z" fill="#0070BA" stroke="#0070BA" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+  <!-- Wordmark in Geist typography -->
+  <text x="42" y="24" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="600" letter-spacing="-0.02em" fill="#FFFFFF">Whole<tspan fill="#0070BA">Share</tspan></text>
+</svg>

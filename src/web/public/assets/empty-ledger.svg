@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Ledger Table Grid Outline -->
+  <rect x="24" y="24" width="72" height="72" rx="6" stroke="#1c2029" stroke-width="1.5"/>
+  <line x1="24" y1="44" x2="96" y2="44" stroke="#1c2029" stroke-width="1.5"/>
+  <line x1="48" y1="24" x2="48" y2="96" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1"/>
+  <line x1="72" y1="24" x2="72" y2="96" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1"/>
+  <!-- Empty Data Dashes -->
+  <line x1="32" y1="56" x2="40" y2="56" stroke="#7e8799" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="56" y1="56" x2="64" y2="56" stroke="#7e8799" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="80" y1="56" x2="88" y2="56" stroke="#ffc439" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="32" y1="72" x2="40" y2="72" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="56" y1="72" x2="64" y2="72" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="80" y1="72" x2="88" y2="72" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+

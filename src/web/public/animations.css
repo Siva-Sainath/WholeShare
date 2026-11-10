@@ -1,0 +1,551 @@
+/**
+ * WholeShare Animation Utilities
+ * Emil Kowalski Motion Physics + Tastemaker Anti-Slop Contract
+ * 
+ * Principles:
+ * - Mechanical intent easing: cubic-bezier(0.16, 1, 0.3, 1)
+ * - GPU-accelerated properties only (transform, opacity)
+ * - NO width/height animations
+ * - Doherty Threshold: All animations < 400ms (except vault draw at 750ms, settlement glow at 2500ms)
+ * - Button press physics: scale(0.98) on :active
+ */
+
+/* ==========================================================================
+   1. VAULT LOGO ANIMATIONS (Already in globals.css)
+   ==========================================================================
+   These are defined in globals.css:
+   - wsVaultDraw: Stroke drawing animation
+   - wsVaultHexReveal: Hexagon reveal
+   - wsVaultLockReveal: Lock reveal
+   - wsVaultGlow: Settlement glow pulse
+*/
+
+/* ==========================================================================
+   2. HERO SECTION ANIMATIONS (Meng To Landing Page Design)
+   ========================================================================== */
+
+/* Hero badge pulse - infinite animation for attention */
+@keyframes wsHeroBadgePulse {
+  0%, 100% { 
+    opacity: 0.6;
+  }
+  50% { 
+    opacity: 1;
+  }
+}
+
+/* Hero title reveal - slide up with mechanical intent */
+@keyframes wsHeroTitleReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hero subtitle reveal - fade in */
+@keyframes wsHeroSubtitleReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hero action buttons reveal - slide up */
+@keyframes wsHeroActionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hero metrics reveal - staggered slide up */
+@keyframes wsHeroMetricReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Number flipper animation for counters */
+@keyframes wsNumberFlip {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+/* Metric value pulse on update */
+@keyframes wsMetricValueIn {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ==========================================================================
+   3. BENTO GRID ANIMATIONS (Meng To + Emil Kowalski)
+   ========================================================================== */
+
+/* Bento card lift on hover */
+@keyframes wsBentoCardLift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+/* Bento card press on active */
+@keyframes wsBentoCardPress {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.98);
+  }
+}
+
+/* Bento icon pulse on hover */
+@keyframes wsBentoIconPulse {
+  0%, 100% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.1);
+  }
+}
+
+/* ==========================================================================
+   4. BUTTON PRESS PHYSICS (Emil Kowalski Motion Physics)
+   ========================================================================== */
+
+/* Button active state - scale down for mechanical intent */
+button:active,
+.ws-sidebar-nav-btn:active,
+.btn-hero-primary:active,
+.btn-hero-secondary:active,
+.btn-step:active,
+.ws-topbar-action-btn:active,
+.ws-topbar-icon-btn:active,
+.ws-sidebar-search-btn:active,
+.ws-role-pill:active,
+.ws-profile-chevron:active {
+  transform: scale(0.98);
+  transition: transform 60ms var(--ws-ease-out);
+}
+
+/* ==========================================================================
+   5. SLIDE-OVER DRAWER ANIMATIONS (Garden Component Boundaries)
+   ========================================================================== */
+
+/* Drawer enter from right */
+@keyframes wsDrawerEnter {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Drawer exit to right */
+@keyframes wsDrawerExit {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Drawer backdrop fade in */
+@keyframes wsDrawerBackdropIn {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
+}
+
+/* Drawer backdrop fade out */
+@keyframes wsDrawerBackdropOut {
+  from { 
+    opacity: 1; 
+  }
+  to { 
+    opacity: 0; 
+  }
+}
+
+/* ==========================================================================
+   6. MODAL ANIMATIONS (Garden Component Boundaries)
+   ========================================================================== */
+
+/* Modal enter - scale up with fade */
+@keyframes wsModalEnter {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Modal exit - scale down with fade */
+@keyframes wsModalExit {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Modal backdrop animations (reuse drawer backdrop animations) */
+
+/* ==========================================================================
+   7. CARD & PANEL ANIMATIONS
+   ========================================================================== */
+
+/* Card lift on hover */
+@keyframes wsCardLift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+/* Card press on active */
+@keyframes wsCardPress {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.98);
+  }
+}
+
+/* Card border glow on focus */
+@keyframes wsCardGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.4);
+  }
+}
+
+/* ==========================================================================
+   8. AG GRID CELL FLASH (Real-time escrow updates)
+   ========================================================================== */
+
+/* Cell flash on data change */
+@keyframes wsCellFlash {
+  from {
+    background-color: rgba(16, 185, 129, 0.2);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+/* ==========================================================================
+   9. TOAST NOTIFICATION ANIMATIONS
+   ========================================================================== */
+
+/* Toast slide in from right */
+@keyframes wsToastIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Toast slide out to right */
+@keyframes wsToastOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   10. SPINNER & LOADING ANIMATIONS
+   ========================================================================== */
+
+/* Spinner rotation */
+@keyframes wsSpinnerRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Skeleton shimmer */
+@keyframes wsShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ==========================================================================
+   11. UTILITY ANIMATION CLASSES
+   ========================================================================== */
+
+/* Fade in */
+@keyframes wsFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fade out */
+@keyframes wsFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Slide up */
+@keyframes wsSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide down */
+@keyframes wsSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in */
+@keyframes wsScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale out */
+@keyframes wsScaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* ==========================================================================
+   12. ANIMATION UTILITY CLASSES
+   ========================================================================== */
+
+/* Animation duration utilities */
+.ws-animate-instant { animation-duration: 60ms; }
+.ws-animate-fast { animation-duration: 120ms; }
+.ws-animate-normal { animation-duration: 200ms; }
+.ws-animate-slow { animation-duration: 350ms; }
+.ws-animate-slower { animation-duration: 500ms; }
+
+/* Animation delay utilities */
+.ws-delay-0 { animation-delay: 0ms; }
+.ws-delay-100 { animation-delay: 100ms; }
+.ws-delay-200 { animation-delay: 200ms; }
+.ws-delay-250 { animation-delay: 250ms; }
+.ws-delay-300 { animation-delay: 300ms; }
+.ws-delay-400 { animation-delay: 400ms; }
+.ws-delay-500 { animation-delay: 500ms; }
+.ws-delay-600 { animation-delay: 600ms; }
+.ws-delay-700 { animation-delay: 700ms; }
+.ws-delay-800 { animation-delay: 800ms; }
+
+/* Animation fill mode */
+.ws-animate-forwards { animation-fill-mode: forwards; }
+.ws-animate-backwards { animation-fill-mode: backwards; }
+.ws-animate-both { animation-fill-mode: both; }
+
+/* Animation iteration */
+.ws-animate-once { animation-iteration-count: 1; }
+.ws-animate-infinite { animation-iteration-count: infinite; }
+
+/* ==========================================================================
+   13. TRANSITION UTILITIES (GPU-accelerated only)
+   ========================================================================== */
+
+/* Transition timing function */
+.ws-transition-ease-out { transition-timing-function: var(--ws-ease-out); }
+.ws-transition-ease-in-out { transition-timing-function: var(--ws-ease-in-out); }
+.ws-transition-spring { transition-timing-function: var(--ws-ease-spring); }
+
+/* Transition duration */
+.ws-transition-instant { transition-duration: 60ms; }
+.ws-transition-fast { transition-duration: 120ms; }
+.ws-transition-normal { transition-duration: 200ms; }
+.ws-transition-slow { transition-duration: 350ms; }
+
+/* Transition properties (GPU-accelerated only) */
+.ws-transition-transform { transition-property: transform; }
+.ws-transition-opacity { transition-property: opacity; }
+.ws-transition-both { transition-property: transform, opacity; }
+.ws-transition-all { transition-property: all; }
+
+/* Combined transition utilities */
+.ws-transition-fast-out { 
+  transition: transform 120ms var(--ws-ease-out), 
+              opacity 120ms var(--ws-ease-out);
+}
+
+.ws-transition-normal-out { 
+  transition: transform 200ms var(--ws-ease-out), 
+              opacity 200ms var(--ws-ease-out);
+}
+
+.ws-transition-slow-out { 
+  transition: transform 350ms var(--ws-ease-out), 
+              opacity 350ms var(--ws-ease-out);
+}
+
+/* ==========================================================================
+   14. HOVER EFFECT UTILITIES
+   ========================================================================== */
+
+/* Lift on hover */
+.ws-hover-lift {
+  transition: transform 200ms var(--ws-ease-out);
+}
+
+.ws-hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Scale on hover */
+.ws-hover-scale {
+  transition: transform 200ms var(--ws-ease-out);
+}
+
+.ws-hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Glow on hover */
+.ws-hover-glow {
+  transition: box-shadow 200ms var(--ws-ease-out);
+}
+
+.ws-hover-glow:hover {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+/* Border glow on focus */
+.ws-focus-glow:focus {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+/* ==========================================================================
+   15. REDUCED MOTION SUPPORT
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   16. HIGH CONTRAST MODE SUPPORT
+   ========================================================================== */
+
+@media (prefers-contrast: high) {
+  .ws-vault-arc,
+  .ws-vault-hex,
+  .ws-vault-pulse {
+    stroke-width: 3px;
+  }
+}
+
+/* ==========================================================================
+   17. PRINT STYLES
+   ========================================================================== */
+
+@media print {
+  .ws-vault-logo,
+  .ws-hero-animations,
+  .ws-bento-grid {
+    animation: none !important;
+    transform: none !important;
+  }
+}
