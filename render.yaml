@@ -1,35 +1,68 @@
+# WholeShare on Render: one Node web service with a persistent disk.
+# Secrets are never written here. Each `sync: false` entry is set once on the service (Dashboard or API).
+# The app keeps its state in JSON files, so no managed database is needed.
 services:
-  # Next.js Web App & API Orchestrator
   - type: web
     name: wholeshare-app
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: npm ci --no-audit --no-fund && npm run build
+    startCommand: sh scripts/render-start.sh
+    healthCheckPath: /api/v1/health
+    disk:
+      name: wholeshare-state
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      - key: NODE_VERSION
+        value: "24"
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
-      - key: DATABASE_URL
-        fromDatabase:
-          name: wholeshare-db
-          property: connectionString
+      - key: RENDER_DISK_PATH
+        value: /var/data
+      # PayPal runs in the sandbox only. Nothing here moves real money.
       - key: PAYPAL_MODE
         value: sandbox
+      - key: PAYPAL_BASE_URL
+        value: https://api-m.sandbox.paypal.com
+      - key: PAYPAL_KEY_RETENTION_HOURS
+        value: "72"
+      - key: MAX_PENDING_RECHECK_COUNT
+        value: "5"
+      - key: AUTHORIZATION_VALIDITY_DAYS
+        value: "29"
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET
         sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      # Mosaic model on Fireworks.
+      - key: MOSAIC_PROVIDER
+        value: fireworks
+      - key: MOSAIC_MODEL_NAME
+        value: accounts/fireworks/models/minimax-m3p1-flash
+      - key: MOSAIC_EXTRA_BODY
+        value: '{"reasoning_effort":"none"}'
+      - key: MOSAIC_DEV_BUDGET_USD
+        value: "20"
+      - key: FIREWORKS_API_KEY
+        sync: false
+      # Kernel cloud browsers.
       - key: KERNEL_API_KEY
         sync: false
-      - key: NEXT_PUBLIC_APP_URL
-        value: https://wholeshare.onrender.com
-
-databases:
-  # Managed PostgreSQL Database
-  - name: wholeshare-db
-    plan: starter
-    region: oregon
-    postgresMajorVersion: 16
+      # UI licences. They are read at build time and baked into the client bundle.
+      - key: AG_LICENSE_KEY
+        sync: false
+      - key: AG_STUDIO_LICENSE_KEY
+        sync: false
+      - key: BRYNTUM_LICENSE_KEY
+        sync: false
+      - key: SYNDICATE_HMAC_SECRET
+        sync: false
+      # Public address of this service, used for the PayPal connect callback. Set after the first deploy.
+      - key: APP_URL
+        sync: false
