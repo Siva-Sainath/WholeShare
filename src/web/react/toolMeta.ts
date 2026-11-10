@@ -21,6 +21,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
   compare_groups: { system: "grid", systemLabel: "AG Grid", running: "Comparing the groups", why: "Pricing the same units in each group and weighing price, tier, delivery and supplier trust." },
   join_group: { system: "paypal", systemLabel: "PayPal", running: "Preparing your pledge", why: "Pricing the pledge and opening the PayPal approval step. You approve there. Mosaic never does." },
   setup_profile: { ...APP, running: "Setting up your profile", why: "Saving the details you gave and opening Settings so you can review them." },
+  send_invoice_reminder: { system: "paypal", systemLabel: "PayPal", running: "Sending an invoice reminder", why: "Asking PayPal to remind the buyer about an open invoice. This is the sandbox, so nothing reaches a real inbox." },
   track_shipment: { system: "kernel", systemLabel: "Kernel cloud browser", running: "Tracking the shipment", why: "Comparing what WholeShare recorded with the carrier's own tracking page." },
   start_group_buy: { ...APP, running: "Setting up your group buy", why: "Opening the form with the details you gave. Nothing publishes until you review it." },
   present: { system: "grid", systemLabel: "AG Grid", running: "Putting the results in the side panel", why: "Showing the real rows in a grid you can sort, filter, group and chart." },

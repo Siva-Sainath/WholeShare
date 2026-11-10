@@ -133,17 +133,23 @@ export function extendInspection({ shipment, hours, actor = "person", reason = "
   return { status: "SUCCESS", change, shipment: updated };
 }
 
-export function bookSlot({ shipment, date, hour, actor = "person" }) {
+export function bookSlot({ shipment, date, hour, point = "", actor = "person" }) {
   const record = findShipment(shipment, { needInFlight: true });
   const day = dayKey(toIso(Date.parse(date)));
   const slotHour = Number(hour);
   if (!Number.isInteger(slotHour) || slotHour < 6 || slotHour > 18) throw new Error("Receiving slots run from 6 to 18 o'clock.");
   const city = cityOf(record);
+  // A group can receive at one point or several. Each point has its own dock, so two points can take a delivery at the same hour.
+  const points = getClanById(record.clanId)?.fulfilment?.points ?? [];
+  const wanted = String(point || "").trim().toLowerCase();
+  const chosen = points.find((candidate) => String(candidate.label).toLowerCase() === wanted) ?? (wanted ? null : points[0]);
+  if (wanted && !chosen) throw new Error(`This group receives at: ${points.map((candidate) => candidate.label).join(", ") || "one point"}. Pick one of those.`);
+  const dock = chosen?.label ? `${city} (${chosen.label})` : city;
   const slots = readJson(SLOT_FILE(), []);
-  const taken = slots.find((slot) => slot.city === city && slot.date === day && slot.hour === slotHour && slot.shipmentId !== record.id);
-  if (taken) throw new Error(`The ${city} dock is already booked at ${slotHour}:00 on ${day} for ${taken.product}. Pick another hour.`);
+  const taken = slots.find((slot) => (slot.dock ?? slot.city) === dock && slot.date === day && slot.hour === slotHour && slot.shipmentId !== record.id);
+  if (taken) throw new Error(`The ${dock} dock is already booked at ${slotHour}:00 on ${day} for ${taken.product}. Pick another hour.`);
   const previous = slots.find((slot) => slot.shipmentId === record.id) ?? null;
-  const next = slots.filter((slot) => slot.shipmentId !== record.id).concat({ shipmentId: record.id, product: label(record), city, date: day, hour: slotHour });
+  const next = slots.filter((slot) => slot.shipmentId !== record.id).concat({ shipmentId: record.id, product: label(record), city, dock, date: day, hour: slotHour });
   writeJson(SLOT_FILE(), next);
   const change = appendLog({ kind: "slot", shipmentId: record.id, product: label(record), field: "receivingSlot", before: previous, after: { date: day, hour: slotHour }, actor, summary: `Booked the ${city} receiving dock at ${slotHour}:00 on ${describeDate(day)} for ${label(record)}` });
   return { status: "SUCCESS", change, slot: next.find((slot) => slot.shipmentId === record.id) };

@@ -65,3 +65,11 @@ test("resolving conflicts clears weekend deliveries", () => {
   assert.equal(applied.applied, true);
   assert.equal(getConflicts().filter((conflict) => conflict.kind === "weekend" || conflict.kind === "dock").length, 0);
 });
+
+test("books the dock of a receiving point and rejects a point the group does not have", async () => {
+  const { rebaseStoryShipments } = await import("../src/lib/story-clock.js");
+  rebaseStoryShipments();
+  const booked = bookSlot({ shipment: "takeout container", date: "2026-11-21", hour: 8 });
+  assert.match(booked.slot.dock, /Flushing \(Back door, Main St\)/);
+  assert.throws(() => bookSlot({ shipment: "takeout container", date: "2026-11-21", hour: 9, point: "Loading bay 9" }), /receives at/);
+});

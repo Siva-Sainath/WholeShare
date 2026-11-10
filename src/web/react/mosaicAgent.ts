@@ -1,3 +1,4 @@
+import { getCanvas } from "./canvasStore";
 import type { McpToolDeclaration } from "./api";
 
 export interface AgentStep {
@@ -263,7 +264,10 @@ declare global {
 
 function screenContext(): Record<string, unknown> {
   const hash = typeof window !== "undefined" ? window.location.hash.replace("#", "") : "";
-  return { view: hash || "landing", ...(window.__wholeshareScreen ?? {}) };
+  const open = getCanvas().artifact;
+  const ids = open?.filter?.find((clause) => clause.field === "id" && Array.isArray(clause.value))?.value as string[] | undefined;
+  const panel = open ? { panelOpen: { title: open.title, source: open.source, kind: open.kind, ...(ids ? { rowIds: ids } : {}) } } : {};
+  return { view: hash || "landing", ...panel, ...(window.__wholeshareScreen ?? {}) };
 }
 
 export async function allowMosaicPermission(permission: string): Promise<void> {
@@ -279,7 +283,7 @@ export async function askMosaic(prompt: string, source: string, evidence: Array<
   const response = await fetch("/api/v1/agent/chat", {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ prompt, maxTurns: 4, metadata: { source, context: { ...screenContext(), evidenceAttached: evidence.length, evidence, history } } })
+    body: JSON.stringify({ prompt, maxTurns: 6, metadata: { source, context: { ...screenContext(), evidenceAttached: evidence.length, evidence, history } } })
   });
   const raw = await response.text();
   let payload: Record<string, unknown>;

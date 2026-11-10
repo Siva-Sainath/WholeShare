@@ -252,6 +252,14 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
   {
     type: "function",
     function: {
+      name: "send_invoice_reminder",
+      description: "Send a PayPal reminder for one open invoice that has not been paid. This runs in the PayPal sandbox. Pass invoice (the invoice number or id) and the reminder goes to the billed address. Use it only when the user asks to remind someone about an invoice. Check the invoice is still open first with query on paypal_invoices.",
+      parameters: { type: "object", properties: { invoice: { type: "string", description: "Invoice number or id." } }, required: ["invoice"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "track_shipment",
       description: "Check where a shipment is. Returns what WholeShare recorded (carrier, tracking number, status, expected and delivered dates) and, when the tracking number has a real carrier format, reads the carrier's tracking page in a Kernel cloud browser. Use it for 'where is my shipment', 'is it late', and before a late or damage dispute. Pass the user's product words or a shipment id.",
       parameters: { type: "object", properties: { shipment: { type: "string", description: "Product words or a shipment id." } }, required: ["shipment"] }
@@ -1455,7 +1463,7 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
     function: {
       name: "schedule_book_slot",
       description: "Book the receiving dock slot for an in transit shipment. date is YYYY-MM-DD, hour is 6 to 18. One booking per hour per city.",
-      parameters: { type: "object", properties: { shipment: { type: "string" }, date: { type: "string" }, hour: { type: "number" } }, required: ["shipment", "date", "hour"] }
+      parameters: { type: "object", properties: { shipment: { type: "string" }, date: { type: "string" }, hour: { type: "number" }, point: { type: "string", description: "Receiving point label, when the group receives at several points." } }, required: ["shipment", "date", "hour"] }
     }
   },
   {
@@ -2097,6 +2105,18 @@ export async function executeTool(toolName, args = {}) {
       const labels = { businessName: "business name", city: "city", country: "country", currency: "currency", contactEmail: "contact email" };
       const speak = `Saved your ${Object.entries(next).map(([key, value]) => `${labels[key] ?? key} (${value})`).join(", ")}. You can review it in Settings, or ask me to change it back.`;
       return { status: "SUCCESS", action: "PROFILE_UPDATED", updated: next, previous, speak, note: "Saved. The Settings page is open so the user can review it." };
+    }
+
+    case "send_invoice_reminder": {
+      const rows = (await querySource("paypal_invoices", { limit: 500 })).rows;
+      const wanted = String(args.invoice || "").trim().toLowerCase();
+      const row = rows.find((r) => String(r.id).toLowerCase() === wanted || String(r.number).toLowerCase() === wanted) ?? (wanted.length > 3 ? rows.find((r) => String(r.number).toLowerCase().includes(wanted)) : undefined);
+      if (!row) return { error: `No invoice matches '${args.invoice}'. Use query on paypal_invoices to find the number.` };
+      if (!["SENT", "UNPAID", "PARTIALLY_PAID"].includes(String(row.status).toUpperCase())) return { error: `Invoice ${row.number} is ${row.status}, so it needs no reminder.` };
+      const outcome = await executePayPalToolkitAction("send_invoice_reminder", { invoice_id: row.id, subject: "Payment reminder from WholeShare", note: "This is a friendly reminder about your open WholeShare invoice." });
+      const parsed = typeof outcome?.result === "string" ? (() => { try { return JSON.parse(outcome.result); } catch { return {}; } })() : outcome?.result;
+      if (parsed?.error) return { error: parsed.error.message || "PayPal did not accept the reminder." };
+      return { status: "SUCCESS", invoice: row.number, billedTo: row.billedTo, dueUsd: row.dueUsd, speak: `Sent a PayPal reminder for invoice ${row.number} ($${Number(row.dueUsd).toFixed(2)} due, billed to ${row.billedTo}). This is the PayPal sandbox, so nothing reaches a real inbox.` };
     }
 
     case "track_shipment": {
@@ -2768,7 +2788,7 @@ export async function executeTool(toolName, args = {}) {
         let result;
         if (toolName === "schedule_move_delivery") result = moveDelivery({ shipment: args.shipment, days: args.days, toDate: args.toDate, actor: "mosaic", reason: args.reason || "Asked in chat" });
         else if (toolName === "schedule_extend_inspection") result = extendInspection({ shipment: args.shipment, hours: args.hours, actor: "mosaic" });
-        else if (toolName === "schedule_book_slot") result = bookSlot({ shipment: args.shipment, date: args.date, hour: args.hour, actor: "mosaic" });
+        else if (toolName === "schedule_book_slot") result = bookSlot({ shipment: args.shipment, date: args.date, hour: args.hour, point: args.point, actor: "mosaic" });
         else if (toolName === "schedule_resolve_conflicts") result = resolveConflicts({ apply: args.apply === true, actor: "mosaic" });
         else result = undoLast({ actor: "mosaic" });
         actionDispatcher.broadcast("UI_ACTION", { type: "SCHEDULE_VIEW", timestamp: new Date().toISOString() });
