@@ -21,8 +21,8 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, r
   const bottomTrim = Math.round(fullContentH * 0.04); // drops the desktop's Now Playing pill that sits over the bottom edge
   const contentH = fullContentH - bottomTrim;
   const cw = rw, cropH = contentH;
-  const outH = Math.min(1080, Math.round(1920 * contentH / rw)); // page area scaled to 1920 wide
-  const padTop = Math.floor((1080 - outH) / 2);
+  const outH = 2 * Math.floor(Math.min(1080, Math.round(1920 * contentH / rw)) / 2); // page area scaled to 1920 wide, with an even height
+  const padTop = 2 * Math.floor((1080 - outH) / 4);
 
   const ranges = [];
   let open = null;
@@ -34,6 +34,7 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, r
   if (reserve0 && ranges[0]) {
     const before = ev.log.filter((l) => l.k === "click" && src(l.t) < ranges[0].a && ranges[0].a - src(l.t) < 3).pop();
     if (before) ranges[0].a = src(before.t);
+    ranges[0].b = Math.min(D, ranges[0].b + 3.2); // the checklist ticks items off right after the reading, keep that in real time
   }
   const pieces = [];
   let cur = 0;

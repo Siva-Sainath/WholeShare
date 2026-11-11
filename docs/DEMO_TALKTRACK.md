@@ -1,75 +1,90 @@
 # WholeShare demo talk track
 
-Your 20 second hook comes first, then this 2 minute 40 second screen recording. Each section below is a few points to say in your own words, in the order they appear on screen. Speed-ups are labelled in the top right corner of the video ("2x sped up" and so on), so you can say "this part is sped up" and it is true.
+Your 20 second hook plays first, then this 2 minute 37 second screen recording. Each section below gives the seconds it is on screen, a line you can say as written, and the sponsor or tech to name there. The lines are written to be spoken at an easy pace, about 2.2 words a second, with room to breathe. Every sped-up stretch has a label in the top right corner, so it is honest to say "this is sped up".
 
-## The problem numbers for your 10 second stats moment
+| Section | On screen | Seconds | Words | Pace |
+|---|---|---|---|---|
+| 1. Landing and the problem | 0:00 to 0:20 | 20 | 54 | 2.7 words per second |
+| 2. Onboarding from documents | 0:20 to 0:36 | 16 | 37 | 2.3 words per second |
+| 3a. Find and open a group | 0:36 to 0:51 | 15 | 29 | 1.9 words per second |
+| 3b. Approve on PayPal | 0:51 to 1:02 | 11 | 17 | 1.5 words per second |
+| 4. Every page, and an outside agent | 1:02 to 1:30 | 28 | 55 | 2.0 words per second |
+| 5. Mosaic | 1:30 to 2:16 | 46 | 78 | 1.7 words per second |
+| 6. Disputes | 2:16 to 2:32 | 16 | 28 | 1.8 words per second |
+| 7. Close | 2:32 to 2:37 | 5 | 10 | 2.0 words per second |
 
-Say two or three of these, not all. Each is from the source named, and the landing page links to the same sources.
+## 1. Landing and the problem (0:00 to 0:20, 20 seconds, 54 words)
 
-- **36 million+ small businesses** in the US, and they employ **45.9% of the workforce**. Source: SBA Office of Advocacy, 2025 profiles.
-- **About 90% of businesses worldwide** are small or medium sized, and they provide **over half of all jobs**. Source: World Bank.
-- **9 in 10 US restaurants have fewer than 50 employees.** Source: National Restaurant Association.
-- Independent restaurants that buy through a group report **10 to 30% lower inventory cost**. This is an industry estimate from trade publications (FSR Magazine), so say "reported" and not "proven".
-- Why small buyers pay more: suppliers give their best price to whoever orders the most, so small operators pay a higher price per unit. McKinsey describes this as small and medium businesses lacking the purchasing power of larger ones. It is a pattern in trade sources, not a measured national number, so do not give it a percentage.
+**Say:** Meet Neon Dumpling, a dumpling shop in Brooklyn. It pays $31.50 a case for takeout boxes, because no shop that small ever reaches the group price. There are 36 million small businesses in the US, so this is everywhere. What stops them buying together is trust: whose door, who pays, who eats the loss.
 
-One line that ties it together: *most businesses are small, small buyers pay more per box, and the fix everyone talks about, buying together, breaks on trust: whose door, who pays, and who eats the loss if it arrives crushed.*
+- Say one stat only here. The SBA number, 36 million, is the safest.
+- The four stat cards on screen carry the sources, so you can point at them for the 10 second stats moment: SBA, World Bank, National Restaurant Association, FSR Magazine.
+- **Sponsor and tech to name:** Fireworks: the 'Mosaic is awake' line on the landing page is real Fireworks inference answering in under a second.
 
-## Section by section
+## 2. Onboarding from documents (0:20 to 0:36, 16 seconds, 37 words)
 
-### 1. Landing and the problem (20 seconds)
-- This is Neon Dumpling, a dumpling restaurant in Brooklyn. It pays $31.50 a case for takeout containers and needs 12 a month.
-- The supplier only gives group pricing at 80 cases. No small restaurant gets there alone.
-- Point at the numbers on screen: these are the sourced figures. Then the three questions at the bottom: whose door does it ship to, who pays what, and who fronts the cash if it arrives crushed.
-- Sponsor note: the line on the page that says Mosaic is awake is **Fireworks** serverless inference answering in under a second.
+**Say:** I don't type a profile. I drop in the invoice and the inventory sheet, and the checklist fills in. Every value has to be written in the documents, so nothing is invented. Then PayPal connects for real.
 
-### 2. Onboarding from documents (24 seconds)
-- We did not type a profile. We dropped the supplier invoice and inventory sheet.
-- It read the business, address, supplier and the $31.50 price, and showed which file each value came from. Anything not written in the documents is left blank and asked, so nothing is invented.
-- Then it connected PayPal for real, with a sandbox login, and let us choose what Mosaic is allowed to do. Everything starts off, and approving payments is never Mosaic's.
-- Sponsor notes: PDF and photo reading runs on the server with no extra tools, **Fireworks** pulls the fields, files go through the **JuiceFS**-aware storage layer, and sign-in is **PayPal**.
-- The darker parts of the video here are sped up: reading the files and the PayPal page loads.
+- Point at the checklist ticking from 0 to 6, then at the PayPal login.
+- **Sponsor and tech to name:** Fireworks reads the fields. PDFs and photos are read on the server with no extra tools. Files go through the JuiceFS storage layer. Sign-in is PayPal.
 
-### 3. Join a group (26 seconds)
-- We search takeout containers and open the Garden State group, the supplier it already uses.
-- On the page: the discount tiers, the supplier's trust score, the delivery estimate, and the receiving point, the back door on Main Street.
-- Pledge 12 cases. PayPal opens, we log in and approve. That places a hold of $325.08. Nothing is charged.
-- Sponsor note: **PayPal** Orders v2 authorize. Money is held, not taken, until the goods arrive.
+## 3a. Find and open a group (0:36 to 0:51, 15 seconds, 29 words)
 
-### 4. Every page, and an outside agent (24 seconds)
-- My groups: what it has pledged and what is held.
-- Disputes: the **Bryntum** timeline of deliveries, the calendar of inspection windows, and the claims board.
-- Insights: **AG Grid** and **AG Studio** reports, all about this business only.
-- Agents page: an outside assistant, here Instinct, used a plain link to ask WholeShare a question, and it shows up live on this page. Any chatbot that can open a link can do this, and it can search and compare but only the person can approve money.
+**Say:** I search takeout containers and open Garden State, the supplier I already use. Price tiers, a trust score, delivery in five days, and the exact receiving point. Twelve cases.
 
-### 5. Mosaic, the hero (42 seconds)
-- One prompt: compare the two container groups for 12 cases. Mosaic opens a full comparison: cheapest total, fastest delivery, most trusted supplier. Eastern is about $50 cheaper but takes 12 days against 5, and Garden State is the supplier already trusted.
-- The panel also shows what it saves against today's $31.50, row by row, with the best value marked.
-- Then ask where the shipments are and which claims are open. Mosaic answers from the real records. Try asking it to move a delivery earlier than the supplier allows: it refuses and tells you the rule, which is the point, because every change is checked by the server.
-- Ask it to find new suppliers for wide boba straws. This reads real supplier pages in a cloud browser, so it is slow and sped up here.
-- Then start a group buy. It fills the form from one sentence, including both delivery points.
-- Sponsor notes: **Fireworks** for the thinking, the Mosaic harness for the rules (allowed tools, permissions, at most five tool calls a turn, a fact check on every reply), **Kernel** for the browser, **AG Grid** and **Bryntum** for what appears on screen.
+- Hover the receiving point and the tiers while you say it.
+- **Sponsor and tech to name:** AG Grid sits behind the search results.
 
-### 6. Disputes (16 seconds)
-- A delivery arrives crushed. We write one sentence and Mosaic fills the claim form, then attach the photo.
-- The claim moves on the board from Draft, to With supplier, to Settled. The refund is proportional to the damaged units. If the money was only held, the supplier is paid for the intact units and the rest of the hold is released.
-- Sponsor note: **PayPal** refund and partial capture, and the Disputes webhook.
+## 3b. Approve on PayPal (0:51 to 1:02, 11 seconds, 17 words)
 
-### 7. Close (5 seconds)
-- Money only moves when you approve it on PayPal. The URL is wholeshare-app.onrender.com.
+**Say:** Now PayPal. I approve, and it places a hold of $325.08. Nothing is charged. The money waits.
 
-## Sponsors and technology, in one breath each
-- **Fireworks AI**: serverless inference for Mosaic and for reading documents.
-- **PayPal**: authorize, capture, refund, invoicing, and the Disputes webhook, all in the sandbox.
-- **AG Grid and AG Studio**: the tables, charts and reports.
-- **Bryntum**: the delivery timeline, calendar and claims board.
-- **Kernel**: cloud browsers that read supplier pages.
-- **MCP** and in-page agent tools: how an outside assistant and an agent in the browser use WholeShare under the same permissions.
-- **JuiceFS** for stored documents and **Render** for hosting.
+- The line to land: held, not charged.
+- **Sponsor and tech to name:** PayPal Orders v2 with authorize. Capture only happens when I accept the goods.
+
+## 4. Every page, and an outside agent (1:02 to 1:30, 28 seconds, 55 words)
+
+**Say:** Everything runs on live data. Disputes has a Bryntum timeline, a calendar of inspection windows, and a claims board. Insights is AG Grid and Studio, only for this business. And on Agents, my assistant Instinct just used a plain link to ask WholeShare a question. It can search and compare. Only I can approve money.
+
+- Say 'Instinct' as the cursor lands on the live feed on the Agents page. That is the moment that shows any chatbot can plug in.
+- **Sponsor and tech to name:** Bryntum for the timeline, calendar and board. AG Grid and AG Studio for tables and reports. MCP and a plain invite link for outside agents.
+
+## 5. Mosaic (1:30 to 2:16, 46 seconds, 78 words)
+
+**Say:** This is Mosaic. One sentence, compare the two container groups, and it builds the whole comparison: cheapest, fastest, most trusted, and what I save against my $31.50. Eastern is about fifty dollars cheaper, Garden State arrives seven days sooner. Then I ask where my shipments are and it answers from the real records. Ask for new suppliers and a cloud browser reads their own pages, that's the sped-up part. Then it fills a group-buy form from one sentence.
+
+- The screen is busy on purpose. Read the three verdict cards at the top, then point at the green cells.
+- The 'sped up' label is on screen. You can say 'this is sped up, it's reading real supplier pages'.
+- **Sponsor and tech to name:** Fireworks does the thinking. The Mosaic harness enforces permissions, at most five tool calls a turn, and a fact check on every reply. Kernel runs the cloud browser. AG Grid and Bryntum are what opens beside the chat.
+
+## 6. Disputes (2:16 to 2:32, 16 seconds, 28 words)
+
+**Say:** A delivery arrives crushed. One sentence, Mosaic fills the claim, I attach the photo, approve it, and the supplier accepts. The refund is proportional to what was damaged.
+
+- If asked about the refund: this sample claim has no PayPal hold behind it, so it records locally. With a real hold it goes through PayPal.
+- **Sponsor and tech to name:** PayPal refund or partial capture, and the Disputes webhook.
+
+## 7. Close (2:32 to 2:37, 5 seconds, 10 words)
+
+**Say:** Small businesses buy together. The money waits for the goods.
+
+- Stop talking when the card appears. It says Powered by PayPal.
+- **Sponsor and tech to name:** PayPal, on screen.
+
+## The numbers for your 10 second stats moment
+
+Use two or three. Each is from the source named, and the landing page links to the same sources.
+
+- 36 million+ small businesses in the US, employing 45.9% of the workforce. SBA Office of Advocacy, 2025.
+- About 90% of businesses worldwide are small or medium sized, and they provide over half of all jobs. World Bank.
+- 9 in 10 US restaurants have fewer than 50 employees. National Restaurant Association.
+- Independent restaurants that buy through a group report 10 to 30% lower inventory cost. This is an industry estimate from trade publications (FSR Magazine), so say "reported", not "proven".
+- Why small buyers pay more: suppliers give their best price to whoever orders the most. McKinsey describes small and medium businesses as lacking the purchasing power of larger ones. This is a pattern in trade sources, not a measured national percentage, so do not put a number on it.
 
 ## Honest limits to be ready for
-- PayPal is the sandbox. No real money moves.
-- A few records on the sample business, the shipments and two past claims, are sample history and carry no PayPal ids.
+
+- PayPal is the sandbox. No real money moves. The closing card says so.
+- The shipments and the two past claims on the sample business are sample history with no PayPal ids.
+- The "move delivery" request is refused by a rule in the app (a delivery cannot arrive less than a day after dispatch). If you show it, present it as the app protecting you.
 - One workspace is shared on the live site, so only one person should use it at a time.
 - Supplier research with Kernel takes 10 to 30 seconds, and web leads are marked unverified.
-- In the dispute clip the claim is approved and the sample supplier accepts it. That claim has no PayPal hold behind it, so the refund shows as a local record and not a PayPal id. When a pledge has a real hold behind it, the refund goes through PayPal.
-- The Mosaic "move delivery" request in the video is refused by a rule (a delivery cannot arrive less than a day after dispatch). Say so as a feature, not a failure.
