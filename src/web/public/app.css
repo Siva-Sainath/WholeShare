@@ -5670,3 +5670,18 @@ body:has([data-ws-view="mosaic-chat"]) .ws-live { display: none; }
 .ws-appbar-signout:hover { background: rgba(255, 255, 255, 0.9); }
 .ws-appbar-signout:disabled { opacity: 0.6; cursor: default; }
 @media (max-width: 720px) { .ws-appbar-signout span { display: none; } }
+
+/* Landing: the problem statement and its sourced numbers */
+.lp-problem .lp-lede { max-width: 640px; margin: 10px 0 0; color: #5C6A79; font: 400 17px/26px 'Geist', sans-serif; }
+.lp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
+.lp-stat { display: grid; gap: 8px; align-content: start; padding: 20px; }
+.lp-stat b { font: 600 34px/38px 'Geist', sans-serif; letter-spacing: -0.02em; color: #0F1F2E; font-variant-numeric: tabular-nums; }
+.lp-stat span { font: 400 14px/20px 'Geist', sans-serif; color: #3C4A59; }
+.lp-stat a { font: 500 12px/16px 'Geist Mono', monospace; color: #0070BA; text-decoration: none; }
+.lp-stat a:hover { text-decoration: underline; }
+.lp-blockers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.lp-blockers div { display: grid; gap: 4px; padding: 16px 18px; border-left: 3px solid #FFC439; background: rgba(255, 255, 255, 0.6); border-radius: 0 12px 12px 0; }
+.lp-blockers b { font: 600 15px/20px 'Geist', sans-serif; color: #0F1F2E; }
+.lp-blockers span { font: 400 14px/20px 'Geist', sans-serif; color: #5C6A79; }
+@media (max-width: 900px) { .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lp-blockers { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .lp-stats { grid-template-columns: 1fr; } }

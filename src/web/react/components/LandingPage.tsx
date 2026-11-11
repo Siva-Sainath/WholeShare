@@ -25,6 +25,19 @@ const HEADLINE: string[][] = [["Pool", "demand."], ["Buy", "with", "clarity."]];
 
 const EXAMPLE_PROMPTS = ["Show me takeout container groups", "Which groups can we still join near me?", "What is the status of my escrow?", "Show me the shipments"];
 
+const PROBLEM_STATS = [
+  { value: "36 million+", label: "small businesses in the United States, employing 45.9% of the workforce", source: "SBA Office of Advocacy, 2025", href: "https://advocacy.sba.gov/2025/10/28/advocacy-releases-2025-small-business-profiles-for-major-metropolitan-areas/" },
+  { value: "About 90%", label: "of businesses worldwide are small or medium sized, and they provide over half of all jobs", source: "World Bank", href: "https://www.worldbank.org/ext/en/topic/competitiveness/small-and-medium-enterprises-smes-finance" },
+  { value: "9 in 10", label: "US restaurants have fewer than 50 employees", source: "National Restaurant Association", href: "https://restaurant.org/research-and-media/research/industry-statistics/national-statistics/" },
+  { value: "10 to 30%", label: "lower inventory cost reported by independent restaurants that buy through a group (industry estimate)", source: "FSR Magazine", href: "https://www.fsrmagazine.com/content/use-gpos-rise-independent-restaurant-operators" }
+];
+
+const PROBLEM_BLOCKERS = [
+  { title: "Whose door does it ship to?", body: "Two shops want one order, but a supplier delivers to one address." },
+  { title: "Who pays what?", body: "Splitting one invoice across businesses that barely know each other." },
+  { title: "Who fronts the cash if it arrives crushed?", body: "Nobody wants to pay a stranger first, and nobody wants to eat the loss." }
+];
+
 const FACTS = [
   { title: "PayPal approved", body: "You approve every authorization on PayPal's own site." },
   { title: "Held, not charged", body: "A soft hold reserves funds. Nothing is captured until the group locks." },
@@ -337,6 +350,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           {FACTS.map((fact) => (
             <div key={fact.title} className="lp-fact lp-reveal"><b>{fact.title}</b>{fact.body}</div>
           ))}
+        </div>
+      </section>
+
+      <section className="lp-section lp-problem" id="problem">
+        <div className="lp-wrap">
+          <div className="lp-section-head lp-reveal">
+            <p className="lp-eyebrow">The problem</p>
+            <h2 className="lp-h2">Small buyers pay more for the same box.</h2>
+            <p className="lp-lede">Suppliers give their best price to whoever orders the most. A restaurant that needs 12 cases a month never reaches the tier that starts at 80, and the chain down the street never has to ask.</p>
+          </div>
+          <div className="lp-stats">
+            {PROBLEM_STATS.map((stat) => (
+              <article key={stat.label} className="lp-card lp-stat lp-reveal">
+                <b>{stat.value}</b>
+                <span>{stat.label}</span>
+                <a href={stat.href} target="_blank" rel="noreferrer">{stat.source}</a>
+              </article>
+            ))}
+          </div>
+          <div className="lp-blockers lp-reveal">
+            {PROBLEM_BLOCKERS.map((item) => (
+              <div key={item.title}><b>{item.title}</b><span>{item.body}</span></div>
+            ))}
+          </div>
         </div>
       </section>
 
