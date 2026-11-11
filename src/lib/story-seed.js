@@ -56,6 +56,8 @@ export function ensureStorySamples(now = Date.now()) {
     if (!known.has(record.id)) { deliveries.upsert(record); added += 1; }
   }
   const claimStore = getClaimsStorage();
+  // Two claims were filed while the demo was being rehearsed. They are not part of the sample history.
+  claimStore.removeWhere((claim) => claim.claimId === "claim-1794406484315-28dkfb" || claim.claimId === "claim-1794407120375-i4dkpx");
   const have = new Set(claimStore.getAll().map((claim) => claim.claimId));
   for (const claim of claims(now)) {
     if (!have.has(claim.claimId)) { claimStore.create(claim); added += 1; }

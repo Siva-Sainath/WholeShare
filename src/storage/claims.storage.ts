@@ -122,6 +122,14 @@ export class ClaimsStorage {
     this.saveAll(records);
   }
 
+  // Drops the records a rule matches, used to clear test records that should not be on the sample business.
+  public removeWhere(match: (record: DamageClaimRecord) => boolean): number {
+    const records = this.getAll();
+    const kept = records.filter((record) => !match(record));
+    if (kept.length !== records.length) this.saveAll(kept);
+    return records.length - kept.length;
+  }
+
   public clear(): void {
     this.saveAll([]);
   }
