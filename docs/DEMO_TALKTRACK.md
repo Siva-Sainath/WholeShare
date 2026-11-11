@@ -66,9 +66,9 @@ Your 20 second hook plays first, then this 2 minute 37 second screen recording. 
 
 ## 7. Close (2:32 to 2:37, 5 seconds, 10 words)
 
-**Say:** Small businesses buy together. The money waits for the goods.
+**Say:** Being small does not mean you have to pay more.
 
-- Stop talking when the card appears. It says Powered by PayPal.
+- Say it as the card appears, then stop. The card also says Powered by PayPal.
 - **Sponsor and tech to name:** PayPal, on screen.
 
 ## The numbers for your 10 second stats moment
