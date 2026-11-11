@@ -16,16 +16,10 @@ import { mosaicProvider } from "./mosaic-config.js";
 import { generateInstinctProfileHeader } from "./instinct-profile.js";
 import { generateFeatureMapPromptContext } from "./feature-map.js";
 import { dreamingEngine } from "./dreaming-engine.js";
-import {
-  routeIntent,
-  gateToolRisk,
-  verifyDealProposal
-} from "./laya-engine.js";
 import { modelClient } from "./model-client.js";
 import { opsdEngine } from "./opsd-engine.js";
 import { SERVING_TARGET } from "./serving-target.js";
 
-const LAYA_ENABLED = process.env.LAYA_ENABLED === "1";
 const MAX_TURNS = 8;
 const MAX_REFLEXIVE_ATTEMPTS = 2;
 const AGENT_TIMEOUT_MS = 90000;
@@ -255,63 +249,6 @@ Follow this operational protocol for sourcing, verification, and escrow:
       model: this.model,
       timestamp: new Date().toISOString()
     });
-
-    const layaStart = Date.now();
-    // Mosaic turns never use the classifier's answer, and it costs about half a second (four seconds on the first call).
-    const layaDecision = focusedSessions.has(sessionId) || !LAYA_ENABLED ? { intent: "mosaic", confidence: 1, requiresLlm: true, probabilities: {} } : await routeIntent(prompt);
-    const layaDurationMs = Date.now() - layaStart;
-
-    actionDispatcher.broadcast("AGENT_LAYA_INTENT_ROUTED", {
-      sessionId,
-      prompt,
-      intent: layaDecision.intent,
-      confidence: layaDecision.confidence,
-      requiresLlm: layaDecision.requiresLlm,
-      durationMs: layaDurationMs,
-      timestamp: new Date().toISOString()
-    });
-
-    const skuMatch = prompt.match(/(?:for|sku|product)?\s*([a-z0-9-]+flour[a-z0-9-]*)/i);
-    if (!layaDecision.requiresLlm && layaDecision.intent === "catalog_query" && skuMatch && skuMatch[1]) {
-      const sku = skuMatch[1];
-      const result = await executeTool("discover_wholesale_catalog", { sku });
-      const totalDurationMs = Date.now() - sessionStartTime;
-
-      await saveAgentStep({
-        sessionId,
-        stepIndex: 1,
-        thought: `Laya System 1 classified intent as catalog_query with ${(layaDecision.confidence * 100).toFixed(1)}% confidence. Resolved deterministically in ${layaDurationMs}ms without LLM generation.`,
-        toolName: "discover_wholesale_catalog",
-        toolArgs: { sku },
-        toolResult: result,
-        interceptorStatus: "PASSED",
-        durationMs: layaDurationMs
-      });
-
-      const finalMessage = `Catalog pricing resolved directly by Laya System 1 in ${layaDurationMs}ms.`;
-      await updateAgentSessionStatus(sessionId, "COMPLETED", {
-        finalMessage,
-        totalDurationMs
-      });
-
-      return {
-        sessionId,
-        success: true,
-        status: "COMPLETED",
-        routedBy: "LAYA_SYSTEM_ONE",
-        totalDurationMs,
-        finalMessage,
-        steps: [
-          {
-            stepIndex: 1,
-            toolName: "discover_wholesale_catalog",
-            toolArgs: { sku },
-            toolResult: result,
-            durationMs: layaDurationMs
-          }
-        ]
-      };
-    }
 
     const messages = FOCUSED_SOURCES.has(metadata?.source) ? withVision(this.buildFocusedMessages(prompt, metadata?.context), metadata?.context?.evidence) : this.buildInitialMessages(prompt);
     return await this.runExecutionLoop({
@@ -561,39 +498,9 @@ Follow this operational protocol for sourcing, verification, and escrow:
             args: toolArgs
           });
 
-          // The on-device risk model needs about 1.4 GB of memory, so it only runs when LAYA_ENABLED=1. Otherwise the tool's declared effect is used.
-          let layaRisk = null;
-          if (LAYA_ENABLED && !focusedSessions.has(sessionId)) {
-            try {
-              layaRisk = await gateToolRisk(toolName, toolArgs);
-            } catch {
-              layaRisk = { mutating: true, highValue: true, requiresStepUp: true };
-            }
-          } else {
-            const mutating = (TOOL_EFFECT[toolName] ?? "read") !== "read";
-            layaRisk = { mutating, highValue: false, requiresStepUp: false };
-          }
-
-          actionDispatcher.broadcast("AGENT_LAYA_TOOL_GATED", {
-            sessionId,
-            stepIndex: turn,
-            toolName,
-            mutating: layaRisk.mutating,
-            highValue: layaRisk.highValue,
-            requiresStepUp: layaRisk.requiresStepUp
-          });
-
-          if (toolName === "run_coalition_negotiation" || toolName === "join_syndicate") {
-            const proposalCheck = await verifyDealProposal(toolArgs);
-            if (!proposalCheck.verified) {
-              actionDispatcher.broadcast("AGENT_LAYA_DEAL_REJECTED", {
-                sessionId,
-                stepIndex: turn,
-                toolName,
-                reason: "Laya critic detected inconsistent allocation invariant."
-              });
-            }
-          }
+          // Risk label comes from the tool's declared effect.
+          const mutating = (TOOL_EFFECT[toolName] ?? "read") !== "read";
+          actionDispatcher.broadcast("AGENT_TOOL_GATED", { sessionId, stepIndex: turn, toolName, mutating });
 
           const interception = interceptToolExecution(toolName, toolArgs);
 
