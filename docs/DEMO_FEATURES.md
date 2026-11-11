@@ -30,6 +30,8 @@ The one-line problem for judges: *small restaurants pay full price because none 
 
 Neon Dumpling already has orders in motion, so the shipment and hold screens are not empty: 12 cases of containers from Garden State in transit (due 13 Nov), 8 cases from Eastern delivered with the 48 hour inspection window open, and holds on rice, gloves and napkins.
 
+Each business sees only its own groups, holds, shipments and claims. Neon Dumpling shows its two container shipments. A business onboarded from documents, such as Cloud Nine Boba, gets its own generated set, so the timeline and grids change when you sign out and onboard as someone else.
+
 ## 4. How Neon Dumpling uses the platform, step by step
 
 **Step 1. Onboard from documents (20 s).** Drop `neon-dumpling-invoice.pdf` and `neon-dumpling-inventory.csv`. Mosaic reads them and shows each value with its source file: business, address, supplier, and "you pay $31.50 a case for containers". Only values written in the documents are kept; anything else is left blank and asked. Photos of an invoice work too (OCR).
