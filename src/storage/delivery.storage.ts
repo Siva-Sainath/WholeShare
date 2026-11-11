@@ -65,6 +65,14 @@ export class DeliveryStorage {
     return records.find((r) => r.clanId === clanId && r.memberId === memberId) || null;
   }
 
+  // Drops every record that belongs to one member, used when a generated workspace is replaced or cleared.
+  public removeByMember(memberId: string): number {
+    const records = this.getAll();
+    const kept = records.filter((record) => record.memberId !== memberId);
+    if (kept.length !== records.length) this.saveAll(kept);
+    return records.length - kept.length;
+  }
+
   public upsert(record: DeliveryRecord): void {
     const records = this.getAll();
     const index = records.findIndex(

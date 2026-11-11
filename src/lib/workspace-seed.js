@@ -53,6 +53,7 @@ export async function seedWorkspaceForProfile(profile) {
   if (isDemoBusiness(profile) || !businessName) {
     // Switching back to the demo business, or clearing the profile, brings the Flushing story back.
     if (profile.workspaceSeeded) {
+      if (profile.smeId && profile.smeId !== "sme_austin_01") getDeliveryStorage().removeByMember(profile.smeId);
       actionDispatcher.resetState();
       updateUserSettings({ profile: { smeId: "sme_austin_01", workspaceSeeded: false, workspaceSig: "", workspaceGroups: [] } });
       actionDispatcher.broadcast("WORKSPACE_SEEDED", { smeId: "sme_austin_01", groups: [] });
@@ -64,6 +65,8 @@ export async function seedWorkspaceForProfile(profile) {
   const words = wordsOf(profile.product);
   const units = Math.max(1, Math.min(Number(profile.units) || 12, 5000));
   const smeId = workspaceOwnerId(profile);
+  // A previous business's generated records are replaced rather than piled up.
+  if (profile.smeId && profile.smeId !== smeId && profile.smeId !== "sme_austin_01") getDeliveryStorage().removeByMember(profile.smeId);
 
   const { rows } = await querySource("groups", { limit: 2000 });
   const open = rows.filter((group) => group.status === "FORMING" && Number(group.fillPct) < 100 && Number(group.targetUnits) > 0);
