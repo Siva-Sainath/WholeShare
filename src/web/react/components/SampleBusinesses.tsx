@@ -8,15 +8,15 @@ const PLACE: Record<string, { city: string; country: string; product: string }> 
   sme_de_bakery: { city: "Berlin", country: "Germany", product: "flour" },
   sme_us_coffee: { city: "Austin", country: "United States", product: "coffee beans" },
   sme_cn_smt: { city: "Shenzhen", country: "China", product: "circuit boards" },
-  sme_gb_packaging: { city: "London", country: "United Kingdom", product: "cartons" },
-  sme_jp_ceramics: { city: "Tokyo", country: "Japan", product: "porcelain" },
+  sme_gb_packaging: { city: "London", country: "United Kingdom", product: "corrugated boxes" },
+  sme_jp_ceramics: { city: "Tokyo", country: "Japan", product: "ceramic tableware" },
   sme_in_textiles: { city: "Mumbai", country: "India", product: "cotton fabric" },
-  sme_it_dental: { city: "Milan", country: "Italy", product: "dental" },
+  sme_it_dental: { city: "Milan", country: "Italy", product: "surgical gloves" },
   sme_br_solar: { city: "Sao Paulo", country: "Brazil", product: "solar panels" },
-  sme_ca_hydro: { city: "Toronto", country: "Canada", product: "perlite" },
-  sme_sg_coldchain: { city: "Singapore", country: "Singapore", product: "pallets" },
-  sme_fr_restaurant: { city: "Lyon", country: "France", product: "grinders" },
-  sme_ae_hospitality: { city: "Dubai", country: "United Arab Emirates", product: "linens" }
+  sme_ca_hydro: { city: "Toronto", country: "Canada", product: "hydroponic grow lights" },
+  sme_sg_coldchain: { city: "Singapore", country: "Singapore", product: "shrink film" },
+  sme_fr_restaurant: { city: "Lyon", country: "France", product: "espresso machines" },
+  sme_ae_hospitality: { city: "Dubai", country: "United Arab Emirates", product: "towels" }
 };
 
 const slug = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 20) || "business";
