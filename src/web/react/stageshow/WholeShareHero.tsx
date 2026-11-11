@@ -34,9 +34,9 @@ const GROUPS: Group[] = [
 
 type Joined = { id: string; name: string; meta: string; amount: string; tone: 'neutral' | 'success'; label: string; Icon: typeof Coffee }
 const JOINED: Joined[] = [
-  { id: 'flour', name: 'Jasmine rice 25 lb', meta: '150 bags', amount: '$3,675.00', tone: 'neutral', label: 'Pledged', Icon: Wheat },
-  { id: 'tiles', name: 'Nitrile gloves, case of 1,000', meta: '10 cases', amount: '$640.00', tone: 'neutral', label: 'Pledged', Icon: LayoutGrid },
-  { id: 'boxes', name: 'Clear PET cups 16 oz', meta: '75 cases', amount: '$2,047.50', tone: 'success', label: 'Authorized', Icon: Boxes }
+  { id: 'rice', name: 'Jasmine rice 25 lb', meta: '150 bags', amount: '$3,675.00', tone: 'neutral', label: 'Pledged', Icon: Wheat },
+  { id: 'gloves', name: 'Nitrile gloves, case of 1,000', meta: '10 cases', amount: '$640.00', tone: 'neutral', label: 'Pledged', Icon: LayoutGrid },
+  { id: 'cups', name: 'Clear PET cups 16 oz', meta: '75 cases', amount: '$2,047.50', tone: 'success', label: 'Authorized', Icon: Coffee }
 ]
 
 const money = (n: number) => `$${n.toFixed(2)}`
@@ -128,9 +128,9 @@ export function WholeShareHero() {
                             title={<Text>{g.name}</Text>}
                             subtitle={<Text>{g.meta}</Text>}
                             meta={<Text className="wh-price">{g.price}</Text>}
-                            selected={s.sheet && g.id === 'specialty'}
+                            selected={s.sheet && g.id === 'garden'}
                           >
-                            {g.id === 'specialty' ? (
+                            {g.id === 'garden' && s.filtered ? (
                               <Button variant="secondary" size="small" data-target="join" data-cursor="pointer">Join</Button>
                             ) : (
                               <Badge tone="neutral">{g.off}</Badge>
@@ -158,7 +158,7 @@ export function WholeShareHero() {
                       ))}
                       <Collapse open={held && !s.sheet} reveal="drop">
                         <Row
-                          lead={<span className="wh-tile"><Coffee size={18} strokeWidth={1.8} /></span>}
+                          lead={<span className="wh-tile"><Boxes size={18} strokeWidth={1.8} /></span>}
                           title={<Text>Kraft takeout containers 32 oz</Text>}
                           subtitle={<Text>10 cases · $289.80</Text>}
                         >

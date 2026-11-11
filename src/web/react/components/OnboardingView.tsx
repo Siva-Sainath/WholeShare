@@ -527,6 +527,16 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
                 <p style={{ margin: "2px 0 0", fontSize: 13, color: c.muted }}>Asks one question at a time</p>
               </div>
             </div>
+            <Button
+              variant="secondary"
+              size="small"
+              label="Use the demo business"
+              onClick={() => {
+                void saveUserSettingsApi({
+                  profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "Flushing", country: "United States", currency: "USD" }
+                }).catch(() => undefined).then(() => onComplete());
+              }}
+            />
           </div>
 
           <div ref={bodyRef} style={{ padding: "24px", display: "grid", gap: 24, alignContent: "start", flex: 1, minHeight: 0, overflowY: "auto", background: "rgba(255, 255, 255, 0.5)" }}>
