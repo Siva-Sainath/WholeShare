@@ -1,0 +1,18 @@
+import puppeteer from "puppeteer";
+const SITE = "https://wholeshare-app.onrender.com";
+const b = await puppeteer.launch({ headless: true, args: ["--no-sandbox"], defaultViewport: { width: 1440, height: 756, deviceScaleFactor: 2 } });
+const p = await b.newPage();
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+await p.goto(`${SITE}/`, { waitUntil: "networkidle2", timeout: 90000 });
+await p.evaluate(() => localStorage.setItem("wholeshare_onboarding_confirmed", "true"));
+const shot = async (hash, name, after) => { await p.goto(`${SITE}/#${hash}`, { waitUntil: "networkidle2" }); await p.reload({ waitUntil: "networkidle2" }); await wait(5000); if (after) await after(); await wait(1500); await p.screenshot({ path: `/tmp/shots/${name}.png` }); };
+const tab = (t) => async () => { const h = await p.evaluateHandle((t) => [...document.querySelectorAll("button,[role=tab],label,span")].find((e) => e.textContent.trim() === t), t); await h.asElement()?.click(); };
+await shot("my-groups", "mygroups");
+await shot("disputes", "d-timeline");
+await shot("disputes", "d-calendar", tab("Calendar"));
+await shot("disputes", "d-board", tab("Claims board"));
+await shot("disputes", "d-shipments", tab("Shipments"));
+await shot("disputes", "d-claims", tab("Claims"));
+await shot("insights", "insights");
+await shot("agents", "agents");
+await b.close();

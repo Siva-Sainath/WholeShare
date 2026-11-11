@@ -76,7 +76,7 @@ if (want.has("k2")) {
   });
 }
 
-const needsSession = ["k3", "k4", "k5", "k6"].some((k) => want.has(k)) && !want.has("k2");
+const needsSession = ["k1", "k3", "k4", "k5", "k6"].some((k) => want.has(k)) && !want.has("k2");
 if (needsSession) {
   await page.goto(`${SITE}/`, { waitUntil: "networkidle2", timeout: 90000 });
   await page.evaluate(() => localStorage.setItem("wholeshare_onboarding_confirmed", "true"));
@@ -150,11 +150,17 @@ if (want.has("k4")) {
   await clip(ctx, "k4-tour", async () => {
     await glide(ctx, 700, 400); await sleep(5500);
     await scrollBy(ctx, 380, 2000); await sleep(4500);
-    await go("disputes"); await glide(ctx, 640, 480); await sleep(5500);
-    await clickText(ctx, "Calendar", 500); await sleep(5000);
+    await go("disputes"); await glide(ctx, 640, 480); await sleep(3500);
+    await clickText(ctx, "Zoom in", 400).catch(() => {}); await sleep(1800);
+    const bar = await page.$(".b-sch-event"); if (bar) { await clickHandle(ctx, bar, 500); await sleep(3500); await page.keyboard.press("Escape"); await sleep(800); }
+    await clickText(ctx, "Calendar", 500); await sleep(3500);
+    await clickText(ctx, "Agenda", 500).catch(() => {}); await sleep(3500);
     await clickText(ctx, "Claims board", 500); await sleep(5000);
-    await go("insights"); await glide(ctx, 700, 460); await sleep(7000);
-    await scrollBy(ctx, 420, 2200); await sleep(4000);
+    await clickText(ctx, "Claims", 500).catch(() => {}); await sleep(2500);
+    const head = await byText(page, "Claim value", "div,span").catch(() => null); if (head) { await clickHandle(ctx, head, 400); await sleep(2500); }
+    await go("insights"); await glide(ctx, 700, 460); await sleep(4500);
+    await clickText(ctx, "Demand and savings", 500).catch(() => {}); await sleep(4000);
+    await clickText(ctx, "Delivery and claims", 500).catch(() => {}); await sleep(4000);
     await go("agents"); await glide(ctx, 700, 460); await sleep(5000);
     const ask = fetch(`${SITE}/api/v1/agent/${invite.token}/ask?q=${encodeURIComponent("Which clear cup groups can we still join?")}`).then((r) => r.json()).catch(() => null);
     await sleep(2500); await scrollBy(ctx, 260, 1400); await ask; await sleep(6000);
@@ -182,9 +188,50 @@ if (want.has("k5")) {
   await clip(ctx, "k5-mosaic", async () => {
     await glide(ctx, 720, 440); await sleep(4000);
     await askMosaic("Compare the two takeout container groups for 12 cases");
-    await askMosaic("Start a group buy for wide boba straws, 8 cases, delivered to our back door on Bedford Avenue and to Cloud Nine Boba on Court Street", { max: 120000, quiet: 9000 });
+    await askMosaic("Sort that by delivery time", { max: 60000, quiet: 6000 });
     await askMosaic("Where is my shipment and when does my inspection window end?");
     await askMosaic("Move the Garden State container delivery up one day");
+    await askMosaic("Find new suppliers for wide boba straws near New York", { max: 100000, quiet: 9000 });
+    await askMosaic("Start a group buy for wide boba straws, 8 cases, delivered to our back door on Bedford Avenue and to Cloud Nine Boba on Court Street", { max: 120000, quiet: 9000 });
+    await sleep(6000);
+  });
+}
+
+if (want.has("k6")) {
+  await go("disputes");
+  const dock = await byText(page, "Close").catch(() => null);
+  if (dock) { await dock.click().catch(() => {}); await sleep(1200); }
+  await clip(ctx, "k6-dispute", async () => {
+    await glide(ctx, 700, 420); await sleep(2500);
+    await clickText(ctx, "File a claim", 500); await sleep(2500);
+    const box = await page.waitForSelector("textarea", { visible: true });
+    await clickHandle(ctx, box, 400);
+    await typeHuman(ctx, "3 of the 8 cases from Eastern arrived crushed at the corners", 35); await sleep(800);
+    await clickText(ctx, "Fill the form with Mosaic", 500);
+    await fast(ctx, 3, async () => { await sleep(6000); await page.waitForFunction(() => !/Reading/.test(document.body.innerText), { timeout: 40000 }).catch(() => {}); });
+    await sleep(2500);
+    // Pick the delivered shipment from the list, then add the unit price and a contact email.
+    const select = await page.evaluateHandle(() => [...document.querySelectorAll("button,[role=combobox],div")].filter((el) => /Choose the shipment that arrived damaged/.test(el.textContent || "") && el.getBoundingClientRect().height < 80 && el.getBoundingClientRect().width > 150).sort((a, b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height)[0]);
+    if (select.asElement()) { await clickHandle(ctx, select.asElement(), 500); await sleep(1500);
+      const option = await page.evaluateHandle(() => { const items = [...document.querySelectorAll("[role=option],li")].filter((el) => el.getBoundingClientRect().height > 0); return items.find((el) => /eastern|delivered/i.test(el.textContent || "")) || items[0] || null; });
+      if (option.asElement()) { await clickHandle(ctx, option.asElement(), 500); await sleep(1500); } }
+    const price = await page.$('input[type="number"][aria-label*="Unit price"], input[aria-label*="Unit price"]');
+    if (price) { await clickHandle(ctx, price, 400); await typeHuman(ctx, "22.88", 50); await sleep(600); }
+    const email = await page.$('input[type="email"]');
+    if (email) { await clickHandle(ctx, email, 400); await typeHuman(ctx, "accounts@neondumpling.example", 35); await sleep(800); }
+    const file = await page.$('input[type="file"]');
+    if (file) await file.uploadFile(`${process.env.HOME}/Documents/Paypal_project/src/web/public/demo-kits/photos/damaged-parcel-crushed.jpg`);
+    await sleep(3000);
+    await scrollBy(ctx, 380, 1800); await sleep(2000);
+    await clickText(ctx, "Submit damage claim", 600);
+    await sleep(4500);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })); await sleep(1500);
+    await clickText(ctx, "Claims board", 500); await sleep(3500);
+    const card = await page.evaluateHandle(() => { const cards = [...document.querySelectorAll(".b-taskboard-card, [class*='b-task-board-card'], .b-card")].filter((el) => el.getBoundingClientRect().width > 80); return cards.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)[0] || null; });
+    if (card.asElement()) await clickHandle(ctx, card.asElement(), 600);
+    await sleep(2500);
+    await clickText(ctx, "Approve and send to supplier", 600); await sleep(3500);
+    await clickText(ctx, "Supplier accepts", 600); await sleep(5000);
   });
 }
 await ctx.browser.close();

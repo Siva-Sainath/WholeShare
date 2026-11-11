@@ -71,7 +71,8 @@ export function scopeGroups(groups: Row[], scope: BusinessScope | null): Row[] {
 function inScope(tableId: string, rows: Row[]): Row[] {
   if (!scopedGroupIds) return rows;
   if (tableId === "groups") return rows.filter((row) => scopedGroupIds?.has(String(row.id)));
-  if (tableId === "members" || tableId === "claims" || tableId === "shipments") return rows.filter((row) => scopedGroupIds?.has(String(row.groupId)));
+  // Claims and shipments already belong to this business on the server, so every one of them is in its reports.
+  if (tableId === "members") return rows.filter((row) => scopedGroupIds?.has(String(row.groupId)));
   return rows;
 }
 

@@ -16,8 +16,10 @@ export async function edit(name, { zoom = 1.45, noZoom = false, target = null, k
   const offset = D - (ev.t1 - ev.t0) / 1000; // the video can start late, so line the log up from the end
   const src = (ms) => Math.min(D, Math.max(0, (ms - ev.t0) / 1000 + offset));
   const pxPerCss = rw / ev.vp.w; // device pixels per page pixel
-  const contentH = Math.min(rh, Math.round(ev.vp.h * pxPerCss)); // the page area, without the browser's tab strip and address bar
-  const titlePx = rh - contentH;
+  const fullContentH = Math.min(rh, Math.round(ev.vp.h * pxPerCss)); // the page area, without the browser's tab strip and address bar
+  const titlePx = rh - fullContentH;
+  const bottomTrim = Math.round(fullContentH * 0.04); // drops the desktop's Now Playing pill that sits over the bottom edge
+  const contentH = fullContentH - bottomTrim;
   const cw = rw, cropH = contentH;
   const outH = Math.min(1080, Math.round(1920 * contentH / rw)); // page area scaled to 1920 wide
   const padTop = Math.floor((1080 - outH) / 2);
