@@ -9,6 +9,8 @@ const save = () => writeFileSync(manifestPath, JSON.stringify(manifest, null, 2)
 const ctx = await launch();
 const { page, browser } = ctx;
 page.on("pageerror", (e) => console.log("PAGEERROR", e.message.slice(0, 160)));
+page.on("response", async (r) => { if (r.url().includes("/api/v1/paypal/pledges") || r.url().includes("/api/v1/pledges")) console.log("RESP", r.status(), r.url().slice(-60), (await r.text().catch(() => "")).slice(0, 300)); });
+page.on("console", (m) => { if (m.type() === "error") console.log("CONSOLE", m.text().slice(0, 200)); });
 
 async function seg(name, speed, fn, target = page) {
   const rec = await start(target, name);

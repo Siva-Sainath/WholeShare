@@ -95,7 +95,8 @@ export async function authorizePledgeOrder(orderId) {
     let authorization;
     try {
       authorization = await authorizeOrderHold({ orderId });
-      if (authorization.status !== "AUTHORIZED") {
+      // PayPal reports a successful hold as CREATED (no capture yet). Mocks and older code used AUTHORIZED.
+      if (!["AUTHORIZED", "CREATED"].includes(authorization.status)) {
         throw new Error(`PayPal returned status ${authorization.status}. The buying group was not updated.`);
       }
 
@@ -124,7 +125,7 @@ export async function authorizePledgeOrder(orderId) {
         businessName: session.businessName,
         orderId,
         authorizationId: authorization.authorizationId,
-        status: authorization.status,
+        status: "AUTHORIZED",
         amountCents: session.amountCents,
         currency: session.currency,
         clanId: session.clanId,

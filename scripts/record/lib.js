@@ -61,6 +61,7 @@ export async function clickHandle(ctx, handle, pause = 350) {
   const { x, y } = await center(ctx, handle);
   await glide(ctx, x, y);
   await sleep(pause);
+  ctx.log?.push({ k: "click", t: Date.now(), x, y });
   await ctx.page.mouse.down();
   await sleep(70);
   await ctx.page.mouse.up();
@@ -84,6 +85,7 @@ export async function clickText(ctx, text, pause) {
 }
 
 export async function typeHuman(ctx, text, delay = 55) {
+  ctx.log?.push({ k: "type", t: Date.now(), x: ctx.pos.x, y: ctx.pos.y });
   for (const ch of text) { await ctx.page.keyboard.type(ch); await sleep(delay + Math.random() * 40); }
 }
 
@@ -95,4 +97,21 @@ export async function scrollBy(ctx, pixels, ms = 1800) {
 export async function clickSel(ctx, selector, pause) {
   const handle = await ctx.page.waitForSelector(selector, { visible: true, timeout: 30000 });
   await clickHandle(ctx, handle, pause);
+}
+
+// Marks a stretch of waiting that the editor speeds up (the video labels it with the speed).
+export async function fast(ctx, speed, fn) {
+  ctx.log?.push({ k: "fast-start", t: Date.now(), speed });
+  try { await fn(); } finally { ctx.log?.push({ k: "fast-end", t: Date.now(), speed }); }
+}
+
+// A visible Chrome window with no browser chrome (app mode). Cap records this one window.
+export async function launchHeaded() {
+  const { execSync } = await import("node:child_process");
+  const browser = await puppeteer.launch({ headless: false, defaultViewport: null, args: ["--app=about:blank", "--window-size=1440,842", "--window-position=10,30", "--disable-features=Translate", "--no-first-run"] });
+  const [page] = await browser.pages();
+  await page.evaluateOnNewDocument(CURSOR);
+  const ctx = { browser, page, pos: { x: 720, y: 420 }, log: null };
+  ctx.front = () => { try { execSync(`osascript -e 'tell application "Google Chrome for Testing" to activate'`); } catch { /* the window stays where it is */ } };
+  return ctx;
 }
