@@ -2375,6 +2375,41 @@ export function createWebServer() {
       return;
     }
 
+    // Link-only agents (a WhatsApp assistant that can open a URL but cannot speak MCP) use plain GET routes behind the same invite token.
+    // GET /api/v1/agent/<token>/ask?q=...      asks Mosaic anything about groups, suppliers, prices and shipments.
+    // GET /api/v1/agent/<token>/clans?search=  lists matching buying groups as rows.
+    const linkRoute = pathname.match(/^\/api\/v1\/agent\/([A-Za-z0-9_-]{8,80})\/(ask|clans)$/);
+    if (linkRoute && req.method === "GET") {
+      const invite = findLiveInvite(linkRoute[1]);
+      if (!invite) { sendJson(res, 404, { error: "Invite token not found, expired or revoked." }); return; }
+      const rate = mcpRateLimiter.isAllowed(`link:${invite.token}`);
+      if (!rate.allowed) { sendJson(res, 429, { error: "Too many requests. Slow down.", retryAfterSec: rate.retryAfterSec }); return; }
+      const baseUrl = String(process.env.APP_URL || `${req.headers["x-forwarded-proto"] || "http"}://${req.headers.host}`);
+      const call = async (name, args) => {
+        const reply = await handleMcpMessage({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } }, { label: invite.createdBy || "agent", baseUrl });
+        if (reply?.error) return { error: reply.error.message };
+        try { return JSON.parse(reply?.result?.content?.[0]?.text ?? "{}"); } catch { return { answer: reply?.result?.content?.[0]?.text ?? "" }; }
+      };
+      try {
+        if (linkRoute[2] === "ask") {
+          const q = String(url.searchParams.get("q") || "").trim();
+          if (!q) { sendJson(res, 400, { error: "Add ?q=your question, for example ?q=Which takeout container groups can we still join?" }); return; }
+          sendJson(res, 200, await call("ask_mosaic", { request: q }));
+        } else {
+          const search = String(url.searchParams.get("search") || "").trim().slice(0, 80);
+          const city = String(url.searchParams.get("city") || "").trim().slice(0, 60);
+          const filter = [];
+          if (search) filter.push({ field: "name", op: "contains", value: search });
+          if (city) filter.push({ field: "city", op: "contains", value: city });
+          const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 10, 1), 25);
+          sendJson(res, 200, await call("query", { source: "groups", filter, limit }));
+        }
+      } catch (error) {
+        sendJson(res, 500, { error: String(error?.message ?? "Request failed.").slice(0, 200) });
+      }
+      return;
+    }
+
     // GET /api/v1/agent/<token> or GET /agent/<token>: Manifest JSON endpoint
     const isManifestApi = pathname.startsWith("/api/v1/agent/") && !pathname.startsWith("/api/v1/agent/sessions") && !pathname.startsWith("/api/v1/agent/onboard") && !pathname.startsWith("/api/v1/agent/pledge-quote");
     const isDirectAgentUrl = pathname.startsWith("/agent/") && !pathname.startsWith("/agent-");
@@ -2382,7 +2417,8 @@ export function createWebServer() {
     if ((isManifestApi || isDirectAgentUrl) && req.method === "GET") {
       const token = pathname.replace(/^\/api\/v1\/agent\//, "").replace(/^\/agent\//, "");
 
-      if (isDirectAgentUrl && (req.headers.accept?.includes("text/html") || !req.headers.accept?.includes("application/json"))) {
+      // Browsers get the Agents page. Anything else (a chat assistant fetching the link) gets the JSON manifest.
+      if (isDirectAgentUrl && req.headers.accept?.includes("text/html")) {
         res.writeHead(302, { Location: `/#agent/${token}` });
         res.end();
         return;
@@ -2468,6 +2504,12 @@ export function createWebServer() {
           "If a required field is missing, ask for it. Do not guess.",
           "All amounts are in USD cents as integers."
         ],
+        howToUse: {
+          note: "If you can only open links, use these. Each answers in JSON. Money never moves from here: approval happens on PayPal's site.",
+          askAnything: `GET ${String(process.env.APP_URL || `${req.headers["x-forwarded-proto"] || "http"}://${req.headers.host}`).replace(/\/$/, "")}/api/v1/agent/${token}/ask?q=<question>`,
+          listGroups: `GET ${String(process.env.APP_URL || `${req.headers["x-forwarded-proto"] || "http"}://${req.headers.host}`).replace(/\/$/, "")}/api/v1/agent/${token}/clans?search=<words>&city=<city>&limit=10`,
+          examples: ["Which takeout container groups can we still join?", "Compare the two takeout container groups for 12 cases", "Find new suppliers for wide boba straws"]
+        },
         chat: {
           endpoint: "POST /api/v1/agent/chat",
           note: "Pass the invite token in the agentInviteToken field of the request body."
