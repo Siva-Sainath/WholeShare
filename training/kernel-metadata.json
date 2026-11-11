@@ -1,0 +1,17 @@
+{
+  "id": "sivasainath06/wholeshare-qwen-opsd-kaggle-p100",
+  "title": "Wholeshare Qwen OPSD Kaggle P100",
+  "code_file": "wholeshare_qwen35_4b_opsd_kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "sivasainath06/wholeshare-opsd-dataset"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

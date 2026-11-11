@@ -1,120 +1,199 @@
 # WholeShare
 
-**Small restaurants pool their orders to reach supplier price tiers. An AI assistant does the legwork. PayPal holds the money until delivery is verified.**
+**Small businesses pool their orders to reach supplier price tiers. An AI assistant does the legwork. PayPal holds the money until the goods arrive in good shape.**
 
-WholeShare is a B2B group buying marketplace. Independent businesses that sit on the same street, and cannot reach a supplier's minimum alone, join a *group*. When the group fills, everyone gets the tier price. Mosaic, an AI assistant that lives in the app, finds groups, compares them, joins one, sources suppliers on the live web, moves deliveries and files damage claims. Every change it makes appears on the same screens a person uses.
+Live app: https://wholeshare-app.onrender.com
 
-> Everything runs in the **PayPal sandbox**. No real money moves anywhere in this project. Groups, members and directory suppliers are generated **sample data**, and the app says so.
+> Everything runs in the **PayPal sandbox**. No real money moves. The groups, members and suppliers in the demo market are sample data, and the app says so.
 
-## Try it (2 minutes)
+![A group page with discount tiers, supplier trust and the receiving point](docs/screenshots/group-page.png)
 
-You do not have to use our demo. Describe **your own business** (any product, any city or country) and WholeShare builds a workspace around it from the real catalog: your pledges, a delivery on the way, a late one and one ready to inspect. The AG Grid panels, the Bryntum timeline, calendar and claims board, and the AG Studio reports all show that business. The landing page also has a one-click **demo business** and **five sample businesses**, each with an invoice, an inventory sheet and a damage photo you can use.
+## What WholeShare does
 
-Live: **https://wholeshare-app.onrender.com** (runs in the PayPal sandbox; the first load after a long idle can take a few seconds).
+A dumpling restaurant and a bubble tea shop on the same street both buy the same takeout boxes. The supplier's price drops at 80 cases. Neither shop will ever order 80 cases alone, so both overpay.
 
-1. Open the app and finish onboarding. Say what you run in one sentence, for example *We run Neon Dumpling Co., a Chinese restaurant in Queens, New York.* Mosaic fills the form.
-2. Open **Mosaic** and try, in this order:
-   - `Which New York groups can we still join?`
-   - `Compare the two New York takeout container groups for 12 cases`
-   - `Join the Garden State container group with 12 cases` (the PayPal approval step opens; approve it in the sandbox, or close it)
-   - `Where is our container shipment and is it late?`
-   - `Move the container delivery up a day`, then `Undo that`
-   - `Our delivered containers arrived crushed, 8 cartons, file a claim` (attach any photo)
-   - `Find new suppliers for jasmine rice on the web` (a Kernel cloud browser searches live)
-3. Watch the sponsor tool rows under each answer, the docked AG Grid beside the chat, and the **Insights**, **Disputes** (Bryntum) and **Agents** pages react to what Mosaic did.
-4. **Settings > Agent and AI** has the permission switches. Turn one off and Mosaic asks before doing that kind of thing.
+Ordering together is the obvious fix, and it rarely happens. Three questions get in the way. Whose door does the order go to? Who pays what? Who covers the loss if half the boxes arrive crushed?
 
-PayPal sandbox buyer login for the approval step: see the testing instructions on the submission page.
+WholeShare answers all three.
 
-## What Mosaic can do
+1. **You start with your paperwork.** Drop in a supplier invoice and an inventory sheet. WholeShare reads them and fills in your business, your supplier and what you pay today. It keeps a value only if the value is written in your documents.
+2. **You find a group.** The app already knows what you buy. It shows matching groups with the price at your volume, the discount tier, the delivery time and how much the supplier can be trusted.
+3. **You pledge through PayPal.** You approve on PayPal's own screen. PayPal places a hold on the money. Nothing is charged.
+4. **Mosaic does the legwork.** Mosaic is the assistant inside the app. Ask it to compare two groups, find new suppliers on the web, or start a group from one sentence.
+5. **You check the goods.** Deliveries show on a timeline and a calendar, with a 48 hour inspection window. Accept the goods and the held money goes to the supplier.
+6. **If something is wrong, you file a claim.** Describe what happened and attach a photo. The refund covers only the damaged units.
 
-| Job | How it works |
+One rule sits under everything. The assistant can prepare any step, but only a person can approve a payment.
+
+![Mosaic compares two groups and shows what you save against what you pay today](docs/screenshots/mosaic-comparison.png)
+
+## Try it
+
+1. Open https://wholeshare-app.onrender.com.
+2. Choose **Use your business**, then **Use the Neon Dumpling sample documents**. WholeShare reads the invoice and the inventory sheet.
+3. Open **Mosaic** and ask `Compare the two takeout container groups for 12 cases`.
+
+The full walkthrough, with the PayPal sandbox buyer login, is in [docs/TESTING.md](docs/TESTING.md).
+
+## How WholeShare uses PayPal
+
+PayPal is the trust layer. The design depends on PayPal's authorize-then-capture flow: money is held first and released only when the goods are right.
+
+**A pledge becomes a hold.** The app creates a PayPal order with the intent set to `AUTHORIZE`. The person approves it in PayPal's window, opened by the PayPal JavaScript SDK v6 button on the group page. Then the server authorizes the order. That authorization is the hold.
+
+**The hold is released, or reduced, when the goods arrive.** When the person accepts the goods, the server captures the hold. If some units are damaged, it captures only the intact units and releases the rest. If the money was already captured, it refunds the damaged units. A hold that is not used can be voided.
+
+**Larger pledges start with an invoice.** A pledge of $1,000 or more first gets a PayPal invoice with a QR code, through Invoicing v2.
+
+**The business signs in with PayPal.** Log in with PayPal connects the business's PayPal identity during onboarding.
+
+**PayPal's events are trusted only after they are verified.** The webhook handler checks PayPal's signature and certificate before any event can change a claim. Events that arrive out of order, such as a capture before its order, wait in a buffer until their order exists.
+
+**Money is handled with care.**
+- Every amount is a whole number of cents.
+- Every call that changes money carries an idempotency key, so a retry never pays twice.
+- A reconciliation worker re-checks operations that are still pending and flags the ones that need a person.
+- A spend limit applies to every pledge.
+
+**Outside assistants cannot approve money either.** An assistant such as Instinct on WhatsApp can ask for a PayPal approval link through the `request_pledge_approval` tool. The owner opens the link and approves on PayPal.
+
+The rest of PayPal's platform is in the code too: Shipment Tracking, Payouts to suppliers, Billing subscriptions for group dues, Disputes offers, and the PayPal Agent Toolkit connected through our interceptor.
+
+**What has run live, and what has not.** In the PayPal sandbox we have run the hold, the PayPal button, invoices and Log in with PayPal. Capture, refund, void, payouts, shipment tracking, billing and disputes are written and covered by tests that use stand-ins for PayPal. We have not run them live yet. Files to read: `src/lib/paypal-checkout.js`, `src/lib/paypal-bridge.js`, `src/lib/pledge-ledger.js`, `src/gateway/` and `src/daemon/reconciliation.worker.ts`.
+
+## How WholeShare uses AI
+
+**Mosaic, the assistant.** Mosaic runs on Fireworks AI. The main model is MiniMax M3.1 Flash, served serverless with its thinking turned off so it answers quickly. DeepSeek V4.1 Flash is the backup. If the first model has not answered in five seconds, the same request also goes to the backup and the first answer wins.
+
+**The harness around the model.** We wrote our own harness, so the model never acts on its own. It does five things:
+- It decides which tools the model may use.
+- It checks every argument on the server before a tool runs.
+- It limits each turn to five tool calls.
+- It checks every number and name in the reply against what the tools returned, and asks for a rewrite when something does not match.
+- It follows five permission switches that the person controls: search and filter, prepare quotes, draft messages and claims, research suppliers, and change schedules. All five start off.
+
+**Reading documents.** PDFs are read with `unpdf`, phone photos with `tesseract.js` OCR, and spreadsheets with `xlsx`. The model pulls out the fields, and the server drops any value that is not written in the document.
+
+**The web.** Kernel cloud browsers read real supplier websites for prices, minimum orders and lead times. They only read, and never submit a form. Web results are labelled unverified.
+
+**Three ways in.** The same tools can be used from three places.
+- *Inside the app.* Mosaic is built in. An in-page tool set, declared through WebMCP, lets an agent in the browser filter, sort, chart and reschedule what is on screen.
+- *From any MCP client.* WholeShare runs an MCP server at `/mcp`. An outside agent connects with an invite token and follows the same permission switches.
+- *From a plain link.* An assistant that can only open links, such as Instinct on WhatsApp, uses two link routes: `/api/v1/agent/<token>/ask` and `/api/v1/agent/<token>/clans`.
+
+**Our own open model.** Fireworks AI with MiniMax and DeepSeek powers the live app today. We also trained our own model, so you can run WholeShare without depending on anyone's servers.
+- *What it is.* LoRA adapters for Qwen3.5 (4B and 9B), tuned to use WholeShare's tools correctly. Model: [model link].
+- *How we trained it.* We used on-policy self-distillation. The model tries a task, a strict rule checker flags its mistakes, and a teacher copy of the model explains the fix without seeing private data. The corrected answer becomes new training data.
+- *The dataset.* The Kaggle dataset `wholeshare-opsd-dataset`: [Kaggle dataset link]. It is ordered like a course, from sourcing to escrow to disputes, with every amount in whole cents. We mixed in 15 percent general finance questions (FinQA and TAT-QA) so the model keeps its everyday money math.
+- *The notebooks.* The Kaggle notebooks that train the adapters are in [`training/`](training/).
+- *How to run it.* Start any OpenAI-compatible server that loads the base model and the adapter. Then set `MOSAIC_PROVIDER=custom` and `MOSAIC_MODEL_URL` to that server, and restart WholeShare.
+- *What we have and have not measured.* We have only small checks of the tuned model. We have not compared it with MiniMax, so the hosted app uses MiniMax and DeepSeek.
+
+**How reliable is Mosaic?** We ran 100 new prompts across ten jobs, with 30 held back that we never tuned against. Mosaic passed 97 percent of all of them and 97 percent of the held back set. The method and results are in [docs/assets/mosaic-eval.md](docs/assets/mosaic-eval.md).
+
+## Tools and sponsors
+
+| Tool | What it does here |
 |---|---|
-| Find and rank groups | `query` reads any data source with filters, sorting, grouping and totals, and answers from the rows |
-| Compare like for like | `compare_groups` prices the same units in each group, with the tier you would reach, delivery days, supplier trust and a verdict per factor |
-| Join through PayPal | `join_group` prices the pledge and opens the PayPal approval step. It never pledges or moves money. The person approves |
-| Start a group | `start_group_buy` opens the form filled in, including one or several receiving points |
-| Set up the account | `setup_profile` fills the profile from one sentence |
-| Source suppliers | `find_suppliers` checks the directory, then a **Kernel** cloud browser searches the web. `kernel_read_supplier_site` reads a supplier's pages for price, minimum order and lead time (read only, never submits a form). Web leads are labelled unverified |
-| Track and dispute | `track_shipment`, `file_damage_claim` (a draft for human review) and the claims board |
-| Change the schedule | `schedule_move_delivery`, extend inspection, book a dock slot per receiving point, resolve conflicts, undo. Dragging a **Bryntum** bar calls the same endpoints |
-| PayPal | position report, invoice list, `send_invoice_reminder` (sandbox) |
+| PayPal (sandbox) | Holds, captures, refunds, invoices, sign-in and webhooks. See above. |
+| Fireworks AI | Runs Mosaic (MiniMax M3.1 Flash, with DeepSeek V4.1 Flash as backup) and reads documents. |
+| AG Grid Enterprise, AG Charts | The tables and charts beside the chat, with sorting, grouping, export and integrated charts. |
+| AG Studio | The Insights reports: money held on PayPal, demand and savings, deliveries and claims. The assistant can edit them. |
+| Bryntum | Scheduler for deliveries, Calendar for inspection windows, TaskBoard for the claims board. |
+| Kernel | Cloud browsers for supplier research. |
+| MCP and WebMCP | How outside agents and in-browser agents use WholeShare. |
+| JuiceFS | Stores uploaded documents when its drive is mounted. Otherwise a local disk is used. |
+| Render | Hosts the app. |
+| React, Node.js, TypeScript, esbuild | The app itself. |
 
-## How it works
+AG Grid Enterprise, AG Studio and Bryntum are commercial products. The code in this repository is MIT licensed, but you need your own licence keys for those three to run the app without a watermark.
 
-```
-Browser (React, Astryx, AG Grid, AG Studio, Bryntum)
-   |  POST /api/v1/agent/chat                  ^  SSE /api/v1/events
-   v                                           |  text deltas, tool calls, tool results, UI actions
-Server (Node)                                  |
-   durable-harness: model call -> tool calls -> checks -> model call
-   |  1. permission switch for the tool         (user settings)
-   |  2. server side argument validation        (interceptor)
-   |  3. tool runs, with a deadline             (tool-registry, mosaic-tools)
-   |  4. reply figures and names checked        (reply-check)
-   v
-Fireworks (MiniMax M3.1 Flash, DeepSeek V4.1 Flash as hedge)   Kernel   PayPal sandbox
-```
+## How it fits together
 
-- **One code path.** Mosaic and a person go through the same server validation. Results stream to every open screen, so the grids, the Scheduler and the Studio reports update live.
-- **The model cannot move money.** None of its tools pledge, capture or pay out. Writes sit behind user permission switches the model cannot change.
-- **Replies are fact checked.** Figures and names in a reply must appear in that turn's tool results. A mismatch triggers one rewrite.
-- **Streaming and parallel reads.** Text streams while the model writes. Independent reads run together, slow tools have deadlines, and a turn is capped at five tool calls.
-- **Reliability.** Transient Fireworks errors retry. If the primary model has not answered in 5 seconds, the same request also goes to a fallback model and the first answer wins. Requests carry a session affinity header for prompt caching (about 76 percent of prompt tokens served from cache).
-- **Spend guard.** A persistent ledger refuses hosted model calls past a budget.
+![System overview](docs/architecture/01-system-overview.png)
 
-Design notes: `docs/HARNESS.md`, and a comparison with other harnesses and WebMCP implementations in `docs/HARNESS_STUDY.md`.
+The browser talks to one Node server. The server holds the harness, the ledger of pledges, shipments and claims, and the document reader. It calls PayPal, Fireworks and Kernel. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains each part and shows the money flow, the harness and the outside-agent path.
 
-## Sponsors in the product
+## Run it yourself
 
-- **AG Grid Enterprise**: the docked results panel (status bar, side bar, grouping, integrated charts, CSV export, cell flash), the ledger and member grids. Registered through `AllEnterpriseModule` and `IntegratedChartsModule`.
-- **AG Studio**: live reports on PayPal, demand, delivery and members from the unified data registry, with transactions for live updates and the Studio AI assistant through a server side proxy. WebMCP tools come from `api.getAiTools()`.
-- **Bryntum**: Scheduler (drag and resize call the same schedule service Mosaic uses, with undo and an audit log), Calendar, TaskBoard claims board and Grid.
-- **PayPal (sandbox)**: Orders v2 authorization holds, Invoicing v2, Disputes, Shipment Tracking, Payouts, Billing and Log in with PayPal. Money only moves after the person approves on PayPal.
-- **Kernel**: cloud browsers for supplier search, supplier site reading and carrier tracking, with a visible tool row while they run.
-- **Fireworks**: MiniMax M3.1 Flash with reasoning off, streamed, with a hedged fallback model.
+You need Node.js 24 or newer, a free [PayPal developer](https://developer.paypal.com) account with a sandbox app, and an API key for a model (Fireworks AI, or any OpenAI-compatible server).
 
-## Evidence
+1. Install the packages.
+   ```bash
+   npm ci
+   ```
+2. Copy the settings file and fill it in.
+   ```bash
+   cp .env.example .env
+   ```
+   At least set `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` and `FIREWORKS_API_KEY`. The table below lists the rest.
+3. Build the browser bundle.
+   ```bash
+   npm run build
+   ```
+4. Start the app.
+   ```bash
+   npm start
+   ```
+5. Open http://localhost:3000.
 
-- A 100 prompt eval across 10 jobs (compare, join, start a group, set up an account, research, quote, schedule, dispute, PayPal, find) with 30 prompts held out and never tuned against: **97 percent, 97 percent on the held out set**. Median 5 to 8 seconds per answer for one person, about 2.9 model calls per prompt, about $0.13 per full run. Results and method: `docs/assets/mosaic-eval.md`.
-- `npm run eval:mosaic` reruns it. `npm run verify:ui` loads every screen at two widths and fails on clipped or overlapping controls, broken images, test data and console errors. `npm run test:unit` runs 204 unit tests. `npm run verify-webmcp` runs 54 WebMCP cases.
+The server refuses to start without PayPal sandbox keys rather than faking a payment gateway.
 
-## Run it
+| Setting | What it does |
+|---|---|
+| `PAYPAL_MODE`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_BASE_URL` | Your PayPal sandbox app. |
+| `PAYPAL_WEBHOOK_ID` | Lets the server verify PayPal's webhooks. |
+| `APP_URL` | The public address of the app. In the PayPal developer dashboard, turn on Log in with PayPal and add `<APP_URL>/api/v1/paypal/connect/callback` as a return URL. Add a webhook that points to `<APP_URL>/api/v1/paypal/webhook`. |
+| `MOSAIC_PROVIDER`, `MOSAIC_MODEL_NAME`, `FIREWORKS_API_KEY` | The model Mosaic uses. `fireworks`, `openai`, `openrouter`, `local` or `custom`. |
+| `MOSAIC_MODEL_URL` | Address of your own model server, when the provider is `custom`. |
+| `MOSAIC_FALLBACK_MODEL`, `MOSAIC_HEDGE_MS` | The backup model and how long to wait before asking it. |
+| `MOSAIC_DEV_BUDGET_USD` | A spend limit for hosted model calls. The app stops calling the model when it is used up. |
+| `KERNEL_API_KEY` | Kernel cloud browsers. Without it, supplier research from the web is switched off. |
+| `AG_LICENSE_KEY`, `AG_STUDIO_LICENSE_KEY`, `BRYNTUM_LICENSE_KEY` | Licence keys for AG Grid, AG Studio and Bryntum. They are read when you build. |
+| `SYNDICATE_HMAC_SECRET` | A long random string used to sign tokens. Generate your own. |
 
-Needs Node 24 or newer.
+Never commit `.env`. The repository ignores it.
 
+**Deploy on Render.** `render.yaml` describes one Node web service with a 1 GB disk and no database. Pick the Starter plan, which stays on, and add the settings above as environment variables. `scripts/render-start.sh` keeps the app's saved state on the disk.
+
+**Run the checks.**
 ```bash
-npm ci
-cp .env.example .env        # then fill in the keys below
-npm run build               # bundles the client and bakes the licence keys in
-npm start                   # http://localhost:3000
+npm run lint
+npm run test:unit        # 226 unit tests
+npm run verify:ui        # opens every screen at two sizes and fails on clipped controls
+npm run verify-webmcp    # checks the in-page agent tools
+npm run eval:mosaic      # the 100 prompt reliability test, needs a model key
 ```
 
-| Variable | Purpose |
-|---|---|
-| `PAYPAL_MODE=sandbox`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_BASE_URL`, `PAYPAL_KEY_RETENTION_HOURS`, `MAX_PENDING_RECHECK_COUNT`, `AUTHORIZATION_VALIDITY_DAYS` | PayPal sandbox. The server refuses to start without them rather than faking a gateway |
-| `FIREWORKS_API_KEY`, `MOSAIC_PROVIDER=fireworks`, `MOSAIC_MODEL_NAME`, `MOSAIC_EXTRA_BODY` | Mosaic model. Any OpenAI compatible endpoint with tool calling works |
-| `MOSAIC_FALLBACK_MODEL`, `MOSAIC_HEDGE_MS`, `MOSAIC_DEV_BUDGET_USD` | Hedge model and spend guard |
-| `KERNEL_API_KEY` | Kernel cloud browsers |
-| `AG_LICENSE_KEY`, `AG_STUDIO_LICENSE_KEY`, `BRYNTUM_LICENSE_KEY` | UI licences, read at build time |
-| `APP_URL` | Public address, for the PayPal connect callback. In the PayPal developer dashboard, turn on Log in with PayPal for the app and add `<APP_URL>/api/v1/paypal/connect/callback` as a Return URL. Add a webhook for `<APP_URL>/api/v1/paypal/webhook` and set `PAYPAL_WEBHOOK_ID` |
+## Project layout
 
-Deploy on Render with `render.yaml` (one Node service and a persistent disk, no database). `scripts/render-start.sh` keeps the app's JSON state on the disk.
-
-## Connect your own agent (MCP)
-
-WholeShare runs an MCP server (JSON-RPC 2.0 over HTTP) at `/mcp`, so an outside agent can search, compare and prepare pledges for you.
-
-1. Open **Agents**, switch on **Let connected agents use WholeShare for me**, and choose **Create agent link**.
-2. Point your MCP client at `https://<your-host>/mcp` with the header `Authorization: Bearer <invite token>`. **Copy client config** on the Agents page gives you the JSON for clients that take a `url` and `headers`.
-3. The agent sees 22 tools: the data and planning tools Mosaic uses, plus `ask_mosaic`, which hands a whole request to your assistant. Tools follow the permission switches in Settings. A blocked tool names the switch to turn on.
-
-Nothing here can move money. A pledge ends as a PayPal approval that you give on PayPal. Revoked or expired invites stop working immediately.
+```
+src/
+  web/            Node server and the React app
+  lib/            Mosaic harness, tools, PayPal and ledger code, document reader, MCP server
+  gateway/        PayPal gateway and webhook verification
+  adapter/        Claims, delivery, settlement and dispute steps
+  domain/         Money math in whole cents and the group and member states
+  daemon/         Reconciliation worker for pending PayPal operations
+  storage/        Saved state: claims, deliveries, idempotency records
+data/             Sample market: groups, suppliers, cities
+schema/           Database schema and the OpenAPI description
+training/         Kaggle notebooks that train the open model
+test/             Unit tests
+scripts/          Checks, the reliability test, data generators, demo recording tools
+docs/             Architecture, testing guide, harness notes, diagrams, screenshots
+```
 
 ## Limits, stated plainly
 
-- Groups, members and directory suppliers are **generated sample data**. Web leads from Kernel are real pages but unverified. PayPal invoices and orders are real sandbox objects.
-- PayPal runs in the sandbox only. Captures and payouts exist in code and have not been run live.
-- Mosaic can be wrong about a photo: it tends to agree with what the user says about damage. Claims stay drafts for human review.
-- A reply takes 5 to 8 seconds, with spikes when the hosted model is slow. Web research steps can take 20 seconds or more.
+- The groups, members and directory suppliers are generated sample data. Web leads from Kernel are real pages but unverified. PayPal invoices and orders are real sandbox objects.
+- PayPal runs in the sandbox only. Capture, refund, void, payouts, tracking, billing and disputes have not run live.
+- The demo shares one workspace. If two people use the live site at once, they see each other's changes.
+- A reply from Mosaic takes five to eight seconds. Supplier research from the web can take twenty seconds or more.
+- Mosaic can be wrong about a photo, and it tends to agree with what the person says about damage. Claims stay drafts for a person to review.
+- The in-page agent tools are checked by our own verifier. We have not tested them in a browser that ships native WebMCP.
 - The app is built for a laptop screen. Phone widths are not supported.
+
+## License
+
+[MIT](LICENSE). AG Grid Enterprise, AG Studio and Bryntum have their own licences. Image credits are in [docs/IMAGE_SOURCES.md](docs/IMAGE_SOURCES.md).

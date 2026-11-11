@@ -9,7 +9,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 
 function runHmacBenchmark(iterations = 10000) {
-  const secret = 'syndicate_secret_key_32_bytes_len!';
+  const secret = process.env.SYNDICATE_HMAC_SECRET || (() => { throw new Error('Set SYNDICATE_HMAC_SECRET before running the benchmark.'); })();
   const payload = JSON.stringify({
     clanId: 'clan_flour_01',
     smeId: 'sme_austin_01',

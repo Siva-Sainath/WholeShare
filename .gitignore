@@ -98,8 +98,9 @@ GEMINI_*.md
 # Local working notes, plans and generated material kept out of the published repository
 docs/*.md
 !docs/HARNESS.md
-!docs/HARNESS_STUDY.md
 !docs/IMAGE_SOURCES.md
+!docs/ARCHITECTURE.md
+!docs/TESTING.md
 docs/assets/*
 !docs/assets/mosaic-eval.md
 docs/archive/
@@ -107,6 +108,7 @@ docs/research/
 artifacts/
 diagrams/
 notebooks/
+!training/
 postman/
 nginx/
 docker-compose.yml
@@ -120,3 +122,6 @@ skills-lock.json
 src/web/public/*.br
 src/web/public/*.gz
 data/pledges.json
+data/procured/
+data/benchmark_corpus/
+docs/architecture/*.svg
