@@ -91,19 +91,28 @@ Fireworks AI with MiniMax and DeepSeek is what powers the live app today. We als
 
 ## What we are proud of
 
-- A real PayPal sandbox hold, approved on PayPal's screen, from a button inside our app.
-- A model that physically cannot move money.
-- A comparison view that shows what a business saves against what it pays today.
-- An assistant on WhatsApp that can use the whole product through a link.
-- Our own tuned model and dataset, open for anyone to run.
+- **A real PayPal hold from a button inside our app.** The buyer approves on PayPal's own screen and a hold appears in the sandbox. Nothing is charged until the goods are accepted.
+- **The assistant can prepare everything, and approve nothing.** Only the person can approve a payment. That rule is built into how the app works, not just a promise.
+- **A comparison that speaks in your own money.** It shows what each group would cost you and what you save against what you pay today. For 12 cases of containers, that is $103.46 saved with one group and $52.92 with the other.
+- **Setting up a business from its own paperwork.** Drop in an invoice and an inventory sheet, and the app fills in the rest. A value is only kept if it is written in the documents.
+- **Any outside assistant can plug in.** Any agent can connect through MCP, or through a plain link. Our assistant app, Instinct, on WhatsApp, asks WholeShare questions and sends the owner a PayPal approval link.
+- **Our own tuned model and dataset, open to anyone.** A business can run the whole assistant on its own machine, with no outside service in the middle.
 
 ## What we learned
 
-Make the assistant's tools match the business, not the screen. Check every number it says against the data. Time one person at a time, not a pile of test runs. And give people a simple status, not buttons that pretend to be the other side.
+- **Trust is the product.** People will pool orders with strangers once they know their money is only held, and released when the goods are right.
+- **Show people their own numbers.** "You pay $31.50 a case today" beats any chart about the market.
+- **Test with the real thing early.** A real PayPal approval caught a bug that our practice runs never would.
+- **Do not fake the other side.** A claim should show its real status and wait for the supplier, not hand the buyer buttons that pretend to be the supplier.
+- **Check every number the assistant says against the data.** And give it tools that match the business, such as compare, join and file a claim, not the screens.
 
 ## What is next
 
-Run capture, refund and payouts live in the sandbox with the same care as the hold. Let suppliers connect and answer claims themselves. Move to live PayPal after review.
+- **Finish the money steps live in the sandbox.** Run capture, refund and payouts with the same care as the hold.
+- **Let suppliers join.** Suppliers answer claims and confirm shipments themselves, so nothing on that side is a sample.
+- **Real supplier prices.** Ask suppliers for quotes with the buyer's approval, so a group starts from a real price.
+- **More places and products.** Open groups beyond takeout packaging and New York.
+- **Live PayPal after review.**
 
 **Honest limits.** Everything runs in the PayPal sandbox, so no real money moves. The sample shipments and two past claims on the demo business are sample history. Capture, refund, payouts and shipment tracking are written and tested with stand-ins, but we have not run them live yet.
 
