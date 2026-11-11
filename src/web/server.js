@@ -979,8 +979,10 @@ export function createWebServer() {
     }
 
     if (pathname === "/api/v1/logistics/shipments" && req.method === "GET") {
+      // Each business sees its own shipments, never another business's.
+      const owner = currentOwnerId();
       const shipments = getDeliveryStorage().getAll().filter((record) =>
-        record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber) &&
+        record.memberId === owner && record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber) &&
         Boolean(record.supplierDeliveredAt || record.buyerDeliveredAt)
       );
       sendJson(res, 200, { count: shipments.length, shipments });
@@ -990,7 +992,8 @@ export function createWebServer() {
     if (pathname === "/api/v1/support/claims" && req.method === "GET") {
       const claimsStorage = getClaimsStorage();
       const byClan = new Map(getAllClans().map((clan) => [clan.id, clan]));
-      const claims = claimsStorage.getAll().map((claim) => {
+      const owner = currentOwnerId();
+      const claims = claimsStorage.getAll().filter((claim) => claim.memberId === owner).map((claim) => {
         const clan = byClan.get(claim.clanId);
         if (clan) return { ...claim, product: clan.name || clan.canonicalSku, city: clan.city, supplierName: clan.supplierName };
         // Older claims can point at a group that has since been renamed. Show the group id as words rather than a blank cell.
@@ -3039,6 +3042,8 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
   server.listen(PORT, () => {
     console.log(`=== Wholeshare Web Command Center running at http://localhost:${PORT} ===`);
     void Promise.all(["groups", "shipments", "ledger", "claims", "suppliers"].map((id) => querySource(id, { limit: 1 }))).catch(() => undefined);
+    // The sample business only has its New York story. Older sample shipments for other products are removed once.
+    try { getDeliveryStorage().removeWhere((record) => record.memberId === "sme_austin_01" && !String(record.clanId).startsWith("clan-nyc-")); } catch { /* the shipments stay as they were */ }
     try { const moved = migrateStoryNames(); if (moved) console.log(`[story] renamed the demo market in ${moved} saved file(s)`); } catch (error) { console.warn(`[story] rename skipped: ${error.message}`); }
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
     void restoreWorkspace().finally(() => { try { applyPledgesToLedger(); } catch { /* the ledger still shows the story */ } });

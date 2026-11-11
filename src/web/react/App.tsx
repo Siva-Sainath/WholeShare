@@ -103,11 +103,6 @@ export const App: React.FC = () => {
         setMyGroupId(myGroupIdFromHash());
         return;
       }
-      if (h === "onboarding" && isConfirmed) {
-        window.location.hash = "discover";
-        setActiveView("discover");
-        return;
-      }
       const hashView = resolveView(h);
       if (hashView) setActiveView(hashView);
     };

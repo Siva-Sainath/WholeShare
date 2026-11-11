@@ -74,6 +74,14 @@ export class DeliveryStorage {
     return records.length - kept.length;
   }
 
+  // Drops the records a rule matches. Used to clear sample shipments that do not belong to the story.
+  public removeWhere(match: (record: DeliveryRecord) => boolean): number {
+    const records = this.getAll();
+    const kept = records.filter((record) => !match(record));
+    if (kept.length !== records.length) this.saveAll(kept);
+    return records.length - kept.length;
+  }
+
   public upsert(record: DeliveryRecord): void {
     const records = this.getAll();
     const index = records.findIndex(
