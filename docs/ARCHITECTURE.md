@@ -2,11 +2,11 @@
 
 This page explains how the parts fit together and why they are shaped this way. For setup, see the [README](../README.md).
 
-The diagrams were drawn in tldraw. The `.tldraw` files next to each image open in tldraw if you want to change them.
+The diagrams are drawn by `scripts/render-diagrams.js`. Edit the script and run `node scripts/render-diagrams.js` to change them.
 
 ## The big picture
 
-![System overview](architecture/01-system-overview.png)
+![System overview](02-system-overview.png)
 
 WholeShare is one Node.js server and one browser app.
 
@@ -26,7 +26,7 @@ A fourth path leads in from outside. An assistant such as Instinct on WhatsApp c
 
 A buying group only works if people will pay before they trust each other. PayPal's authorize-then-capture flow gives us exactly that. The buyer approves, PayPal places a hold, and nothing is charged until the goods are accepted. We did not invent an escrow system. We used PayPal's.
 
-![The money flow](architecture/02-money-flow-with-paypal.png)
+![The money flow](03-money-flow.png)
 
 Read the diagram from the top.
 
@@ -45,7 +45,7 @@ A background worker, `src/daemon/reconciliation.worker.ts`, re-checks operations
 
 Mosaic is useful because it can do things. It is safe because the harness limits what it can do.
 
-![The Mosaic harness](architecture/03-mosaic-harness.png)
+![The Mosaic harness](04-mosaic-harness.png)
 
 A request passes through these steps.
 
@@ -64,7 +64,7 @@ The code is in `src/lib/durable-harness.js` (the loop), `src/lib/tool-registry.j
 
 ## How outside assistants connect
 
-![Outside agents](architecture/04-outside-agents.png)
+![Outside agents](05-outside-agents.png)
 
 The same tools can be used from outside the app, in two ways.
 
