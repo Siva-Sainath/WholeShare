@@ -1,5 +1,47 @@
 [
   {
+    "id": "clan_custom_sku_1794385696357",
+    "name": "Madagascar Vanilla Syndicate",
+    "industryVertical": "OTHER",
+    "canonicalSku": "commercial-vanilla-extract-1gal",
+    "hsCodePrefix": "",
+    "city": "",
+    "countryCode": "US",
+    "settlementCurrency": "USD",
+    "targetUnits": 250,
+    "currentUnits": 0,
+    "baseUnitPriceCents": 4500,
+    "discountTiers": [
+      {
+        "minUnits": 100,
+        "discountPct": 0
+      },
+      {
+        "minUnits": 250,
+        "discountPct": 28
+      }
+    ],
+    "estimatedDeliveryDays": 14,
+    "supplierId": "",
+    "supplierName": "Supplier chosen by the group",
+    "supplierTrustScore": 0,
+    "lat": 0,
+    "lng": 0,
+    "memberCount": 1,
+    "status": "FORMING",
+    "createdAt": "2026-11-11T08:28:16.367Z",
+    "fulfilment": {
+      "mode": "SINGLE_POINT",
+      "points": [
+        {
+          "label": "Receiving point",
+          "address": "",
+          "city": ""
+        }
+      ]
+    }
+  },
+  {
     "id": "clan_custom_sku_1794335033031",
     "name": "Madagascar Vanilla Syndicate",
     "industryVertical": "OTHER",
@@ -42,7 +84,7 @@
     }
   },
   {
-    "id": "clan-flushing-cups",
+    "id": "clan-nyc-cups",
     "name": "New York Clear Cups 16 oz with Lids",
     "industryVertical": "PACKAGING_MATERIALS",
     "canonicalSku": "Clear PET Cups 16 oz with Dome Lids (case of 1,000)",
@@ -77,7 +119,7 @@
     "memberCount": 5,
     "status": "FORMING",
     "isCrossBorder": false,
-    "createdAt": "2026-11-03T17:15:19.891Z",
+    "createdAt": "2026-11-04T08:30:47.130Z",
     "demo": true,
     "fulfilment": {
       "mode": "SINGLE_POINT",
@@ -92,7 +134,7 @@
     }
   },
   {
-    "id": "clan-flushing-cooking-oil",
+    "id": "clan-nyc-cooking-oil",
     "name": "New York Soybean Cooking Oil 35 lb",
     "industryVertical": "FOOD_AND_BEVERAGE",
     "canonicalSku": "Soybean Cooking Oil 35 lb Jug",
@@ -127,7 +169,7 @@
     "memberCount": 5,
     "status": "FORMING",
     "isCrossBorder": false,
-    "createdAt": "2026-11-02T17:15:19.891Z",
+    "createdAt": "2026-11-03T08:30:47.130Z",
     "demo": true,
     "fulfilment": {
       "mode": "SINGLE_POINT",
@@ -142,7 +184,7 @@
     }
   },
   {
-    "id": "clan-flushing-rice",
+    "id": "clan-nyc-rice",
     "name": "New York Jasmine Rice 25 lb",
     "industryVertical": "FOOD_AND_BEVERAGE",
     "canonicalSku": "Jasmine Rice Hom Mali 25 lb Bag",
@@ -177,7 +219,7 @@
     "memberCount": 5,
     "status": "FORMING",
     "isCrossBorder": true,
-    "createdAt": "2026-11-01T17:15:19.891Z",
+    "createdAt": "2026-11-02T08:30:47.130Z",
     "demo": true,
     "fulfilment": {
       "mode": "SINGLE_POINT",
@@ -192,7 +234,7 @@
     }
   },
   {
-    "id": "clan-flushing-gloves",
+    "id": "clan-nyc-gloves",
     "name": "New York Nitrile Gloves (case of 1,000)",
     "industryVertical": "RESTAURANT_EQUIPMENT",
     "canonicalSku": "Nitrile Exam Gloves Powder Free Black Medium (case of 1,000)",
@@ -227,7 +269,7 @@
     "memberCount": 5,
     "status": "FORMING",
     "isCrossBorder": false,
-    "createdAt": "2026-10-31T17:15:19.891Z",
+    "createdAt": "2026-11-01T08:30:47.130Z",
     "demo": true,
     "fulfilment": {
       "mode": "SINGLE_POINT",
@@ -242,7 +284,7 @@
     }
   },
   {
-    "id": "clan-flushing-containers-eastern",
+    "id": "clan-nyc-containers-eastern",
     "name": "New York Takeout Containers 32 oz (Eastern Imports)",
     "industryVertical": "PACKAGING_MATERIALS",
     "canonicalSku": "Kraft Takeout Container 32 oz with Lid (case of 150)",
@@ -277,7 +319,7 @@
     "memberCount": 5,
     "status": "FORMING",
     "isCrossBorder": false,
-    "createdAt": "2026-10-30T17:15:19.891Z",
+    "createdAt": "2026-10-31T08:30:47.130Z",
     "demo": true,
     "fulfilment": {
       "mode": "SINGLE_POINT",
@@ -292,7 +334,7 @@
     }
   },
   {
-    "id": "clan-flushing-containers-garden-state",
+    "id": "clan-nyc-containers-garden-state",
     "name": "New York Takeout Containers 32 oz (Garden State)",
     "industryVertical": "PACKAGING_MATERIALS",
     "canonicalSku": "Kraft Takeout Container 32 oz with Lid (case of 150)",
@@ -327,7 +369,7 @@
     "memberCount": 5,
     "status": "FORMING",
     "isCrossBorder": false,
-    "createdAt": "2026-10-29T17:15:19.891Z",
+    "createdAt": "2026-10-30T08:30:47.130Z",
     "demo": true,
     "fulfilment": {
       "mode": "SINGLE_POINT",

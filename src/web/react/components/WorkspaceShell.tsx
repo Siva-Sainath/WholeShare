@@ -1,4 +1,5 @@
 import { MosaicLogo } from "./MosaicLogo";
+import { describeAgentCall, type AgentCall } from "../agentCalls";
 import React, { useState, useEffect, FormEvent } from "react";
 import { ActiveView, SlideOverState } from "../types";
 import { ClanDetail, fetchClanById, fetchMcpTools, fetchUserSettings, McpToolDeclaration } from "../api";
@@ -57,6 +58,23 @@ interface WorkspaceShellProps {
 }
 
 // Success is never announced: the screen already shows the change. Only a failure or an approval note appears, as a small glass toast.
+// A small glass note whenever an outside agent uses the app for the person.
+const AgentCallToast: React.FC = () => {
+  const [call, setCall] = useState<AgentCall | null>(null);
+  useEffect(() => {
+    let timer: number | undefined;
+    const onCall = (event: Event) => {
+      setCall((event as CustomEvent<AgentCall>).detail);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setCall(null), 5000);
+    };
+    window.addEventListener("ws:agent-call", onCall);
+    return () => { window.removeEventListener("ws:agent-call", onCall); window.clearTimeout(timer); };
+  }, []);
+  if (!call) return null;
+  return <aside className="ws-toast ws-toast--agent" role="status" aria-live="polite"><Bot size={16} aria-hidden="true" /><div className="ws-toast-text"><strong>{describeAgentCall(call)}</strong><span>An outside agent is using WholeShare for you.</span></div></aside>;
+};
+
 export const ActionNoticeBanner: React.FC<{ notice: ActionNotice | null | undefined; onClose?: () => void }> = ({ notice, onClose }) => {
   const visible = Boolean(notice && notice.status !== "success");
   useEffect(() => {
@@ -197,6 +215,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
   return (
     <div id="workspaceShell" className="ws-workspace-shell bg-brand-bg min-h-screen flex antialiased">
       <CommandBar hideTrigger={activeView === "mosaic-chat"} />
+      <AgentCallToast />
       <div className="flex flex-col flex-1 min-h-screen bg-brand-bg">
         <header className="ws-appbar sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-brand-border" aria-label="Workspace navigation">
           <div className="ws-appbar-inner">
@@ -388,6 +407,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
                     <button
                       type="button"
                       disabled={!drawerRulesAgreed}
+                      onClick={() => { window.location.hash = `#group/${slideOver.clanId}`; }}
                       style={{
                         width: "100%",
                         padding: "12px",

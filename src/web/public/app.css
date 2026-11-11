@@ -5652,3 +5652,16 @@ body:has([data-ws-view="mosaic-chat"]) .ws-live { display: none; }
 .ws-surface-count { display: grid; justify-items: end; font: 600 24px/28px 'Geist', sans-serif; font-variant-numeric: tabular-nums; }
 .ws-surface-count small { font: 500 11px/14px 'Geist', sans-serif; color: #5C6A79; }
 @media (max-width: 1100px) { .ws-surfaces { grid-template-columns: minmax(0, 1fr); } }
+.ws-paytoday { margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(15, 31, 46, 0.1); font: 400 14px/20px 'Geist', sans-serif; color: #5C6A79; width: fit-content; max-width: 100%; }
+.ws-paytoday b { color: #0F1F2E; font-weight: 600; }
+
+/* Agents: slim surfaces row and the live feed */
+.ws-surfaces-wrap { display: grid; gap: 12px; }
+.ws-surface-body { align-content: center; }
+.ws-surface-body .ws-surface-note { font: 400 13px/18px 'Geist', sans-serif; }
+.ws-agent-feed { display: grid; gap: 6px; padding: 12px 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(15, 31, 46, 0.08); font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-agent-feed b { color: #0F1F2E; font-weight: 600; font-size: 14px; }
+.ws-agent-feed ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.ws-agent-feed li { display: flex; justify-content: space-between; gap: 12px; color: #0F1F2E; }
+.ws-agent-feed li small { color: #5C6A79; font-variant-numeric: tabular-nums; }
+.ws-toast--agent svg { color: #0070BA; }

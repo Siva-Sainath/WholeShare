@@ -89,6 +89,12 @@ export const PayPalPledgeButton: React.FC<PayPalPledgeButtonProps> = ({ clanId, 
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sdkReady, setSdkReady] = useState(false);
+  // The business that is signed in is the buyer, so its name is already filled in.
+  useEffect(() => {
+    let live = true;
+    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { businessName?: string } }) => { if (live && p.profile?.businessName) setBusinessName((current) => current || String(p.profile?.businessName)); }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
   const businessNameRef = useRef(businessName);
   const unitsRef = useRef(units);
   const quoteRef = useRef(quote);
@@ -199,7 +205,7 @@ export const PayPalPledgeButton: React.FC<PayPalPledgeButtonProps> = ({ clanId, 
     setInvoiceBusy(true);
     setMessage(null);
     try {
-      const result = await runAgentTool("generate_step_up_invoice", { amountCents: quote.amountCents, buyerId: "sme_austin_01", memo: `Step-up for ${clanName}, ${quote.units} units` });
+      const result = await runAgentTool("generate_step_up_invoice", { amountCents: quote.amountCents, memo: `Step-up for ${clanName}, ${quote.units} units` });
       setInvoice({ number: String(result.invoiceNumber ?? ""), qr: String(result.qrCodeUrl ?? "") });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not create the step-up invoice.");
@@ -264,6 +270,6 @@ export const PayPalPledgeButton: React.FC<PayPalPledgeButtonProps> = ({ clanId, 
     {step === 2 && !sdkReady && !message && <p className="ws-paypal-status" role="status">Loading PayPal checkout…</p>}
     {message && <p className="ws-paypal-status" role={receipt ? "status" : "alert"}>{message}</p>}
     {receipt && <div className="ws-pledge-done"><span className="lp-gold"><Button variant="primary" label="Open My groups" onClick={() => { window.location.hash = "my-groups"; }} /></span></div>}
-    {receipt && <Banner status="success" title="Pledge authorized" description={`PayPal confirmed the authorization. ${receipt.units} units are pledged to this group. Order ${receipt.orderId}.`} />}
+    {receipt && <Banner status="success" title="Pledge authorized" description={`PayPal confirmed the authorization and is holding ${(receipt.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })} for ${receipt.units} units. Authorization ${receipt.authorizationId}. Order ${receipt.orderId}. Nothing is charged until you accept the goods.`} />}
   </div>;
 };

@@ -123,7 +123,7 @@ async function run() {
         });
       });
       await new Promise((r) => setTimeout(r, 400));
-      const busVal = await page.$eval("input[placeholder*='Answer Mosaic'], form input[type='text'], input", (el) => el.value).catch(() => "");
+      const busVal = await page.$eval("input[placeholder*='Answer Mosaic'], form input[type='text'], input[type='text']", (el) => el.value).catch(() => "");
       recordTest("onboarding.prefill", "PASSING", { businessName: "Austin Artisan Bakery" }, dispatched, { busVal }, dispatched && busVal.includes("Austin Artisan"));
     }
     {

@@ -150,12 +150,16 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({ externalQuery, exter
   const [category, setCategory] = useState(externalCategory || "All categories");
   const [city, setCity] = useState("All cities");
   const [visibleCount, setVisibleCount] = useState(6);
+  // From the business's own invoice: who it buys from today and the price it pays.
+  const [payToday, setPayToday] = useState<{ supplier: string; price: number } | null>(null);
   // A business that said what it buys starts on groups for that product. Clearing the search shows everything.
   useEffect(() => {
     if (externalQuery) return;
     let live = true;
-    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string } }) => {
+    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { smeId?: string; product?: string; currentSupplier?: string; currentUnitPriceUsd?: number } }) => {
       const product = String(p.profile?.product ?? "").trim();
+      if (live && p.profile?.smeId) { setOwnerId(p.profile.smeId); setVoterId(p.profile.smeId); }
+      if (live && p.profile?.currentSupplier && p.profile.currentUnitPriceUsd) setPayToday({ supplier: p.profile.currentSupplier, price: Number(p.profile.currentUnitPriceUsd) });
       if (live && product) setQuery((current) => current || product);
     }).catch(() => undefined);
     return () => { live = false; };
@@ -176,6 +180,7 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({ externalQuery, exter
   const [proposals, setProposals] = useState<GovernanceProposalRecord[]>([]);
   const [govLoading, setGovLoading] = useState(false);
   const [voterRole, setVoterRole] = useState<"MEMBER" | "GUEST">("MEMBER");
+  const [ownerId, setOwnerId] = useState("sme_austin_01");
   const [voterId, setVoterId] = useState("sme_austin_01");
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
@@ -724,6 +729,15 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({ externalQuery, exter
           Discover buying groups
         </h1>
         <p style={{ ...mutedText, margin: 0 }}>Browse by product, city or category, then open a group for its pricing tiers, members and pledge activity.</p>
+        {payToday && (() => {
+          const best = clans.length > 0 ? Math.min(...clans.map((group) => (group.unitPriceCents / 100) * (1 - group.discountTierPct / 100))) : null;
+          return (
+            <p className="ws-paytoday">
+              <b>You pay ${payToday.price.toFixed(2)} each today</b> with {payToday.supplier}, read from your invoice.
+              {best !== null && best < payToday.price ? ` The lowest group price shown here is $${best.toFixed(2)} at the top tier.` : ""}
+            </p>
+          );
+        })()}
       </header>
 
       <div style={{ marginBottom: 20 }}>
@@ -1198,11 +1212,11 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({ externalQuery, exter
                     onChange={(e) => {
                       const role = e.target.value as "MEMBER" | "GUEST";
                       setVoterRole(role);
-                      setVoterId(role === "MEMBER" ? "sme_austin_01" : "sme_guest_99");
+                      setVoterId(role === "MEMBER" ? ownerId : "sme_guest_99");
                     }}
                     style={{ ...inputStyle, width: "auto", padding: "4px 8px", fontSize: 12 }}
                   >
-                    <option value="MEMBER">Member (sme_austin_01)</option>
+                    <option value="MEMBER">Member (you)</option>
                     <option value="GUEST">Guest non-member (sme_guest_99)</option>
                   </select>
                 </label>

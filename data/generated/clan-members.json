@@ -32809,7 +32809,7 @@
       "pledgedAt": "2026-11-02T16:25:00.000Z"
     }
   ],
-  "clan-flushing-containers-garden-state": [
+  "clan-nyc-containers-garden-state": [
     {
       "smeId": "sme_austin_01",
       "name": "Golden Lotus Kitchen",
@@ -32856,7 +32856,7 @@
       "pledgedAt": "2026-10-27T17:15:19.891Z"
     }
   ],
-  "clan-flushing-containers-eastern": [
+  "clan-nyc-containers-eastern": [
     {
       "smeId": "sme_austin_01",
       "name": "Golden Lotus Kitchen",
@@ -32903,7 +32903,7 @@
       "pledgedAt": "2026-10-26T17:15:19.891Z"
     }
   ],
-  "clan-flushing-gloves": [
+  "clan-nyc-gloves": [
     {
       "smeId": "sme_austin_01",
       "name": "Golden Lotus Kitchen",
@@ -32942,7 +32942,7 @@
     },
     {
       "smeId": "sme_fl_gloves_3",
-      "name": "Flushing Bakery & Buns",
+      "name": "Rivera's Bakery & Buns",
       "pledgedUnits": 5,
       "authorizedCents": 29440,
       "status": "PLEDGED",
@@ -32950,7 +32950,7 @@
       "pledgedAt": "2026-10-25T17:15:19.891Z"
     }
   ],
-  "clan-flushing-rice": [
+  "clan-nyc-rice": [
     {
       "smeId": "sme_austin_01",
       "name": "Golden Lotus Kitchen",
@@ -32980,7 +32980,7 @@
     },
     {
       "smeId": "sme_fl_rice_2",
-      "name": "Flushing Bakery & Buns",
+      "name": "Rivera's Bakery & Buns",
       "pledgedUnits": 10,
       "authorizedCents": 21070,
       "status": "AUTHORIZED",
@@ -32997,7 +32997,7 @@
       "pledgedAt": "2026-10-24T17:15:19.891Z"
     }
   ],
-  "clan-flushing-cooking-oil": [
+  "clan-nyc-cooking-oil": [
     {
       "smeId": "sme_austin_01",
       "name": "Golden Lotus Kitchen",
@@ -33044,7 +33044,7 @@
       "pledgedAt": "2026-10-23T17:15:19.891Z"
     }
   ],
-  "clan-flushing-cups": [
+  "clan-nyc-cups": [
     {
       "smeId": "sme_austin_01",
       "name": "Golden Lotus Kitchen",
@@ -33089,6 +33089,288 @@
       "status": "PLEDGED",
       "paypalOrderId": null,
       "pledgedAt": "2026-10-22T17:15:19.891Z"
+    }
+  ],
+  "clan-nyc-containers-garden-state": [
+    {
+      "smeId": "sme_austin_01",
+      "name": "Neon Dumpling Co.",
+      "pledgedUnits": 4,
+      "authorizedCents": 11592,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-09T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containersgardenstate_0",
+      "name": "Tin Roof Taqueria",
+      "pledgedUnits": 10,
+      "authorizedCents": 28980,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-06T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containersgardenstate_1",
+      "name": "Cloud Nine Boba",
+      "pledgedUnits": 9,
+      "authorizedCents": 26082,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-03T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containersgardenstate_2",
+      "name": "Main Street Dumpling House",
+      "pledgedUnits": 8,
+      "authorizedCents": 23184,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-31T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containersgardenstate_3",
+      "name": "Lucky Panda Takeout",
+      "pledgedUnits": 7,
+      "authorizedCents": 20286,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-28T08:30:47.130Z"
+    }
+  ],
+  "clan-nyc-containers-eastern": [
+    {
+      "smeId": "sme_austin_01",
+      "name": "Neon Dumpling Co.",
+      "pledgedUnits": 9,
+      "authorizedCents": 20592,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-08T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containerseastern_0",
+      "name": "Cloud Nine Boba",
+      "pledgedUnits": 8,
+      "authorizedCents": 18304,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-05T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containerseastern_1",
+      "name": "Main Street Dumpling House",
+      "pledgedUnits": 6,
+      "authorizedCents": 13728,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-02T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containerseastern_2",
+      "name": "Lucky Panda Takeout",
+      "pledgedUnits": 5,
+      "authorizedCents": 11440,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-30T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_containerseastern_3",
+      "name": "Chengdu Spice House",
+      "pledgedUnits": 13,
+      "authorizedCents": 29744,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-27T08:30:47.130Z"
+    }
+  ],
+  "clan-nyc-gloves": [
+    {
+      "smeId": "sme_austin_01",
+      "name": "Neon Dumpling Co.",
+      "pledgedUnits": 3,
+      "authorizedCents": 17664,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-07T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_gloves_0",
+      "name": "Main Street Dumpling House",
+      "pledgedUnits": 9,
+      "authorizedCents": 52992,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-04T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_gloves_1",
+      "name": "Lucky Panda Takeout",
+      "pledgedUnits": 8,
+      "authorizedCents": 47104,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-01T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_gloves_2",
+      "name": "Chengdu Spice House",
+      "pledgedUnits": 7,
+      "authorizedCents": 41216,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-29T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_gloves_3",
+      "name": "New York Bakery & Buns",
+      "pledgedUnits": 5,
+      "authorizedCents": 29440,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-26T08:30:47.130Z"
+    }
+  ],
+  "clan-nyc-rice": [
+    {
+      "smeId": "sme_austin_01",
+      "name": "Neon Dumpling Co.",
+      "pledgedUnits": 19,
+      "authorizedCents": 40033,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-06T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_rice_0",
+      "name": "Lucky Panda Takeout",
+      "pledgedUnits": 16,
+      "authorizedCents": 33712,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-03T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_rice_1",
+      "name": "Chengdu Spice House",
+      "pledgedUnits": 13,
+      "authorizedCents": 27391,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-31T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_rice_2",
+      "name": "New York Bakery & Buns",
+      "pledgedUnits": 10,
+      "authorizedCents": 21070,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-28T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_rice_3",
+      "name": "Taste of Xi'an",
+      "pledgedUnits": 26,
+      "authorizedCents": 54782,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-25T08:30:47.130Z"
+    }
+  ],
+  "clan-nyc-cooking-oil": [
+    {
+      "smeId": "sme_austin_01",
+      "name": "Neon Dumpling Co.",
+      "pledgedUnits": 4,
+      "authorizedCents": 17296,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-05T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cookingoil_0",
+      "name": "Tin Roof Taqueria",
+      "pledgedUnits": 11,
+      "authorizedCents": 47564,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-02T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cookingoil_1",
+      "name": "Cloud Nine Boba",
+      "pledgedUnits": 9,
+      "authorizedCents": 38916,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-30T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cookingoil_2",
+      "name": "Main Street Dumpling House",
+      "pledgedUnits": 8,
+      "authorizedCents": 34592,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-27T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cookingoil_3",
+      "name": "Lucky Panda Takeout",
+      "pledgedUnits": 7,
+      "authorizedCents": 30268,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-24T08:30:47.130Z"
+    }
+  ],
+  "clan-nyc-cups": [
+    {
+      "smeId": "sme_austin_01",
+      "name": "Neon Dumpling Co.",
+      "pledgedUnits": 7,
+      "authorizedCents": 38164,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-04T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cups_0",
+      "name": "Cloud Nine Boba",
+      "pledgedUnits": 6,
+      "authorizedCents": 32712,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-11-01T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cups_1",
+      "name": "Main Street Dumpling House",
+      "pledgedUnits": 4,
+      "authorizedCents": 21808,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-29T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cups_2",
+      "name": "Lucky Panda Takeout",
+      "pledgedUnits": 3,
+      "authorizedCents": 16356,
+      "status": "AUTHORIZED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-26T08:30:47.130Z"
+    },
+    {
+      "smeId": "sme_fl_cups_3",
+      "name": "Chengdu Spice House",
+      "pledgedUnits": 9,
+      "authorizedCents": 49068,
+      "status": "PLEDGED",
+      "paypalOrderId": null,
+      "pledgedAt": "2026-10-23T08:30:47.130Z"
     }
   ]
 }

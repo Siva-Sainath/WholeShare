@@ -98,7 +98,7 @@ function formatCategory(cat?: string): string {
 }
 
 // The built-in demo groups share one id prefix, so they lead the list for visitors who have not set up their own city.
-const isStory = (clan: { id: string }): boolean => clan.id.startsWith("clan-flushing-");
+const isStory = (clan: { id: string }): boolean => clan.id.startsWith("clan-nyc-");
 
 // Visitors with their own city see groups there first. Everyone else starts with the built-in demo groups.
 const nearScore = (clan: { id: string; city?: string | null }, home: string): number => (home === "New York" && isStory(clan) ? 2 : 0) + (clan.city === home ? 1 : 0);
@@ -147,7 +147,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       .sort((a, b) => nearScore(b, homeCity) - nearScore(a, homeCity) || b.progressPct - a.progressPct),
     [clans, homeCity]
   );
-  const featured = openGroups.find((c) => c.id === "clan-flushing-containers-eastern") ?? openGroups[0] ?? null;
+  const featured = openGroups.find((c) => c.id === "clan-nyc-containers-eastern") ?? openGroups[0] ?? null;
   const localGroups = openGroups.filter((c) => nearScore(c, homeCity) > 0);
   const gridGroups = localGroups.length >= 4 ? localGroups.slice(0, 6) : openGroups.filter((c) => c.id !== featured?.id).slice(0, 6);
 
@@ -198,7 +198,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     window.location.reload();
   };
 
-  const useDemoBusiness = () => openBusiness({ businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12 });
+  const useDemoBusiness = () => openBusiness({ businessName: "Neon Dumpling Co.", industry: "Restaurant", contactEmail: "owner@neondumpling.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12, address: "218 Bedford Avenue", borough: "Brooklyn", state: "NY", currentSupplier: "Garden State Paper & Packaging", currentUnitPriceUsd: 31.5 });
 
   const scrollTo = (id: string) => (event: React.MouseEvent) => {
     event.preventDefault();
@@ -359,7 +359,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
             <div className="lp-try-card lp-reveal">
               <h3>Use the demo business</h3>
-              <p>Golden Lotus Kitchen, a restaurant in New York that pools takeout containers with its neighbours. Open it and try every step.</p>
+              <p>Neon Dumpling Co., a restaurant in New York that pools takeout containers with its neighbours. Open it and try every step.</p>
               <ul>
                 <li>Find and compare two container groups</li>
                 <li>Join one and approve the hold on PayPal</li>

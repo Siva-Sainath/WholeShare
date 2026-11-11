@@ -567,7 +567,7 @@ export function initBryntumTaskBoard(
         if (from === to) return false;
         try {
           if (from === "draft" && to === "supplier") {
-            await postClaim("approve", { claimId: String(task.id), memberId: String(task.memberId || "sme_austin_01") });
+            await postClaim("approve", { claimId: String(task.id), memberId: String(task.memberId || "") });
             Toast.show(`Approved ${task.id}. It is now with the supplier.`);
           } else if (from === "supplier" && (to === "settled" || to === "rejected")) {
             await postClaim("respond", { claimId: String(task.id), action: to === "settled" ? "ACCEPT" : "REJECT", notes: "Decided on the claims board (supplier demo view)." });

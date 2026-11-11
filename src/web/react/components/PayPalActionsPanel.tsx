@@ -44,7 +44,7 @@ export const StepUpCard: React.FC = () => {
       <Field label="Amount (USD)" value={amount} onChange={setAmount} type="number" />
       <Field label="Memo" value={memo} onChange={setMemo} />
       <Gold variant="primary" label={busy ? "Creating invoice" : "Create invoice"} isDisabled={busy || dollarsToCents(amount) < 100000} onClick={() => void run(async () => {
-        const r = await runAgentTool("generate_step_up_invoice", { amountCents: dollarsToCents(amount), buyerId: "sme_austin_01", memo });
+        const r = await runAgentTool("generate_step_up_invoice", { amountCents: dollarsToCents(amount), memo });
         setOut({ number: asText(r.invoiceNumber), qr: asText(r.qrCodeUrl), id: asText(r.invoiceId) });
       })} />
       {dollarsToCents(amount) < 100000 && <p className="ws-hub-sub">Step-up applies from $1,000.</p>}

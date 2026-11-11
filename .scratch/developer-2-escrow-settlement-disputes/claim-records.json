@@ -156,5 +156,32 @@
     "reducedSupplierPayout": 14040,
     "createdAt": "2026-11-03T17:03:51.900Z",
     "updatedAt": "2026-11-03T17:04:25.566Z"
+  },
+  {
+    "claimId": "claim-1794386129222-xak35g",
+    "clanId": "coalition_strict_evidence",
+    "memberId": "sme_austin_01",
+    "orderId": "ORD_TEST_01",
+    "captureId": "CAP_TEST_01",
+    "damagedUnits": 5,
+    "unitPrice": 10,
+    "orderValue": 50,
+    "claimedAmount": 50,
+    "evidence": {
+      "photoUrls": [
+        "https://storage.wholeshare.io/photo_torn_bag.jpg",
+        "https://storage.wholeshare.io/unboxing_video.mp4"
+      ],
+      "description": "Torn bag recorded in unboxing video."
+    },
+    "status": "DRAFT",
+    "buyerApprovedAt": null,
+    "supplierResponse": null,
+    "agreedRefundAmount": null,
+    "refundId": null,
+    "refundTransaction": null,
+    "reducedSupplierPayout": null,
+    "createdAt": "2026-11-11T08:35:29.222Z",
+    "updatedAt": "2026-11-11T08:35:29.222Z"
   }
 ]

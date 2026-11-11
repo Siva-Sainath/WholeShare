@@ -12,3 +12,8 @@ Good next sources, free API key needed:
 - Smithsonian Open Access and Library of Congress. CC0 or public domain, strong for industrial and textile history, weaker for modern products.
 
 Rule: never ship a photo without a credits row. Prefer CC0 and public domain. CC BY and CC BY-SA need the credit shown.
+
+## Sample damage photos
+
+The damage photos in the sample business kits (`src/web/public/demo-kits/photos`) are real photographs, found through Openverse and credited in `src/web/public/demo-kits/photos/CREDITS.json`:
+- Damaged Package, by dmuth, CC BY-SA 2.0 (two photos).

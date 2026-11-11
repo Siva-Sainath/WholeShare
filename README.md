@@ -8,11 +8,11 @@ WholeShare is a B2B group buying marketplace. Independent businesses that sit on
 
 ## Try it (2 minutes)
 
-You do not have to use our demo. Describe **your own business** (any product, any city or country) and WholeShare builds a workspace around it from the real catalog: your pledges, a delivery on the way, a late one and one ready to inspect. The AG Grid panels, the Bryntum timeline, calendar and claims board, and the AG Studio reports all show that business. The landing page also has a one-click **demo business** and **twelve sample businesses** in twelve countries, each with an invoice, an inventory sheet and a damage photo you can use.
+You do not have to use our demo. Describe **your own business** (any product, any city or country) and WholeShare builds a workspace around it from the real catalog: your pledges, a delivery on the way, a late one and one ready to inspect. The AG Grid panels, the Bryntum timeline, calendar and claims board, and the AG Studio reports all show that business. The landing page also has a one-click **demo business** and **five sample businesses**, each with an invoice, an inventory sheet and a damage photo you can use.
 
 Live: **https://wholeshare-app.onrender.com** (runs in the PayPal sandbox; the first load after a long idle can take a few seconds).
 
-1. Open the app and finish onboarding. Say what you run in one sentence, for example *We run Golden Lotus Kitchen, a Chinese restaurant in Queens, New York.* Mosaic fills the form.
+1. Open the app and finish onboarding. Say what you run in one sentence, for example *We run Neon Dumpling Co., a Chinese restaurant in Queens, New York.* Mosaic fills the form.
 2. Open **Mosaic** and try, in this order:
    - `Which New York groups can we still join?`
    - `Compare the two New York takeout container groups for 12 cases`

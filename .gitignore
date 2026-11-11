@@ -119,3 +119,4 @@ skills-lock.json
 
 src/web/public/*.br
 src/web/public/*.gz
+data/pledges.json

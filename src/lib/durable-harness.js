@@ -171,6 +171,8 @@ export class WholeshareDurableHarness {
     try {
       const saved = loadUserSettings().profile ?? {};
       profile = { businessName: saved.businessName, city: saved.city, country: saved.country, currency: saved.currency };
+      // What their own documents showed, so a comparison can say what a group saves against what they pay today.
+      if (saved.currentSupplier && saved.currentUnitPriceUsd) profile.payToday = { supplier: saved.currentSupplier, unitPriceUsd: saved.currentUnitPriceUsd, product: saved.product, units: saved.units };
     } catch {
       profile = {};
     }
@@ -193,6 +195,7 @@ Policy:
 - Stay in the chat. Answer questions with query. Navigate (ui_navigate_view, ui_open_group, ui_open_my_group) only when the user asks to go somewhere or open something.
 - If a needed detail is missing or the request is ambiguous, ask one short question and call no tool.
 - All PayPal activity in this app runs in the PayPal sandbox. Say so briefly when you talk about payments, holds, invoices or payouts, and never imply real money moved.
+- When the profile has payToday, compare group prices with what the business pays today and state the saving in dollars for its units. Only use numbers from payToday and the tools.
 - After tools run, reply in one or two plain sentences that name the specifics.
 What the user is looking at and who they are (JSON): ${screen}`
       },

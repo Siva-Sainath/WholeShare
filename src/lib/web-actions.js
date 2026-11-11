@@ -6,6 +6,7 @@ import { interceptNegotiationProposal } from "./interceptor.js";
 import { proposeCoalitionAllocation } from "./model-runner.js";
 import { transitionCoalitionState } from "./fsm.js";
 import { generateInvoiceWithQr } from "./paypal-bridge.js";
+import { currentOwnerId } from "./user-settings.js";
 import { getRepaymentStorage } from "../storage/repayment.storage.ts";
 import { getClanGovernanceAdapter } from "../adapter/clan-governance.adapter.ts";
 import { DEFAULT_CLAN_RULES, GovernanceError } from "../domain/clan-governance.ts";
@@ -48,9 +49,9 @@ const STORY_LEDGER = {
   coalition_vanilla_06: { skuName: "Toasted Sesame Oil 5 L Tin", unitPriceCents: 4500 }
 };
 const STORY_PEOPLE = {
-  "Austin Artisan Bakery": "Golden Lotus Kitchen",
-  "Bean & Leaf Coffee Roasters": "Jade Garden Noodle Bar",
-  "GreenLeaf Organics Cafe": "Sweet Pearl Bubble Tea"
+  "Austin Artisan Bakery": "Neon Dumpling Co.",
+  "Bean & Leaf Coffee Roasters": "Tin Roof Taqueria",
+  "GreenLeaf Organics Cafe": "Cloud Nine Boba"
 };
 
 class WholeshareActionDispatcher {
@@ -941,6 +942,8 @@ class WholeshareActionDispatcher {
           status: m.status,
           stepUpRequired: m.stepUpRequired,
           paypalOrderId: m.paypalOrderId,
+          authorizationId: m.authorizationId ?? null,
+          captureId: m.captureId ?? null,
           invoiceQrUrl: m.invoiceQrUrl
         }))
       });
@@ -1037,7 +1040,7 @@ class WholeshareActionDispatcher {
           id: claimId,
           orderId: orderId || "ORD_UNKNOWN",
           coalitionId: targetCoalition?.id || "coalition_flour_01",
-          buyerId: buyerId || "sme_austin_01",
+          buyerId: buyerId || currentOwnerId(),
           totalAmount: (targetMember?.authorizedCents || 150000) / 100,
           claimedRefundAmount: Math.round(((targetMember?.authorizedCents || 150000) / 100) * 0.4),
           status: "DRAFT",

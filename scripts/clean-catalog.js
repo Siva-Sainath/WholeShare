@@ -19,7 +19,7 @@ let renamed = 0;
 let capped = 0;
 
 for (const clan of clans) {
-  if (clan.id.startsWith("clan-flushing-")) continue;
+  if (clan.id.startsWith("clan-nyc-")) continue;
   // Names are rebuilt from the product, so they always say what the group buys.
   const product = String(clan.canonicalSku || "").replace(/\s*\([^)]*\)\s*$/, "").replace(SUFFIX, "").trim();
   let name = `${clan.city} ${product}`;
@@ -38,7 +38,7 @@ for (const clan of clans) {
 }
 let disambiguated = 0;
 for (const group of buckets.values()) {
-  if (group.length < 2 || group[0].id.startsWith("clan-flushing-")) continue;
+  if (group.length < 2 || group[0].id.startsWith("clan-nyc-")) continue;
   const used = new Set();
   group.forEach((clan, index) => {
     let tag = shortSupplier(clan.supplierName) || `Group ${index + 1}`;

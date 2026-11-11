@@ -16,7 +16,7 @@ import {
 } from "./paypal-bridge.js";
 import { interceptToolExecution } from "./interceptor.js";
 import { getPledgeQuote } from "./paypal-checkout.js";
-import { loadUserSettings } from "./user-settings.js";
+import { loadUserSettings, currentOwnerId } from "./user-settings.js";
 import { SOURCES, querySource, resolveSourceId } from "./data-sources.js";
 import { runQuery, resolveEntity, compareGroups, groupIdFromWords } from "./mosaic-tools.js";
 import { callPageTool } from "./page-bridge.js";
@@ -1796,7 +1796,7 @@ export async function executeTool(toolName, args = {}) {
     case "generate_step_up_invoice": {
       const invoice = await generateInvoiceWithQr({
         totalCents: args.amountCents,
-        recipientEmail: `${args.buyerId}@wholeshare.local`,
+        recipientEmail: `${args.buyerId || currentOwnerId()}@wholeshare.local`,
         memo: args.memo || "Wholeshare Group Escrow Step-Up Invoice"
       });
       return {
@@ -2919,14 +2919,14 @@ export async function executeTool(toolName, args = {}) {
       } else {
         unitPriceCents = coalition.unitPriceCents;
       }
-      const memberId = loadUserSettings().profile?.smeId || "sme_austin_01";
+      const memberId = currentOwnerId();
       const description = [args.reason, args.notes, args.detectedTracking ? `Tracking in photo: ${args.detectedTracking}` : null].filter(Boolean).join(". ");
       try {
         const claim = claimsAdapter.intakeClaim({
           clanId: args.clanId,
           memberId,
-          orderId: "local-record",
-          captureId: "local-record",
+          orderId: (await import("./pledge-ledger.js")).findPledge(args.clanId, memberId)?.orderId ?? "local-record",
+          captureId: (await import("./pledge-ledger.js")).findPledge(args.clanId, memberId)?.captureId ?? "local-record",
           damagedUnits: units,
           unitPrice: unitPriceCents / 100,
           orderValue: (unitPriceCents * units) / 100,
@@ -2959,7 +2959,7 @@ export async function executeTool(toolName, args = {}) {
         photoBase64,
         conditionStatus: conditionStatus || "GOOD_CONDITION",
         notes: notes || "Multimodal proof uploaded by buyer.",
-        buyerId: buyerId || "sme_austin_01"
+        buyerId: buyerId || currentOwnerId()
       });
       return result;
     }

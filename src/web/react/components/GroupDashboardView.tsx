@@ -4,12 +4,10 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
-import { FileInput } from "@astryxdesign/core/FileInput";
-import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Skeleton } from "@astryxdesign/core/Skeleton";
 import { Step, Stepper } from "@astryxdesign/core/Stepper";
 import {
-  confirmDelivery, evaluateGroupExit, fetchLiquidity, fetchUserOverview, JoinedGroup, leaveGroup, LiquiditySummary, settleDebt, UserOverview
+  acceptGoods, evaluateGroupExit, markSupplierDelivered, fetchLiquidity, fetchUserOverview, JoinedGroup, leaveGroup, LiquiditySummary, settleDebt, UserOverview
 } from "../api";
 import { PayoutCard, CaptureCard, SubscriptionCard } from "./PayPalActionsPanel";
 import { ProductVisual } from "./ProductVisual";
@@ -29,23 +27,12 @@ function stageIndex(status: string): number {
   }
 }
 
-function readFileBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = () => reject(new Error("Could not read that photo."));
-    reader.readAsDataURL(file);
-  });
-}
-
 export const GroupDashboardView: React.FC<{ clanId: string }> = ({ clanId }) => {
   const [overview, setOverview] = useState<UserOverview | null>(null);
   const [liquidity, setLiquidity] = useState<LiquiditySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [condition, setCondition] = useState<"GOOD_CONDITION" | "DAMAGED">("GOOD_CONDITION");
-  const [photo, setPhoto] = useState<File | null>(null);
   const [exitInfo, setExitInfo] = useState<Awaited<ReturnType<typeof evaluateGroupExit>> | null>(null);
 
   const load = useCallback(() => {
@@ -92,7 +79,6 @@ export const GroupDashboardView: React.FC<{ clanId: string }> = ({ clanId }) => 
   }
 
   const stage = stageIndex(group.clanStatus);
-  const canConfirm = group.clanStatus === "LOCKED" || group.clanStatus === "DELIVERED";
   const debts = overview.outstandingDebts;
 
   return (
@@ -119,32 +105,33 @@ export const GroupDashboardView: React.FC<{ clanId: string }> = ({ clanId }) => 
 
       <div className="ws-gdash-grid">
         <section className="ws-gdash-card">
-          <h2>Delivery</h2>
-          <p className="ws-group-muted">{canConfirm ? "Confirm what arrived. Good condition starts the 48 hour inspection clock. Damaged goods open a claim." : "Delivery can be confirmed once the group is locked and the supplier has shipped."}</p>
-          <SegmentedControl label="Condition on arrival" value={condition} onChange={(value) => setCondition(value as "GOOD_CONDITION" | "DAMAGED")}>
-            <SegmentedControlItem value="GOOD_CONDITION" label="Good condition" />
-            <SegmentedControlItem value="DAMAGED" label="Damaged" />
-          </SegmentedControl>
-          <FileInput label="Photo of the delivery" value={photo} onChange={(files) => setPhoto(Array.isArray(files) ? files[0] ?? null : files)} accept="image/*" isOptional description="A photo is kept with the claim if goods are damaged." />
-          <span className="lp-gold">
+          <h2>Delivery and payment</h2>
+          <p className="ws-group-muted">
+            {group.captureId
+              ? `Payment released. PayPal capture ${group.captureId}.`
+              : group.authorizationId
+                ? `${money(group.authorizedUsd)} is held on PayPal (authorization ${group.authorizationId}). It is only captured when you accept the goods.`
+                : "This pledge has no PayPal hold behind it, so accepting the goods records the release in WholeShare only."}
+          </p>
+          <div className="ws-hub-actions">
             <Button
-              variant="primary"
-              label={busy === "delivery" ? "Recording" : "Confirm delivery"}
-              isDisabled={!canConfirm || busy === "delivery"}
-              onClick={() => void run("delivery", async () => {
-                const message = await confirmDelivery({
-                  coalitionId: group.clanId,
-                  orderId: group.paypalOrderId ?? undefined,
-                  conditionStatus: condition,
-                  notes: condition === "DAMAGED" ? "Damage reported on arrival." : "Received in good condition.",
-                  photoBase64: photo ? await readFileBase64(photo) : undefined
-                });
-                load();
-                if (condition === "DAMAGED") window.setTimeout(() => { window.location.hash = "disputes"; }, 900);
-                return message;
-              })}
+              variant="secondary"
+              label={busy === "deliver" ? "Marking delivered" : "Sample supplier marks delivered"}
+              isDisabled={busy === "deliver" || Boolean(group.captureId)}
+              onClick={() => void run("deliver", async () => { await markSupplierDelivered(group.groupId); load(); return "The sample supplier marked the goods delivered. Inspect them: you have 48 hours."; })}
             />
-          </span>
+          </div>
+          <div className="ws-hub-actions">
+            <span className="lp-gold">
+              <Button
+                variant="primary"
+                label={busy === "accept" ? "Releasing payment" : "Goods are fine, release payment"}
+                isDisabled={busy === "accept" || Boolean(group.captureId)}
+                onClick={() => void run("accept", async () => { const result = await acceptGoods(group.groupId); load(); return result.captureId ? `Payment released. PayPal capture ${result.captureId}.` : "Payment released."; })}
+              />
+            </span>
+            <Button variant="secondary" label="Report damage" onClick={() => { window.location.hash = "disputes"; }} />
+          </div>
         </section>
 
         <section className="ws-gdash-card">

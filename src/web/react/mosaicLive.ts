@@ -131,6 +131,11 @@ export function startMosaicLive(): void {
     const { toolName, message } = parsed.payload as { toolName?: string; message?: string };
     emit({ ...state, items: state.items.map((item) => (item.pending && item.tool === toolName ? { ...item, detail: message } : item)) });
   });
+  // An outside agent (a chat assistant, another MCP client) used WholeShare for the person. Any screen can show it.
+  source.addEventListener("EXTERNAL_AGENT_CALL", (event) => {
+    const parsed = parse(event as MessageEvent<string>);
+    if (parsed) window.dispatchEvent(new CustomEvent("ws:agent-call", { detail: parsed.payload }));
+  });
   source.addEventListener("AGENT_TOOL_CALL", onToolCall as EventListener);
   source.addEventListener("AGENT_TOOL_RESULT", (event) => void onToolResult(event as MessageEvent<string>));
   source.addEventListener("AGENT_SESSION_COMPLETED", onSessionDone);

@@ -15,6 +15,9 @@ import { authorizePledgeOrder, createPledgeOrder, getPledgeQuote } from "../lib/
 import { durableHarness, describeHarness } from "../lib/durable-harness.js";
 import { handleMcpMessage, listMcpTools } from "../lib/mcp-server.js";
 import { getInferenceStatus, startInferenceProbe } from "../lib/inference-status.js";
+import { migrateStoryNames } from "../lib/story-migrate.js";
+import { extractOnboardingProfile } from "../lib/onboarding-extract.js";
+import { applyPledgesToLedger, listPledges, markDelivered, recordPledge, releasePayment, settleClaimPayment } from "../lib/pledge-ledger.js";
 import { needsSeed, restoreWorkspace, seedWorkspaceForProfile, isDemoBusiness } from "../lib/workspace-seed.js";
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../lib/tool-registry.js";
 import { kernelResearchService } from "../lib/kernel-service.js";
@@ -30,6 +33,7 @@ import {
   listIngestedDocuments
 } from "../lib/ingestion-pipeline.js";
 import {
+  currentOwnerId,
   getUserDashboardOverview,
   loadUserSettings,
   updateUserSettings,
@@ -126,6 +130,8 @@ const DURABLE_JOURNAL_PATH = resolve(process.cwd(), "data/durable_journal.json")
 const agentInviteCreateLimiter = new TokenBucketRateLimiter({ capacity: 10, refillRatePerSec: 10 / 3600 });
 // An outside agent works in bursts of tool calls, so this allows a quick burst and about one call a second after that.
 const mcpRateLimiter = new TokenBucketRateLimiter({ capacity: 40, refillRatePerSec: 1 });
+// Reading a document takes real compute (OCR, a model call), so a visitor gets a handful every ten minutes.
+const extractLimiter = new TokenBucketRateLimiter({ capacity: 8, refillRatePerSec: 8 / 600 });
 const agentOnboardLimiter = new TokenBucketRateLimiter({ capacity: 20, refillRatePerSec: 20 / 3600 });
 
 // Browser calls from this app send a matching Origin. External agents must present a live invite token.
@@ -508,7 +514,7 @@ export function createWebServer() {
         const batch = Array.isArray(body);
         const replies = [];
         for (const message of batch ? body.slice(0, 10) : [body]) {
-          const reply = await handleMcpMessage(message, { label: invite.createdBy || "agent" });
+          const reply = await handleMcpMessage(message, { label: invite.createdBy || "agent", baseUrl: String(process.env.APP_URL || `${req.headers["x-forwarded-proto"] || "http"}://${req.headers.host}`) });
           if (reply) replies.push(reply);
         }
         if (replies.length === 0) { res.writeHead(202); res.end(); return; }
@@ -775,6 +781,26 @@ export function createWebServer() {
       return;
     }
 
+    // An order that can be approved on any device. PayPal sends the person back here, and the hold is recorded.
+    if (pathname === "/api/v1/paypal/pledges/return" && req.method === "GET") {
+      try {
+        const orderId = String(url.searchParams.get("token") || "");
+        const result = await authorizePledgeOrder(orderId);
+        recordPledge({ clanId: result.clanId, units: result.units, amountCents: result.amountCents, currency: result.currency, orderId: result.orderId, authorizationId: result.authorizationId, businessName: result.businessName });
+        actionDispatcher.broadcast("PAYPAL_PLEDGE_AUTHORIZED", result);
+        res.writeHead(302, { Location: "/?pledge=authorized#my-groups" });
+      } catch (err) {
+        res.writeHead(302, { Location: `/?pledge=error&message=${encodeURIComponent(String(err.message).slice(0, 140))}#discover` });
+      }
+      res.end();
+      return;
+    }
+    if (pathname === "/api/v1/paypal/pledges/cancel" && req.method === "GET") {
+      res.writeHead(302, { Location: "/?pledge=cancelled#discover" });
+      res.end();
+      return;
+    }
+
     if ((pathname === "/api/v1/paypal/pledge-quote" || pathname === "/api/v1/paypal/pledges") && req.method === "POST") {
       if (!getSameOrigin(req)) {
         sendJson(res, 403, { error: "Payment requests must originate from this website." });
@@ -782,7 +808,8 @@ export function createWebServer() {
       }
       try {
         const body = await readJsonBody(req);
-        const result = pathname.endsWith("pledge-quote") ? getPledgeQuote(body) : await createPledgeOrder(body);
+        const base = String(process.env.APP_URL || `${req.headers["x-forwarded-proto"] || "http"}://${req.headers.host}`).replace(/\/$/, "");
+        const result = pathname.endsWith("pledge-quote") ? getPledgeQuote(body) : await createPledgeOrder(body, body.external === true ? { returnUrl: `${base}/api/v1/paypal/pledges/return`, cancelUrl: `${base}/api/v1/paypal/pledges/cancel` } : {});
         sendJson(res, pathname.endsWith("pledge-quote") ? 200 : 201, result);
       } catch (err) {
         sendJson(res, 400, { error: err.message });
@@ -799,11 +826,45 @@ export function createWebServer() {
       try {
         const orderId = safeDecode(paypalAuthorizationMatch[1]);
         const result = await authorizePledgeOrder(orderId);
+        recordPledge({ clanId: result.clanId, units: result.units, amountCents: result.amountCents, currency: result.currency, orderId: result.orderId, authorizationId: result.authorizationId, businessName: result.businessName });
         actionDispatcher.broadcast("PAYPAL_PLEDGE_AUTHORIZED", result);
         sendJson(res, 200, result);
       } catch (err) {
         sendJson(res, 400, { error: err.message });
       }
+      return;
+    }
+
+    // The sample supplier marks a group's goods as delivered, so the business can inspect them. The UI labels this step as a sample.
+    if (pathname === "/api/v1/demo/supplier-delivered" && req.method === "POST") {
+      if (!getSameOrigin(req)) { sendJson(res, 403, { error: "This action must come from the WholeShare site." }); return; }
+      try {
+        const body = await readJsonBody(req);
+        const clanId = String(body.clanId || "");
+        if (!clanId) throw new Error("Say which group.");
+        sendJson(res, 200, { status: "DELIVERED", delivery: markDelivered({ clanId }) });
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    // The business accepts the goods, and the PayPal hold is captured for the supplier.
+    if (pathname === "/api/v1/shipment/accept" && req.method === "POST") {
+      if (!getSameOrigin(req)) { sendJson(res, 403, { error: "This action must come from the WholeShare site." }); return; }
+      try {
+        const body = await readJsonBody(req);
+        const result = await releasePayment({ clanId: String(body.clanId || "") });
+        if (!result.released) { sendJson(res, 409, { error: result.reason }); return; }
+        sendJson(res, 200, { status: "RELEASED", ...result });
+      } catch (err) {
+        sendJson(res, 400, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === "/api/v1/pledges" && req.method === "GET") {
+      sendJson(res, 200, { pledges: listPledges() });
       return;
     }
 
@@ -813,7 +874,7 @@ export function createWebServer() {
     }
 
     if (pathname === "/api/v1/user/overview" && req.method === "GET") {
-      const smeId = url.searchParams.get("smeId") || "sme_austin_01";
+      const smeId = url.searchParams.get("smeId") || currentOwnerId();
       const overview = getUserDashboardOverview(smeId);
       sendJson(res, 200, overview);
       return;
@@ -832,14 +893,35 @@ export function createWebServer() {
         if (allowed.profile && typeof allowed.profile === "object") {
           const { paypalMerchantEmail: _a, paypalPayerId: _b, paypalConnectedAt: _c, paypalConnectMode: _d, smeId: _e, ...profile } = allowed.profile;
           // Whatever a visitor types is kept short and plain before it is stored or used to build a workspace.
-          for (const key of ["businessName", "industry", "city", "country", "product", "contactEmail"]) {
+          for (const key of ["businessName", "industry", "city", "country", "product", "contactEmail", "address", "borough", "state", "currentSupplier", "invoiceNumber"]) {
             if (key in profile) profile[key] = String(profile[key] ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, key === "product" ? 80 : 120);
           }
+          // What the business's documents showed: today's price and the lines it buys. Kept short and numeric.
+          if ("currentUnitPriceUsd" in profile) {
+            const price = Number(profile.currentUnitPriceUsd);
+            if (Number.isFinite(price) && price > 0 && price < 1e6) profile.currentUnitPriceUsd = Math.round(price * 100) / 100; else delete profile.currentUnitPriceUsd;
+          }
+          if ("products" in profile) {
+            profile.products = (Array.isArray(profile.products) ? profile.products : []).slice(0, 12).map((item) => ({
+              name: String(item?.name ?? "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 120),
+              unit: String(item?.unit ?? "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 40),
+              ...(Number(item?.quantity) > 0 ? { quantity: Math.min(Math.round(Number(item.quantity)), 1e6) } : {}),
+              ...(Number(item?.unitPriceUsd) > 0 ? { unitPriceUsd: Math.min(Math.round(Number(item.unitPriceUsd) * 100) / 100, 1e6) } : {}),
+              ...(item?.supplier ? { supplier: String(item.supplier).replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 100) } : {})
+            })).filter((item) => item.name);
+          }
+          if ("documentsRead" in profile) profile.documentsRead = profile.documentsRead === true;
           if ("units" in profile) {
             const units = Math.round(Number(profile.units));
             profile.units = Number.isFinite(units) && units > 0 ? Math.min(units, 100000) : 12;
           }
           allowed.profile = profile;
+        }
+        // The spend limit a person sets during onboarding only ever limits what Mosaic can prepare for them.
+        const requestedLimit = Number(body?.policies?.perPledgeSpendLimitUsd);
+        if (Number.isFinite(requestedLimit) && requestedLimit > 0) {
+          const limit = Math.min(Math.round(requestedLimit), 50000);
+          allowed.policies = { perPledgeSpendLimitUsd: limit, dailySpendLimitUsd: limit * 2 };
         }
         let updated = updateUserSettings(allowed);
         // A business that has finished onboarding gets its own pledges and shipments, built from the groups that match what it buys.
@@ -923,7 +1005,18 @@ export function createWebServer() {
       try {
         const body = await readJsonBody(req);
         const claimsAdapter = new ClaimsAdapter();
-        const claim = claimsAdapter.intakeClaim(body);
+        const memberId = String(body.memberId || currentOwnerId());
+        const pledge = listPledges(memberId).find((entry) => entry.clanId === body.clanId);
+        const units = Number(body.damagedUnits);
+        const price = Number(body.unitPrice);
+        const claim = claimsAdapter.intakeClaim({
+          ...body,
+          memberId,
+          orderId: body.orderId && body.orderId !== "local-record" ? body.orderId : pledge?.orderId ?? "local-record",
+          captureId: body.captureId && body.captureId !== "local-record" ? body.captureId : pledge?.captureId ?? "local-record",
+          orderValue: Number(body.orderValue) > 0 ? Number(body.orderValue) : Math.round(units * price * 100) / 100,
+          evidence: body.evidence ?? { photoUrls: body.photoProofUri ? [String(body.photoProofUri)] : [], description: String(body.reason ?? "Damage reported on arrival.").slice(0, 500) }
+        });
         actionDispatcher.broadcast("CLAIM_INTAKEN", claim);
         sendJson(res, 201, { status: "SUCCESS", claim });
       } catch (err) {
@@ -936,7 +1029,7 @@ export function createWebServer() {
       try {
         const body = await readJsonBody(req);
         const claimsAdapter = new ClaimsAdapter();
-        const updated = claimsAdapter.approveClaimByBuyer(String(body.claimId || ""), String(body.memberId || "sme_austin_01"));
+        const updated = claimsAdapter.approveClaimByBuyer(String(body.claimId || ""), String(body.memberId || currentOwnerId()));
         actionDispatcher.broadcast("CLAIM_APPROVED", updated);
         sendJson(res, 200, { status: "SUCCESS", claim: updated });
       } catch (err) {
@@ -949,7 +1042,10 @@ export function createWebServer() {
       try {
         const body = await readJsonBody(req);
         const claimsAdapter = new ClaimsAdapter();
-        const updated = await claimsAdapter.respondToClaim(body);
+        const updated = await claimsAdapter.respondToClaim({
+          ...body,
+          executeRefundFn: async ({ clanId, memberId, amount }) => settleClaimPayment({ clanId, memberId, amountCents: Math.round(Number(amount) * 100) })
+        });
         actionDispatcher.broadcast("CLAIM_RESPONDED", updated);
         sendJson(res, 200, { status: "SUCCESS", claim: updated });
       } catch (err) {
@@ -962,12 +1058,12 @@ export function createWebServer() {
       try {
         const body = await readJsonBody(req);
         const result = await actionDispatcher.joinCoalition({
-          smeId: body.smeId || "sme_austin_01",
+          smeId: body.smeId || currentOwnerId(),
           coalitionId: body.coalitionId,
           sku: body.sku,
           units: Number(body.units)
         });
-        actionDispatcher.broadcast("MEMBER_PLEDGED", { coalitionId: body.coalitionId, smeId: body.smeId || "sme_austin_01", units: body.units });
+        actionDispatcher.broadcast("MEMBER_PLEDGED", { coalitionId: body.coalitionId, smeId: body.smeId || currentOwnerId(), units: body.units });
         sendJson(res, 200, { status: "PLEDGED", result });
       } catch (err) {
         sendJson(res, 400, { error: err.message });
@@ -1087,11 +1183,18 @@ export function createWebServer() {
 
       if (skuFilter) {
         const term = skuFilter.toLowerCase();
-        clans = clans.filter(c =>
-          c.sku.toLowerCase().includes(term) ||
-          (c.name && c.name.toLowerCase().includes(term)) ||
-          (c.city && c.city.toLowerCase().includes(term))
-        );
+        const haystack = (c) => `${c.sku} ${c.name ?? ""} ${c.city ?? ""}`.toLowerCase();
+        const phrase = clans.filter((c) => haystack(c).includes(term));
+        if (phrase.length > 0) {
+          clans = phrase;
+        } else {
+          // No group carries the exact phrase, so match its words (plurals folded), all of them first and then at least half.
+          const tokens = term.split(/[^a-z0-9]+/).filter((word) => word.length >= 3).map((word) => (word.length > 3 ? word.replace(/ies$/, "y").replace(/s$/, "") : word));
+          const scored = clans.map((c) => ({ c, n: tokens.filter((token) => haystack(c).includes(token)).length }));
+          const all = scored.filter((entry) => tokens.length > 0 && entry.n === tokens.length);
+          const some = scored.filter((entry) => entry.n > 0 && entry.n >= Math.ceil(tokens.length / 2)).sort((a, b) => b.n - a.n);
+          clans = (all.length > 0 ? all : some).map((entry) => entry.c);
+        }
       }
       if (statusFilter && statusFilter !== "ALL") {
         clans = clans.filter(c => c.status.toUpperCase() === statusFilter.toUpperCase());
@@ -1513,6 +1616,29 @@ export function createWebServer() {
       return;
     }
 
+    // Reads a business's own documents and returns its profile. Only values written in the documents come back.
+    if (pathname === "/api/v1/onboarding/extract" && req.method === "POST") {
+      if (!isSameOriginOrInvited(req)) { sendJson(res, 403, { error: "Open WholeShare in your browser to upload documents." }); return; }
+      const rate = extractLimiter.isAllowed(clientIp(req));
+      if (!rate.allowed) { res.setHeader("Retry-After", String(rate.retryAfterSec)); sendJson(res, 429, { error: "Too many documents just now. Try again in a few minutes." }); return; }
+      try {
+        const body = await readJsonBody(req, 36 * 1024 * 1024);
+        let files = Array.isArray(body.files) ? body.files : [];
+        if (body.demoKit) {
+          const manifest = JSON.parse(readFileSync(resolve(PUBLIC_DIR, "demo-kits/demo-kits-manifest.json"), "utf-8"));
+          const kit = manifest.find((entry) => entry.id === String(body.demoKit));
+          if (!kit) { sendJson(res, 404, { error: "That sample kit does not exist." }); return; }
+          files = [[kit.invoicePdf, "application/pdf"], [kit.inventoryCsv, "text/csv"]].map(([url, mimeType]) => ({ fileName: url.split("/").pop(), mimeType, buffer: readFileSync(resolve(PUBLIC_DIR, url.replace(/^\//, ""))) }));
+        } else {
+          files = files.slice(0, 4).map((file) => ({ fileName: String(file?.fileName ?? "document").slice(0, 120), mimeType: String(file?.mimeType ?? ""), base64: String(file?.base64 ?? "") }));
+        }
+        sendJson(res, 200, await extractOnboardingProfile(files));
+      } catch (err) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message.slice(0, 200) : "Those documents could not be read." });
+      }
+      return;
+    }
+
     if (pathname === "/api/v1/ingest/upload" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
@@ -1760,7 +1886,7 @@ export function createWebServer() {
     if (pathname === "/api/v1/clan/exit/evaluate" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
-        const result = await executeTool("evaluate_clan_voluntary_exit", body);
+        const result = await executeTool("evaluate_clan_voluntary_exit", { ...body, smeId: currentOwnerId() });
         sendJson(res, 200, result);
       } catch (err) {
         sendJson(res, 400, { error: err.message });
@@ -1771,7 +1897,7 @@ export function createWebServer() {
     if (pathname === "/api/v1/clan/leave" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
-        const result = await executeTool("leave_clan", body);
+        const result = await executeTool("leave_clan", { ...body, smeId: currentOwnerId() });
         if (result.status === "ERROR" || result.error) {
           sendJson(res, 400, result);
         } else {
@@ -1807,7 +1933,7 @@ export function createWebServer() {
 
     if (pathname === "/api/v1/buyer/liquidity" && req.method === "GET") {
       try {
-        const buyerId = url.searchParams.get("buyerId") || url.searchParams.get("smeId") || "sme_austin_01";
+        const buyerId = url.searchParams.get("buyerId") || url.searchParams.get("smeId") || currentOwnerId();
         const autoRemind = url.searchParams.get("autoRemind") === "true";
         const result = await executeTool("check_buyer_liquidity_and_ar", { buyerId, autoRemindOverdue: autoRemind });
         sendJson(res, 200, result);
@@ -1838,7 +1964,7 @@ export function createWebServer() {
           photoBase64: body.photoBase64,
           conditionStatus: body.conditionStatus || "GOOD_CONDITION",
           notes: body.notes,
-          buyerId: body.buyerId || "sme_austin_01",
+          buyerId: body.buyerId || currentOwnerId(),
           coalitionId: body.coalitionId || undefined
         });
         sendJson(res, 200, result);
@@ -2913,8 +3039,9 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
   server.listen(PORT, () => {
     console.log(`=== Wholeshare Web Command Center running at http://localhost:${PORT} ===`);
     void Promise.all(["groups", "shipments", "ledger", "claims", "suppliers"].map((id) => querySource(id, { limit: 1 }))).catch(() => undefined);
+    try { const moved = migrateStoryNames(); if (moved) console.log(`[story] renamed the demo market in ${moved} saved file(s)`); } catch (error) { console.warn(`[story] rename skipped: ${error.message}`); }
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
-    void restoreWorkspace();
+    void restoreWorkspace().finally(() => { try { applyPledgesToLedger(); } catch { /* the ledger still shows the story */ } });
     setInterval(() => { try { rebaseStoryShipments(); } catch { /* next hour */ } }, 3600 * 1000).unref();
     startInferenceProbe();
   });

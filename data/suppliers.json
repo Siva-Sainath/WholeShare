@@ -19,7 +19,7 @@
       "email": "sales@brooklyn-cup.example"
     },
     "source": "simulated",
-    "id": "sup-flushing-brooklyn-cup",
+    "id": "sup-nyc-brooklyn-cup",
     "name": "Brooklyn Cup & Lid Co.",
     "city": "Brooklyn",
     "state": "NY",
@@ -55,7 +55,7 @@
       "email": "sales@queens-foodservice.example"
     },
     "source": "simulated",
-    "id": "sup-flushing-queens-foodservice",
+    "id": "sup-nyc-queens-foodservice",
     "name": "Queens Foodservice Distributors",
     "city": "Long Island City",
     "state": "NY",
@@ -91,7 +91,7 @@
       "email": "sales@bangkok-rice.example"
     },
     "source": "simulated",
-    "id": "sup-flushing-bangkok-rice",
+    "id": "sup-nyc-bangkok-rice",
     "name": "Bangkok Rice Exporters Co.",
     "city": "Bangkok",
     "state": "",
@@ -127,7 +127,7 @@
       "email": "sales@hudson-safety.example"
     },
     "source": "simulated",
-    "id": "sup-flushing-hudson-safety",
+    "id": "sup-nyc-hudson-safety",
     "name": "Hudson Safety Supply",
     "city": "Jersey City",
     "state": "NJ",
@@ -163,7 +163,7 @@
       "email": "sales@eastern-wholesale-imports.example"
     },
     "source": "simulated",
-    "id": "sup-flushing-eastern-wholesale-imports",
+    "id": "sup-nyc-eastern-wholesale-imports",
     "name": "Eastern Wholesale Packaging Imports",
     "city": "Newark",
     "state": "NJ",
@@ -199,7 +199,7 @@
       "email": "sales@garden-state-packaging.example"
     },
     "source": "simulated",
-    "id": "sup-flushing-garden-state-packaging",
+    "id": "sup-nyc-garden-state-packaging",
     "name": "Garden State Paper & Packaging",
     "city": "Edison",
     "state": "NJ",

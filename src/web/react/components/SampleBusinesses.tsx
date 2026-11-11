@@ -5,23 +5,16 @@ export interface SampleProfile { businessName: string; industry: string; contact
 
 // Where each sample business is and what it buys, so opening one builds its workspace in its own country.
 const PLACE: Record<string, { city: string; country: string; product: string }> = {
-  sme_de_bakery: { city: "Berlin", country: "Germany", product: "flour" },
+  sme_neon_dumpling: { city: "New York", country: "United States", product: "takeout containers" },
+  sme_cloud_nine_boba: { city: "New York", country: "United States", product: "cups" },
   sme_us_coffee: { city: "Austin", country: "United States", product: "coffee beans" },
-  sme_cn_smt: { city: "Shenzhen", country: "China", product: "circuit boards" },
-  sme_gb_packaging: { city: "London", country: "United Kingdom", product: "corrugated boxes" },
-  sme_jp_ceramics: { city: "Tokyo", country: "Japan", product: "ceramic tableware" },
-  sme_in_textiles: { city: "Mumbai", country: "India", product: "cotton fabric" },
-  sme_it_dental: { city: "Milan", country: "Italy", product: "surgical gloves" },
-  sme_br_solar: { city: "Sao Paulo", country: "Brazil", product: "solar panels" },
-  sme_ca_hydro: { city: "Toronto", country: "Canada", product: "hydroponic grow lights" },
-  sme_sg_coldchain: { city: "Singapore", country: "Singapore", product: "shrink film" },
-  sme_fr_restaurant: { city: "Lyon", country: "France", product: "espresso machines" },
-  sme_ae_hospitality: { city: "Dubai", country: "United Arab Emirates", product: "towels" }
+  sme_in_textiles: { city: "Mumbai", country: "India", product: "cotton" },
+  sme_br_solar: { city: "Sao Paulo", country: "Brazil", product: "solar" }
 };
 
 const slug = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 20) || "business";
 
-// Twelve sample businesses in twelve countries. Opening one builds its workspace, and its sample files are here to download.
+// A few sample businesses that each find real groups. Opening one builds its workspace, and its sample files are here to download.
 export const SampleBusinesses: React.FC<{ onOpen: (profile: SampleProfile) => void }> = ({ onOpen }) => {
   const [kits, setKits] = useState<Kit[]>([]);
   useEffect(() => {
@@ -30,7 +23,7 @@ export const SampleBusinesses: React.FC<{ onOpen: (profile: SampleProfile) => vo
   if (kits.length === 0) return null;
   return (
     <div className="lp-samples">
-      <p className="lp-samples-head"><strong>Or start from a sample business.</strong> Twelve countries, each with its own invoice, inventory sheet and damage photo to try.</p>
+      <p className="lp-samples-head"><strong>Or start from a sample business.</strong> Five businesses, each with its own invoice, inventory sheet and damage photo to try. Open one, or download the files and upload them yourself.</p>
       <div className="lp-samples-grid">
         {kits.map((kit) => {
           const place = PLACE[kit.id];

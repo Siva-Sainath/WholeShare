@@ -188,7 +188,13 @@ export function removeAgentConnection(agentId) {
   return current.aiAgents;
 }
 
-export function getUserDashboardOverview(smeId = "sme_austin_01") {
+// The business using the app. Routes and tools fall back to this instead of a fixed demo id, so every business works the same way.
+export function currentOwnerId() {
+  const id = String(loadUserSettings().profile?.smeId ?? "").trim();
+  return id || "sme_austin_01";
+}
+
+export function getUserDashboardOverview(smeId = currentOwnerId()) {
   const settings = loadUserSettings();
   const repaymentStorage = getRepaymentStorage();
   const outstandingDebtCents = repaymentStorage.getOutstandingDebtTotalCents(smeId);
@@ -212,6 +218,9 @@ export function getUserDashboardOverview(smeId = "sme_austin_01") {
 
         joinedClans.push({
           clanId: clan.id,
+          groupId: clan.clanId ?? clan.id,
+          authorizationId: member.authorizationId ?? null,
+          captureId: member.captureId ?? null,
           sku: clan.sku,
           skuName: clan.skuName || catalogItem?.name || clan.sku,
           category: catalogItem?.category || "GENERAL",

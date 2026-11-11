@@ -608,28 +608,37 @@ export async function fetchLiquidity(autoRemind = false): Promise<LiquiditySumma
   return { outstandingDebtCents: Number(payload.outstandingDebtCents ?? 0), status: String(payload.liquidity.status ?? "UNKNOWN"), unpaidInvoices: Number(payload.liquidity.totalUnpaidInvoices ?? 0), details: String(payload.liquidity.details ?? "") };
 }
 
-export interface JoinedGroup { clanId: string; skuName: string; clanStatus: string; pledgedUnits: number; authorizedUsd: string; memberStatus: string; paypalOrderId: string | null; }
+export interface JoinedGroup { clanId: string; groupId: string; authorizationId: string | null; captureId: string | null; skuName: string; clanStatus: string; pledgedUnits: number; authorizedUsd: string; memberStatus: string; paypalOrderId: string | null; }
 export interface DebtRecord { debtId?: string; id?: string; clanId?: string; amountCents?: number; status?: string; reason?: string; }
 export interface UserOverview { businessName: string; kybStatus: string; joinedClans: JoinedGroup[]; outstandingDebts: DebtRecord[]; metrics: Record<string, string | number>; }
+export async function markSupplierDelivered(clanId: string): Promise<void> {
+  await postJson("/api/v1/demo/supplier-delivered", { clanId });
+}
+
+export async function acceptGoods(clanId: string): Promise<{ captureId?: string; amountCents: number; alreadyReleased?: boolean }> {
+  const payload = await postJson("/api/v1/shipment/accept", { clanId });
+  return payload as { captureId?: string; amountCents: number; alreadyReleased?: boolean };
+}
+
 export async function fetchUserOverview(): Promise<UserOverview> {
   const payload = await getJson("/api/v1/user/overview");
   if (!isRecord(payload) || !isRecord(payload.profile)) throw new Error("Invalid overview response.");
   const clans = Array.isArray(payload.joinedClans) ? payload.joinedClans.filter(isRecord) : [];
   return {
     businessName: String(payload.profile.businessName ?? ""), kybStatus: String(payload.profile.kybStatus ?? ""),
-    joinedClans: clans.map((c) => ({ clanId: String(c.clanId), skuName: String(c.skuName ?? c.sku ?? ""), clanStatus: String(c.clanStatus ?? ""), pledgedUnits: Number(c.pledgedUnits ?? 0), authorizedUsd: String(c.authorizedUsd ?? "0.00"), memberStatus: String(c.memberStatus ?? ""), paypalOrderId: typeof c.paypalOrderId === "string" ? c.paypalOrderId : null })),
+    joinedClans: clans.map((c) => ({ clanId: String(c.clanId), groupId: String(c.groupId ?? c.clanId), authorizationId: typeof c.authorizationId === "string" ? c.authorizationId : null, captureId: typeof c.captureId === "string" ? c.captureId : null, skuName: String(c.skuName ?? c.sku ?? ""), clanStatus: String(c.clanStatus ?? ""), pledgedUnits: Number(c.pledgedUnits ?? 0), authorizedUsd: String(c.authorizedUsd ?? "0.00"), memberStatus: String(c.memberStatus ?? ""), paypalOrderId: typeof c.paypalOrderId === "string" ? c.paypalOrderId : null })),
     outstandingDebts: Array.isArray(payload.outstandingDebts) ? (payload.outstandingDebts.filter(isRecord) as DebtRecord[]) : [],
     metrics: isRecord(payload.metrics) ? (payload.metrics as Record<string, string | number>) : {}
   };
 }
 
-export async function evaluateGroupExit(coalitionId: string, smeId = "sme_austin_01"): Promise<{ canExitImmediately: boolean; exitStatus: string; lockedEscrowCents: number; unsettledDebtCents: number; message: string }> {
+export async function evaluateGroupExit(coalitionId: string, smeId = ""): Promise<{ canExitImmediately: boolean; exitStatus: string; lockedEscrowCents: number; unsettledDebtCents: number; message: string }> {
   const payload = await postJson("/api/v1/clan/exit/evaluate", { coalitionId, smeId });
   const e = isRecord(payload) && isRecord(payload.evaluation) ? payload.evaluation : {};
   return { canExitImmediately: Boolean(e.canExitImmediately), exitStatus: String(e.exitStatus ?? ""), lockedEscrowCents: Number(e.lockedEscrowCents ?? 0), unsettledDebtCents: Number(e.unsettledDebtCents ?? 0), message: String(e.message ?? "") };
 }
 
-export async function leaveGroup(coalitionId: string, reason: string, smeId = "sme_austin_01"): Promise<string> {
+export async function leaveGroup(coalitionId: string, reason: string, smeId = ""): Promise<string> {
   const payload = await postJson("/api/v1/clan/leave", { coalitionId, smeId, reason });
   return isRecord(payload) && typeof payload.message === "string" ? payload.message : "You have left the group.";
 }

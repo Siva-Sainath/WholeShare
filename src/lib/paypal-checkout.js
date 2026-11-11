@@ -52,14 +52,16 @@ export function getPledgeQuote(input) {
   };
 }
 
-export async function createPledgeOrder(input) {
+export async function createPledgeOrder(input, { returnUrl, cancelUrl } = {}) {
   const businessName = typeof input.businessName === "string" ? input.businessName.trim() : "";
   if (!businessName || businessName.length > 120) throw new Error("Enter a business name up to 120 characters.");
   const quote = calculateQuote(input.clanId, input.units);
   const order = await createOrderAuthorization({
     amountCents: quote.amountCents,
     currency: quote.currency,
-    referenceId: `wholeshare:${quote.clanId}`
+    referenceId: `wholeshare:${quote.clanId}`,
+    returnUrl,
+    cancelUrl
   });
   if (!order.orderId) throw new Error("PayPal did not return an order ID. No pledge was recorded.");
 
@@ -74,7 +76,8 @@ export async function createPledgeOrder(input) {
     amountCents: quote.amountCents,
     currency: quote.currency,
     intent: order.intent,
-    status: order.status
+    status: order.status,
+    ...(order.approvalUrl ? { approvalUrl: order.approvalUrl } : {})
   };
 }
 
@@ -118,6 +121,7 @@ export async function authorizePledgeOrder(orderId) {
 
       session.status = "AUTHORIZED";
       return {
+        businessName: session.businessName,
         orderId,
         authorizationId: authorization.authorizationId,
         status: authorization.status,

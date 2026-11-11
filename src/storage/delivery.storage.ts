@@ -28,6 +28,7 @@ export class DeliveryStorage {
   constructor(customFilePath?: string) {
     this.filePath =
       customFilePath ||
+      process.env.WHOLESHARE_DELIVERY_FILE ||
       path.join(
         ROOT_DIR,
         ".scratch",

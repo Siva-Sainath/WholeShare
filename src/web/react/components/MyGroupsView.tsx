@@ -120,6 +120,15 @@ const detailColumns: ColDef<LedgerMember>[] = [
   },
   { field: "status", headerName: "Status", flex: 1, minWidth: 80 },
   {
+    headerName: "PayPal hold",
+    flex: 1.4,
+    minWidth: 120,
+    valueGetter: (params) => {
+      const member = params.data as (LedgerMember & { authorizationId?: string; captureId?: string }) | undefined;
+      return member?.captureId ? `Captured ${member.captureId}` : member?.authorizationId ? `Hold ${member.authorizationId}` : "";
+    }
+  },
+  {
     field: "paypalOrderId",
     headerName: "PayPal record",
     flex: 1.6,

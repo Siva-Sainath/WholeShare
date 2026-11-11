@@ -141,6 +141,8 @@ export async function createOrderAuthorization({
   currency = "USD",
   referenceId,
   idempotencyKey,
+  returnUrl,
+  cancelUrl,
   timeoutMs = DEFAULT_TIMEOUT_MS
 }) {
   if (!Number.isInteger(amountCents) || amountCents <= 0) {
@@ -170,7 +172,9 @@ export async function createOrderAuthorization({
               value: amountStr
             }
           }
-        ]
+        ],
+        // With return and cancel addresses the approval can be completed on any device, for example from a link sent in a chat.
+        ...(returnUrl && cancelUrl ? { payment_source: { paypal: { experience_context: { return_url: returnUrl, cancel_url: cancelUrl, shipping_preference: "NO_SHIPPING", user_action: "CONTINUE", brand_name: "WholeShare" } } } } : {})
       })
     },
     timeoutMs
@@ -186,8 +190,27 @@ export async function createOrderAuthorization({
     referenceId,
     idempotencyKey: requestId,
     links: data.links || [],
+    approvalUrl: (data.links || []).find((link) => link.rel === "payer-action" || link.rel === "approve")?.href ?? null,
     liveMode: true
   };
+}
+
+// Returns money to the buyer from a captured payment. The amount is the refund, in cents.
+export async function refundCapture({ captureId, amountCents, currency = "USD", note, idempotencyKey, timeoutMs = DEFAULT_TIMEOUT_MS }) {
+  if (!captureId) throw new Error("captureId is required to refund a payment.");
+  if (!Number.isInteger(amountCents) || amountCents <= 0) throw new Error("amountCents must be a positive integer.");
+  const token = await getPayPalAccessToken(timeoutMs);
+  const res = await executePayPalRequest(
+    `/v2/payments/captures/${captureId}/refund`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "PayPal-Request-Id": idempotencyKey || `ref_${crypto.randomUUID()}` },
+      body: JSON.stringify({ amount: { currency_code: currency, value: (amountCents / 100).toFixed(2) }, ...(note ? { note_to_payer: String(note).slice(0, 255) } : {}) })
+    },
+    timeoutMs
+  );
+  const data = await res.json();
+  return { refundId: data.id, status: data.status, amountCents, currency, rawResponse: data, liveMode: true };
 }
 
 export async function authorizeOrderHold({ orderId, idempotencyKey, timeoutMs = DEFAULT_TIMEOUT_MS }) {

@@ -11,7 +11,7 @@ import { loadUserSettings, updateUserSettings } from "./user-settings.js";
 // that match what it buys. AG Grid, Bryntum, Insights and Mosaic read the same stores, so they all show this business.
 // The demo business keeps the New York story, and a restart rebuilds the same workspace from the saved profile.
 
-const DEMO_BUSINESS = "Golden Lotus Kitchen";
+const DEMO_BUSINESS = "Neon Dumpling Co.";
 const STOP = new Set(["the", "and", "for", "with", "bulk", "pack", "case", "size", "grade", "premium", "organic", "from"]);
 const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word));
 const slug = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "business";
@@ -56,7 +56,7 @@ function trackingFor(seed) {
 
 const hoursFromNow = (hours) => new Date(Date.now() + hours * 3600 * 1000).toISOString();
 
-const signatureOf = (profile) => hash(`${profile.businessName}|${profile.city}|${profile.product}|${profile.units}`).slice(0, 12);
+const signatureOf = (profile) => hash(`${profile.businessName}|${profile.city}|${profile.product}|${profile.units}|${profile.currentSupplier ?? ""}|${profile.currentUnitPriceUsd ?? ""}`).slice(0, 12);
 
 // True when this profile has not been turned into a workspace yet, or what it buys has changed.
 export function needsSeed(profile) {
@@ -123,7 +123,7 @@ export async function seedWorkspaceForProfile(profile) {
       targetUnits: group.targetUnits, currentUnits: Math.min(index === 0 ? group.targetUnits - 1 : group.targetUnits, Number(group.currentUnits) + mine),
       unitPriceCents: priceCents, discountTierPct: Number(group.tierDiscountPct) || 0,
       status: index === 0 ? "FORMING" : "LOCKED", leaderId: smeId,
-      originPort: group.supplier || "Supplier warehouse", destinationPort: group.city || "Your location",
+      originPort: group.supplier || profile.currentSupplier || "Supplier warehouse", destinationPort: group.city || "Your location",
       subscription: { monthlyDuesUsd: 49, yearlyDuesUsd: 499, commitmentTerm: "1_YEAR", cancellationNoticeDays: 30, updatedAt: now },
       members: [{ smeId, name: businessName, pledgedUnits: mine, authorizedCents: mine * priceCents, status: index === 0 ? "PLEDGED" : "AUTHORIZED", stepUpRequired: false, paypalOrderId: null, invoiceQrUrl: null }, ...neighbours],
       createdAt: now, updatedAt: now

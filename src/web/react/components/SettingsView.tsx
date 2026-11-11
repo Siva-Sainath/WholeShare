@@ -17,8 +17,8 @@ interface AgentInviteRecord {
   uses: number;
 }
 
-const DEMO_BUSINESS = "Golden Lotus Kitchen";
-const DEMO_EMAIL = "orders@goldenlotuskitchen.example";
+const DEMO_BUSINESS = "Neon Dumpling Co.";
+const DEMO_EMAIL = "orders@neondumplingkitchen.example";
 const DEMO_CITY = "New York";
 const DEMO_PAYPAL = "sb-merchant@business.example.com";
 

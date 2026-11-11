@@ -174,6 +174,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
     if (prefill?.businessName) {
       setAnswers((prev) => ({ ...prev, businessName: prefill.businessName! }));
       setInput(prefill.businessName);
+      setDocSkip(true);
     }
   }, [prefill]);
   const [error, setError] = useState<string | null>(null);
@@ -191,6 +192,13 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
   const [manual, setManual] = useState<Record<string, string>>({ country: "", paypal: "Connect later" });
   const [manualError, setManualError] = useState<string | null>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
+  // Documents the business already has. Mosaic reads them, fills the profile and skips the questions it can already answer.
+  const [reading, setReading] = useState(false);
+  const [docError, setDocError] = useState<string | null>(null);
+  const [docRead, setDocRead] = useState(false);
+  const [docSkip, setDocSkip] = useState(false);
+  const [docFiles, setDocFiles] = useState<File[]>([]);
+  const [docExtra, setDocExtra] = useState<Record<string, unknown>>({});
   const [paypalState, setPaypalState] = useState<PayPalConnection | null>(null);
   const [suggestedClan, setSuggestedClan] = useState<ClanRecord | null>(null);
   const [suggestedChecked, setSuggestedChecked] = useState(false);
@@ -280,6 +288,55 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
     if (nextStep === 2) nextQ.text = "Email noted. Now let us link your desired item.";
     setMessages((prev) => [...prev, userMsg, ...extraMsgs, nextQ]);
     setStep(nextStep);
+  };
+
+  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(new Error("Could not read that file."));
+    reader.readAsDataURL(file);
+  });
+
+  const applyExtraction = (result: { fields: Record<string, any>; files: Array<{ name: string }> }) => {
+    const f = result.fields;
+    const next: Record<string, string> = { ...answers };
+    if (f.businessName) next.businessName = String(f.businessName);
+    if (f.contactEmail) next.contactEmail = String(f.contactEmail);
+    if (f.mainProduct) next.product = String(f.mainProduct);
+    if (f.units) next.units = String(f.units);
+    if (f.city) next.city = String(f.city);
+    if (f.country) next.country = String(f.country);
+    const index = QUESTIONS.findIndex((q) => !next[q.id] || next[q.id].trim().length === 0);
+    const target = index === -1 ? QUESTIONS.length : index;
+    const bits: string[] = [`I read ${result.files.map((file) => file.name).join(" and ")}.`];
+    if (f.businessName) bits.push(`${f.businessName}${f.address ? `, ${f.address}` : ""}${f.borough ? `, ${f.borough}` : f.city ? `, ${f.city}` : ""}.`);
+    if (f.currentSupplier && f.currentUnitPriceUsd && f.mainProduct) bits.push(`You buy ${f.mainProduct} from ${f.currentSupplier} at $${Number(f.currentUnitPriceUsd).toFixed(2)} each today.`);
+    const answered = QUESTIONS.filter((q, i) => i < target && next[q.id]).length;
+    bits.push(answered > 0 ? `That answers ${answered} of the questions. Here is the next one.` : "I could not find your details in them, so let us answer a few questions.");
+    const note: ChatMsg = { id: nextId(), from: "mosaic", text: bits.join(" ") };
+    setAnswers(next);
+    setDocExtra({ address: f.address, borough: f.borough, state: f.state, currentSupplier: f.currentSupplier, currentUnitPriceUsd: f.currentUnitPriceUsd, industry: f.industry, invoiceNumber: f.invoiceNumber, products: f.products, documentsRead: true });
+    setDocRead(true);
+    setMessages((prev) => [...prev, note, ...(target < QUESTIONS.length ? [mosaicQuestion(target)] : [])]);
+    setStep(target);
+  };
+
+  const readDocuments = async (input: { files?: File[]; demoKit?: string }) => {
+    setReading(true);
+    setDocError(null);
+    try {
+      const body = input.demoKit
+        ? { demoKit: input.demoKit }
+        : { files: await Promise.all((input.files ?? []).map(async (file) => ({ fileName: file.name, mimeType: file.type, base64: await toBase64(file) }))) };
+      const response = await fetch("/api/v1/onboarding/extract", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Those documents could not be read.");
+      applyExtraction(payload);
+    } catch (cause) {
+      setDocError(cause instanceof Error ? cause.message : "Those documents could not be read.");
+    } finally {
+      setReading(false);
+    }
   };
 
   const submitAnswer = () => {
@@ -378,6 +435,8 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
       onboardingConfirmed: true
     };
     if (prefill?.vertical) profile.industry = prefill.vertical;
+    // What the documents showed: who the business buys from today and at what price.
+    for (const [key, value] of Object.entries(docExtra)) if (value !== undefined && value !== null && value !== "") profile[key] = value;
     try {
       if (docFile) {
         const stored = await uploadEvidence(docFile);
@@ -535,7 +594,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
               label="Use the demo business"
               onClick={() => {
                 void saveUserSettingsApi({
-                  profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12 }
+                  profile: { businessName: "Neon Dumpling Co.", industry: "Restaurant", contactEmail: "owner@neondumpling.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12, address: "218 Bedford Avenue", borough: "Brooklyn", state: "NY", currentSupplier: "Garden State Paper & Packaging", currentUnitPriceUsd: 31.5 }
                 }).catch(() => undefined).then(() => onComplete());
               }}
             />
@@ -575,6 +634,34 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
                 </div>
               );
             })}
+
+            {step === 0 && !docRead && !docSkip && messages.length > 0 && (
+              <div className="ws-ai-fill" style={{ maxWidth: 620, marginLeft: 48 }}>
+                <div style={{ display: "grid", gap: 4 }}>
+                  <strong style={{ fontSize: 15 }}>Start from your documents</strong>
+                  <span style={{ fontSize: 13, color: c.muted, lineHeight: "20px" }}>Drop a supplier invoice, an inventory sheet or a photo of an invoice. Mosaic reads them, fills your profile and skips the questions it can already answer. Nothing is guessed: it only keeps what is written in the documents.</span>
+                </div>
+                <FileInput
+                  label="Business documents"
+                  isLabelHidden
+                  isMultiple
+                  maxFiles={4}
+                  value={docFiles}
+                  onChange={(files) => setDocFiles(Array.isArray(files) ? files : files ? [files] : [])}
+                  accept="application/pdf,image/png,image/jpeg,image/webp,text/csv,.csv,.xlsx"
+                  maxSize={6 * 1024 * 1024}
+                  isDisabled={reading}
+                  description="PDF, CSV, Excel or an image, up to 6 MB each."
+                />
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <Button variant="secondary" size="small" label={reading ? "Reading your documents" : "Read my documents"} isDisabled={reading || docFiles.length === 0} onClick={() => void readDocuments({ files: docFiles })} />
+                  <Button variant="secondary" size="small" label="Use the Neon Dumpling sample documents" isDisabled={reading} onClick={() => void readDocuments({ demoKit: "sme_neon_dumpling" })} />
+                  <Button variant="ghost" size="small" label="Answer questions instead" isDisabled={reading} onClick={() => setDocSkip(true)} />
+                </div>
+                {reading && <span role="status" style={{ fontSize: 13, color: c.muted }}>Reading the documents and checking every value against them. This takes a few seconds.</span>}
+                {docError && <span role="alert" style={{ fontSize: 13, color: c.status.error }}>{docError}</span>}
+              </div>
+            )}
 
             {step >= QUESTIONS.length && (
               <div style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: STITCH_RADIUS["2xl"], padding: 20, display: "grid", gap: 16 }}>
