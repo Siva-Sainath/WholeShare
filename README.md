@@ -95,7 +95,7 @@ npm start                   # http://localhost:3000
 | `MOSAIC_FALLBACK_MODEL`, `MOSAIC_HEDGE_MS`, `MOSAIC_DEV_BUDGET_USD` | Hedge model and spend guard |
 | `KERNEL_API_KEY` | Kernel cloud browsers |
 | `AG_LICENSE_KEY`, `AG_STUDIO_LICENSE_KEY`, `BRYNTUM_LICENSE_KEY` | UI licences, read at build time |
-| `APP_URL` | Public address, for the PayPal connect callback |
+| `APP_URL` | Public address, for the PayPal connect callback. In the PayPal developer dashboard, turn on Log in with PayPal for the app and add `<APP_URL>/api/v1/paypal/connect/callback` as a Return URL. Add a webhook for `<APP_URL>/api/v1/paypal/webhook` and set `PAYPAL_WEBHOOK_ID` |
 
 Deploy on Render with `render.yaml` (one Node service and a persistent disk, no database). `scripts/render-start.sh` keeps the app's JSON state on the disk.
 

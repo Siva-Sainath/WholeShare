@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
-import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { PayPalMark } from "./PayPalAttribution";
 import { disconnectPayPalApi, fetchPayPalConnection, PayPalConnection, startPayPalConnect } from "../api";
 
@@ -15,6 +14,9 @@ interface Props {
   secondary?: React.ReactNode;
 }
 
+// Setup problems (a missing return URL, a bad client id) belong in the operator docs, not in front of a customer.
+const friendlyError = (message: string): string => (/redirect|client_id|invalid_client|unauthorized/i.test(message) ? "PayPal sign-in is not available right now. You can connect later from Settings." : message);
+
 export const PayPalConnectCard: React.FC<Props> = ({ onBeforeRedirect, onChange, secondary }) => {
   const [state, setState] = useState<PayPalConnection | null>(null);
   const [error, setError] = useState<string | null>(() => {
@@ -22,7 +24,6 @@ export const PayPalConnectCard: React.FC<Props> = ({ onBeforeRedirect, onChange,
     return params.get("paypal") === "error" ? params.get("message") || "PayPal sign-in did not finish." : null;
   });
   const [busy, setBusy] = useState(false);
-  const returnUrl = `${window.location.origin}/api/v1/paypal/connect/callback`;
 
   useEffect(() => {
     const reset = () => setBusy(false);
@@ -85,7 +86,7 @@ export const PayPalConnectCard: React.FC<Props> = ({ onBeforeRedirect, onChange,
         </div>
         {state?.connected && <Badge variant="green" label={state.mode === "live" ? "Live" : "Sandbox"} />}
       </div>
-      {error && <Banner status="error" title="PayPal could not connect" description={error} isDismissable onDismiss={() => setError(null)} />}
+      {error && <Banner status="error" title="PayPal could not connect" description={friendlyError(error)} isDismissable onDismiss={() => setError(null)} />}
       {state && !state.configured && <Banner status="warning" title="PayPal credentials are missing" description="Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET on the server." />}
       <div className="ws-connect-actions">
         {state?.connected ? (
@@ -95,14 +96,6 @@ export const PayPalConnectCard: React.FC<Props> = ({ onBeforeRedirect, onChange,
         )}
         {secondary}
       </div>
-      {!state?.connected && (
-        <Collapsible defaultIsOpen={false} trigger={<span style={{ fontSize: 13 }}>PayPal says "invalid client_id or redirect_uri"?</span>}>
-          <p style={{ margin: "6px 0", fontSize: 13 }}>
-            In the PayPal developer dashboard, open this app, turn on Log in with PayPal, and add this Return URL exactly:
-          </p>
-          <code style={{ display: "block", padding: "8px 10px", background: "#F4EFEB", borderRadius: 8, fontSize: 12, wordBreak: "break-all" }}>{returnUrl}</code>
-        </Collapsible>
-      )}
     </div>
   );
 };
