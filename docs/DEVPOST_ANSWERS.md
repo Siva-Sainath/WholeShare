@@ -81,11 +81,13 @@ Fireworks AI with MiniMax and DeepSeek is what powers the live app today. We als
 
 ## Challenges
 
-- **Our first assistant only worked on the exact sentences we tested.** It passed our tests and then failed on new wording. We rebuilt it around a small set of general tools and tested it on 100 new prompts, with 30 held back that we never tuned against. It scored 97% on all of them, and 97% on the held back set. A normal answer takes 5 to 8 seconds, about 2.9 model calls, and a full test run costs about $0.13.
-- **Speed.** The delay came from how many times the model was called, not from how big the prompts were. With our local Qwen model, turning its thinking off took one tool call from 11 seconds to 2.4. We also merged tools and ran reads in parallel.
-- **Trust.** We did not want a model that could ever move money. So the model cannot. It can only open PayPal's approval step.
-- **Fake data feels fake.** We cleaned the app until it showed real names and plain words instead of ids and codes, and until every business sees only its own data.
+- **Making group buying feel safe.** Nobody wants to pay a stranger first. So we built it so money is only ever held, never taken, until the goods arrive. Everyone approves on PayPal's own screen. The assistant can prepare a pledge, but it cannot approve one.
+- **Testing the real PayPal hold.** Our first real sandbox approval failed. PayPal reports a successful hold with a status we were not expecting, so our app turned down a good payment. Only a real approval showed us this. We fixed it, and the hold now goes through.
+- **Starting a new business without making things up.** A new business has no data. We read its invoice and inventory sheet, and keep a value only if it is written in the documents. Then we build a workspace around what it buys and where it is.
+- **Every business sees only its own world.** Early on, a restaurant could see another company's shipments, and screens showed raw ids and codes. We cleaned it up so each business sees its own groups, deliveries and claims, with real names and plain words.
+- **Deliveries and disputes are the hard middle.** Goods arrive late, or crushed. We built a 48 hour inspection window, a claim with a photo, and a refund for just the damaged units. We also stopped pretending to be the supplier. A claim shows its real status and waits for their answer.
 - **Reading documents on a server.** The tools we first used only existed on our laptops. We switched to ones that run anywhere, and check every value against the document.
+- **Making the assistant dependable.** Our first assistant only worked on the exact sentences we tested. We rebuilt it and tried it on 100 new prompts, with 30 held back that we never tuned against. It got 97% on all of them, and 97% on the held back set. Answers take 5 to 8 seconds, and Fireworks AI makes that fast enough to feel live.
 
 ## What we are proud of
 
