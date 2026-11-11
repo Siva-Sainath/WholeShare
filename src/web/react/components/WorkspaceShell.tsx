@@ -2,13 +2,13 @@ import { MosaicLogo } from "./MosaicLogo";
 import { describeAgentCall, type AgentCall } from "../agentCalls";
 import React, { useState, useEffect, FormEvent } from "react";
 import { ActiveView, SlideOverState } from "../types";
-import { ClanDetail, fetchClanById, fetchMcpTools, fetchUserSettings, McpToolDeclaration } from "../api";
+import { ClanDetail, disconnectPayPalApi, fetchClanById, fetchMcpTools, fetchUserSettings, McpToolDeclaration, saveUserSettingsApi } from "../api";
 import { PayPalAttribution } from "./PayPalAttribution";
 import { Button } from "@astryxdesign/core/Button";
 import { ImageCredits } from "./ImageCredits";
 import { CommandBar } from "./CommandBar";
 import { allowMosaicPermission, askMosaic, describeTool } from "../mosaicAgent";
-import { BarChart3, Bot, LayoutGrid, Scale, Settings as SettingsIcon, Sparkles, Users, Wallet } from "lucide-react";
+import { BarChart3, Bot, LayoutGrid, LogOut, Scale, Settings as SettingsIcon, Sparkles, Users, Wallet } from "lucide-react";
 import type { MosaicReply } from "../mosaicAgent";
 import {
   X,
@@ -175,6 +175,26 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
   const [drawerRulesAgreed, setDrawerRulesAgreed] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
+
+  // Signing out forgets this business on the site: the profile is cleared, PayPal is disconnected and the workspace goes back to the sample one.
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      await saveUserSettingsApi({ profile: { businessName: "", industry: "", city: "", country: "", product: "", contactEmail: "", address: "", borough: "", state: "", currentSupplier: "", invoiceNumber: "", products: [], documentsRead: false } });
+      await disconnectPayPalApi().catch(() => undefined);
+    } catch {
+      // Even if the server is slow, the browser still forgets the sign in below.
+    }
+    try {
+      localStorage.removeItem("wholeshare_onboarding_confirmed");
+      sessionStorage.clear();
+    } catch {
+      // Storage can be blocked. The page reload below still starts clean.
+    }
+    window.location.hash = "";
+    window.location.reload();
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -261,6 +281,12 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
                 </span>
                 <span className="ws-appbar-avatar">{initialsFor(businessName)}</span>
               </button>
+              {businessName && (
+                <button type="button" className="ws-appbar-signout" onClick={() => void signOut()} disabled={signingOut} aria-label="Sign out of this business">
+                  <LogOut size={14} aria-hidden="true" />
+                  <span>{signingOut ? "Signing out" : "Sign out"}</span>
+                </button>
+              )}
             </div>
           </div>
         </header>

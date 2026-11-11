@@ -5665,3 +5665,8 @@ body:has([data-ws-view="mosaic-chat"]) .ws-live { display: none; }
 .ws-agent-feed li { display: flex; justify-content: space-between; gap: 12px; color: #0F1F2E; }
 .ws-agent-feed li small { color: #5C6A79; font-variant-numeric: tabular-nums; }
 .ws-toast--agent svg { color: #0070BA; }
+
+.ws-appbar-signout { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(15, 31, 46, 0.12); background: rgba(255, 255, 255, 0.6); color: #0F1F2E; font: 500 13px/16px 'Geist', sans-serif; cursor: pointer; }
+.ws-appbar-signout:hover { background: rgba(255, 255, 255, 0.9); }
+.ws-appbar-signout:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 720px) { .ws-appbar-signout span { display: none; } }
