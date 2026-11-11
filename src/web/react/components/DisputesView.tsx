@@ -219,12 +219,14 @@ export const DisputesView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [claimsData, shipmentsResp] = await Promise.all([
+      const [claimsData, shipmentsResp, owner] = await Promise.all([
         fetchClaims().catch(() => [] as ClaimRecord[]),
-        fetchShipments().catch(() => ({ shipments: [] as ShipmentRecord[] }))
+        fetchShipments().catch(() => ({ shipments: [] as ShipmentRecord[] })),
+        fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { smeId?: string; workspaceSeeded?: boolean } }) => (p.profile?.workspaceSeeded ? String(p.profile.smeId ?? "") : "")).catch(() => "")
       ]);
-      setClaims(claimsData);
-      setShipments(shipmentsResp.shipments || []);
+      // A business that finished onboarding sees its own shipments and claims, in the grids and on the Bryntum boards.
+      setClaims(owner ? claimsData.filter((claim) => claim.memberId === owner) : claimsData);
+      setShipments(owner ? (shipmentsResp.shipments || []).filter((shipment) => shipment.memberId === owner) : shipmentsResp.shipments || []);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Failed to load dispute records.");
     } finally {
@@ -323,22 +325,22 @@ export const DisputesView: React.FC = () => {
   const disputeStats = [
     {
       label: "Open claims",
-      value: claims.length === 0 ? "No data" : String(claims.filter((claim) => !["RESOLVED", "REJECTED", "SETTLED"].includes(claim.status)).length),
-      note: claims.length === 0 ? undefined : `${claims.length} claims on record`
+      value: String(claims.filter((claim) => !["RESOLVED", "REJECTED", "SETTLED"].includes(claim.status)).length),
+      note: claims.length === 0 ? "None filed yet" : `${claims.length} claims on record`
     },
     {
       label: "Claimed value",
-      value: claims.length === 0 ? "No data" : claims.reduce((sum, claim) => sum + (claim.claimedAmount || 0), 0).toLocaleString("en-US", { style: "currency", currency: "USD" }),
+      value: claims.reduce((sum, claim) => sum + (claim.claimedAmount || 0), 0).toLocaleString("en-US", { style: "currency", currency: "USD" }),
       note: "Sum of claimed amounts"
     },
     {
       label: "In transit",
-      value: shipments.length === 0 ? "No data" : String(shipments.filter((shipment) => shipment.status === "IN_TRANSIT").length),
+      value: String(shipments.filter((shipment) => shipment.status === "IN_TRANSIT").length),
       note: shipments.length === 0 ? undefined : `${shipments.filter((shipment) => shipment.status === "DELAYED").length} delayed`
     },
     {
       label: "Delivered",
-      value: shipments.length === 0 ? "No data" : String(shipments.filter((shipment) => shipment.status === "DELIVERED").length),
+      value: String(shipments.filter((shipment) => shipment.status === "DELIVERED").length),
       note: shipments.length === 0 ? undefined : `of ${shipments.length} shipments`
     }
   ];

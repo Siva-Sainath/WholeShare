@@ -14,6 +14,7 @@ import { createOrderAuthorization, authorizeOrderHold } from "../lib/paypal-brid
 import { authorizePledgeOrder, createPledgeOrder, getPledgeQuote } from "../lib/paypal-checkout.js";
 import { durableHarness, describeHarness } from "../lib/durable-harness.js";
 import { handleMcpMessage, listMcpTools } from "../lib/mcp-server.js";
+import { needsSeed, restoreWorkspace, seedWorkspaceForProfile, isDemoBusiness } from "../lib/workspace-seed.js";
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../lib/tool-registry.js";
 import { kernelResearchService } from "../lib/kernel-service.js";
 import { loadAllFeatures } from "../lib/feature-map.js";
@@ -831,9 +832,14 @@ export function createWebServer() {
           const { paypalMerchantEmail: _a, paypalPayerId: _b, paypalConnectedAt: _c, paypalConnectMode: _d, smeId: _e, ...profile } = allowed.profile;
           allowed.profile = profile;
         }
-        const updated = updateUserSettings(allowed);
+        let updated = updateUserSettings(allowed);
+        // A business that has finished onboarding gets its own pledges and shipments, built from the groups that match what it buys.
+        let workspace = null;
+        if (needsSeed(updated.profile) || ((isDemoBusiness(updated.profile) || !String(updated.profile.businessName ?? "").trim()) && updated.profile.workspaceSeeded)) {
+          try { workspace = await seedWorkspaceForProfile(updated.profile); updated = loadUserSettings(); } catch (error) { console.warn(`[workspace] not seeded: ${error.message}`); }
+        }
         actionDispatcher.broadcast("USER_SETTINGS_UPDATED", { updatedAt: new Date().toISOString() });
-        sendJson(res, 200, { status: "SUCCESS", settings: publicSettings(updated) });
+        sendJson(res, 200, { status: "SUCCESS", settings: publicSettings(updated), ...(workspace?.seeded ? { workspace } : {}) });
       } catch (err) {
         sendJson(res, 400, { error: err.message });
       }
@@ -2894,6 +2900,7 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
     console.log(`=== Wholeshare Web Command Center running at http://localhost:${PORT} ===`);
     void Promise.all(["groups", "shipments", "ledger", "claims", "suppliers"].map((id) => querySource(id, { limit: 1 }))).catch(() => undefined);
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
+    void restoreWorkspace();
     setInterval(() => { try { rebaseStoryShipments(); } catch { /* next hour */ } }, 3600 * 1000).unref();
     durableHarness.warmUp().then(() => console.log("[mosaic] model warmed")).catch((error) => console.warn(`[mosaic] warm-up skipped: ${error.message}`));
   });

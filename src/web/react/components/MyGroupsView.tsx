@@ -182,6 +182,8 @@ export const MyGroupsView: React.FC<MyGroupsViewProps> = ({ externalQuery, onDri
     flex: 1,
     wrapHeaderText: true,
     autoHeaderHeight: true,
+    suppressHeaderMenuButton: true,
+    suppressHeaderFilterButton: true,
     sortable: true,
     filter: true,
     resizable: true

@@ -5528,7 +5528,7 @@ body:has(.ws-canvas) .ws-live { right: auto; left: 24px; }
 }
 
 .ws-fab {
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60;
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 20;
   display: flex; align-items: center; gap: 12px;
   width: min(520px, calc(100vw - 32px)); height: 54px; padding: 0 10px 0 8px;
   background: rgba(255, 255, 255, 0.58);
@@ -5589,7 +5589,7 @@ body:has(.ws-canvas) .ws-live { right: auto; left: 24px; }
 @media (max-width: 720px) { .ws-harness-head { grid-template-columns: auto minmax(0, 1fr); } .ws-harness-badges { grid-column: 1 / -1; justify-content: flex-start; } }
 
 /* ---------- Glass AI helper boxes and the claim summary ---------- */
-.ws-ai-fill { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(0, 112, 186, 0.07), rgba(255, 255, 255, 0.6) 60%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0, 112, 186, 0.16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85); }
+.ws-ai-fill { display: grid; gap: 12px; padding: 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(12px) saturate(1.4); -webkit-backdrop-filter: blur(12px) saturate(1.4); border: 1px solid rgba(15, 31, 46, 0.1); box-shadow: 0 8px 24px -16px rgba(15, 31, 46, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
 .ws-claim-aside { align-self: start; position: sticky; top: 96px; display: grid; gap: 14px; padding: 20px; border-radius: 20px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), 0 14px 40px -22px rgba(15, 31, 46, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
 .ws-claim-eyebrow { font: 600 11px/16px 'Geist Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #5C6A79; }
 .ws-claim-total { display: grid; gap: 2px; }
@@ -5626,3 +5626,9 @@ body:has(.ws-canvas) .ws-live { right: auto; left: 24px; }
 .ws-product-photo { position: relative; }
 .ws-product-photo img[data-art] { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 6px 0; box-sizing: border-box; }
 .ws-product-photo:has(img[data-art]) { background: linear-gradient(135deg, #EAF3FA, #FAF8F3); }
+
+/* Calmer rhythm for forms and page sections */
+.ws-workspace-shell main { row-gap: 28px; }
+.ws-workspace-shell main h1 { margin-bottom: 4px; }
+.ws-workspace-shell form { row-gap: 16px; }
+body:has([role="dialog"][aria-modal="true"]) .ws-fab, body:has(.astryx-dialog) .ws-fab { opacity: 0; pointer-events: none; }

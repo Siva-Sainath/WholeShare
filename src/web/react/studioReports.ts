@@ -57,7 +57,7 @@ export function scopeGroups(groups: Row[], scope: BusinessScope | null): Row[] {
   const city = scope.city.trim().toLowerCase();
   const picked = groups.filter((group) => {
     const text = `${group.product ?? ""} ${group.name ?? ""}`.toLowerCase();
-    const byProduct = words.length > 0 && words.some((word) => text.includes(word));
+    const byProduct = words.length > 0 && words.some((word) => new RegExp(`\\b${word}s?\\b`).test(text));
     const byCity = city !== "" && String(group.city ?? "").toLowerCase() === city;
     return words.length > 0 ? byProduct : byCity;
   });

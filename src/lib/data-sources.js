@@ -5,6 +5,7 @@ import { getDeliveryStorage } from "../storage/delivery.storage.ts";
 import { getGeneratedMembers } from "./clan-members.js";
 import { isCarrierFormatTracking } from "./tracking-format.js";
 import { executeTool } from "./tool-registry.js";
+import { loadUserSettings } from "./user-settings.js";
 import { supplierRows } from "./supplier-search.js";
 
 // One named place for every dataset the app can show. AG Grid artifacts, AG Studio and Mosaic's read tools
@@ -81,9 +82,16 @@ function memberRows() {
   return rows;
 }
 
+// Once a business has finished onboarding, its shipments and claims are its own. Before that, the shared demo set shows.
+function ownerId() {
+  const profile = loadUserSettings().profile ?? {};
+  return profile.workspaceSeeded ? String(profile.smeId ?? "") : "";
+}
+
 function claimRows() {
   const byClan = new Map(getAllClans().map((clan) => [clan.id, clan]));
-  return getClaimsStorage().getAll().map((claim) => ({
+  const owner = ownerId();
+  return getClaimsStorage().getAll().filter((claim) => !owner || claim.memberId === owner).map((claim) => ({
     id: claim.claimId,
     groupId: claim.clanId,
     product: byClan.get(claim.clanId)?.canonicalSku ?? "",
@@ -99,7 +107,7 @@ function claimRows() {
 function shipmentRows() {
   return getDeliveryStorage()
     .getAll()
-    .filter((record) => record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber))
+    .filter((record) => record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber) && (!ownerId() || record.memberId === ownerId()))
     .map((record) => ({
       id: record.id,
       groupId: record.clanId,

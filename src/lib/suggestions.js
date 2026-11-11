@@ -37,7 +37,7 @@ export async function buildSuggestions() {
 
   // What the business buys decides what is relevant. With no product, the city does.
   const wanted = wordsOf(product);
-  const matches = (group) => wanted.length === 0 || wanted.some((word) => `${group.product} ${group.name}`.toLowerCase().includes(word));
+  const matches = (group) => wanted.length === 0 || wanted.some((word) => new RegExp(`\\b${word}s?\\b`).test(`${group.product} ${group.name}`.toLowerCase()));
   const relevant = groups.filter(matches);
   const nearby = city ? relevant.filter((g) => String(g.city).toLowerCase() === city.toLowerCase()) : [];
   const pool = nearby.length > 0 ? nearby : relevant;
@@ -66,7 +66,7 @@ export async function buildSuggestions() {
   if (ledger.some((row) => row.memberId === me) && out.length < 5) out.push({ text: "Show my pledges and what is held in escrow", reason: "Held on PayPal" });
 
   if (label && out.length < 6) {
-    const known = suppliers.some((supplier) => wanted.some((word) => String(supplier.products ?? "").toLowerCase().includes(word)));
+    const known = suppliers.some((supplier) => wanted.some((word) => new RegExp(`\\b${word}s?\\b`).test(String(supplier.products ?? "").toLowerCase())));
     out.push({ text: `Find new suppliers for ${label} on the web`, reason: known ? "Kernel browser search" : "No directory suppliers yet" });
   }
   if (label && pool.length === 0) out.push({ text: `Start a group buy for ${label}${city ? ` in ${city}` : ""}`, reason: "No open group yet" });

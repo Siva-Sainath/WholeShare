@@ -4,6 +4,7 @@ import { getDeliveryStorage } from "../storage/delivery.storage.ts";
 import { getClanById } from "./matchmaking/clanStore.ts";
 import { isCarrierFormatTracking } from "./tracking-format.js";
 import { actionDispatcher } from "./web-actions.js";
+import { loadUserSettings } from "./user-settings.js";
 
 // The one place that changes delivery dates, inspection windows and receiving slots.
 // Mosaic's tools and the Bryntum Scheduler (drag and resize) both call these functions, so a change made by
@@ -40,8 +41,11 @@ const toIso = (ms) => new Date(ms).toISOString();
 const dayKey = (iso) => String(iso).slice(0, 10);
 const isWeekend = (ms) => [0, 6].includes(new Date(ms).getUTCDay());
 
+// A business that finished onboarding works on its own shipments. Everyone else works on the shared demo set.
 function records() {
-  return getDeliveryStorage().getAll().filter((record) => record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber));
+  const profile = loadUserSettings().profile ?? {};
+  const owner = profile.workspaceSeeded ? profile.smeId : "";
+  return getDeliveryStorage().getAll().filter((record) => record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber) && (!owner || record.memberId === owner));
 }
 
 function inFlight(record) {
