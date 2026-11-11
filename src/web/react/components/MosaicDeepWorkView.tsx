@@ -8,6 +8,7 @@ import {
   ChatMessage,
   ChatMessageBubble,
   ChatMessageList,
+  ChatMessageMetadata,
   ChatSystemMessage
 } from "@astryxdesign/core/Chat";
 import { Avatar } from "@astryxdesign/core/Avatar";
@@ -172,14 +173,14 @@ export const MosaicDeepWorkView: React.FC<MosaicDeepWorkViewProps> = ({ initialQ
                 {messages.map((message) =>
                   message.role === "user" ? (
                     <ChatMessage key={message.id} sender="user" data-msg-id={message.id}>
-                      <ChatMessageBubble metadata={formatTime(message.at)}>{message.text}</ChatMessageBubble>
+                      <ChatMessageBubble metadata={<ChatMessageMetadata timestamp={formatTime(message.at)} />}>{message.text}</ChatMessageBubble>
                     </ChatMessage>
                   ) : (
                     <ChatMessage key={message.id} sender="assistant" avatar={<Avatar name="Mosaic" size="md" />} name="Mosaic" data-msg-id={message.id}>
                       {message.actions && message.actions.length > 0 && (
                         <ToolTrace items={message.actions.map((action, index) => ({ key: `${message.id}-${index}`, tool: action.tool, label: action.label, pending: false, ok: action.ok, href: action.href }))} />
                       )}
-                      <ChatMessageBubble metadata={formatTime(message.at)}><Markdown>{message.text}</Markdown></ChatMessageBubble>
+                      <ChatMessageBubble metadata={<ChatMessageMetadata timestamp={formatTime(message.at)} />}><Markdown>{message.text}</Markdown></ChatMessageBubble>
                       {message.blocked && (
                         <div className="ws-chat-allow">
                           <span className="lp-gold">
