@@ -197,7 +197,7 @@ const BoardArtifact: React.FC<{ revision: number }> = ({ revision }) => {
   if (error) return <EmptyState title="Could not show the board" description={error} />;
   return (
     <div>
-      <p className="ws-canvas-meta">Drag a claim forward: Draft to With supplier approves it, then Settled or Rejected records the supplier's decision. The server checks every move.</p>
+      <p className="ws-canvas-meta">Drag a claim from Draft to With supplier to approve it. After that the supplier answers, and it moves to Settled or Rejected when they do.</p>
       <div id="canvasBoardMount" className="ws-canvas-board" />
     </div>
   );

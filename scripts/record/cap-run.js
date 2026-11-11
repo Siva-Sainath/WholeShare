@@ -247,8 +247,7 @@ if (want.has("k6")) {
     if (tab.asElement()) { await clickHandle(ctx, tab.asElement(), 500); await sleep(3500); }
     const row = await page.waitForSelector(".ag-row[row-index=\"0\"] .ag-cell", { visible: true, timeout: 20000 });
     await clickHandle(ctx, row, 600); await sleep(3000);
-    await clickText(ctx, "Approve and send to supplier", 600); await sleep(4000);
-    await clickText(ctx, "Supplier accepts", 600); await sleep(4500);
+    await clickText(ctx, "Approve and send to supplier", 600); await sleep(5500);
     await page.keyboard.press("Escape"); await sleep(1200);
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })); await sleep(1000);
     await clickText(ctx, "Claims board", 500); await sleep(5000);

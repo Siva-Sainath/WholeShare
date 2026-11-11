@@ -560,7 +560,7 @@ export function initBryntumTaskBoard(
     ],
     tasks,
     listeners: {
-      // Dragging a card is a real action. It calls the same endpoints as the buttons and the server decides.
+      // Approving a claim is a real action and the server decides. The supplier's answer is theirs, so cards are not dragged past With supplier.
       beforeTaskDrop: async ({ taskRecords, targetColumn }: any) => {
         const task = taskRecords[0];
         const from = String(task.status);
@@ -569,12 +569,12 @@ export function initBryntumTaskBoard(
         try {
           if (from === "draft" && to === "supplier") {
             await postClaim("approve", { claimId: String(task.id), memberId: String(task.memberId || "") });
-            Toast.show(`Approved ${task.id}. It is now with the supplier.`);
-          } else if (from === "supplier" && (to === "settled" || to === "rejected")) {
-            await postClaim("respond", { claimId: String(task.id), action: to === "settled" ? "ACCEPT" : "REJECT", notes: "Decided on the claims board (supplier demo view)." });
-            Toast.show(to === "settled" ? `Supplier accepted ${task.id}. The claim is settled.` : `Supplier rejected ${task.id}.`);
+            Toast.show(`Approved ${claimRef(String(task.id))}. It is now with the supplier.`);
+          } else if (from === "supplier") {
+            Toast.show("With the supplier. This card moves to Settled or Rejected when they answer.");
+            return false;
           } else {
-            Toast.show("Claims only move forward: Draft, then With supplier, then Settled or Rejected.");
+            Toast.show("A claim moves from Draft to With supplier when you approve it.");
             return false;
           }
           return true;

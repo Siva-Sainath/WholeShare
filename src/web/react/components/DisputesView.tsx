@@ -12,7 +12,7 @@ import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Badge } from "@astryxdesign/core/Badge";
-import { approveClaim, respondToClaim } from "../api";
+import { approveClaim } from "../api";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { ClaimStatusCell } from "./gridCells";
 import { uploadEvidence } from "../api";
@@ -586,7 +586,7 @@ export const DisputesView: React.FC = () => {
       <section style={cardStyle}>
         <h2 id="dispute-board" style={{ ...sectionTitleStyle, marginBottom: "12px", scrollMarginTop: "96px" }}>Dispute workflow</h2>
         <p style={{ fontSize: "12px", color: STITCH_COLORS.muted, margin: "0 0 12px" }}>
-          Drag a card forward to act on it: Draft to With supplier approves the claim, and With supplier to Settled or Rejected records the supplier's decision. The server checks every move.
+          Drag a card from Draft to With supplier to approve it. After that the supplier answers, and the card moves to Settled or Rejected when they do.
         {claims.length === 0 ? " No claims yet. File one from the next tabs or ask Mosaic, and a card appears in Draft." : ""}</p>
         <div id="bryntumTaskBoardMount" style={{ height: `${fillHeight()}px`, width: "100%" }} />
       </section>
@@ -620,19 +620,10 @@ export const DisputesView: React.FC = () => {
                   }} /></span>
                 )}
                 {openClaim.status === "BUYER_APPROVED" && (
-                  <>
-                    <p className="ws-claim-desc">Supplier response. These buttons act as the supplier's console until suppliers connect.</p>
-                    {(["ACCEPT", "REJECT"] as const).map((action) => (
-                      <Button key={action} variant="secondary" label={action === "ACCEPT" ? "Supplier accepts" : "Supplier rejects"} isDisabled={Boolean(claimBusy)} onClick={() => {
-                        setClaimBusy(action);
-                        respondToClaim({ claimId: openClaim.claimId, action, notes: `${action === "ACCEPT" ? "Accepted" : "Rejected"} in the supplier demo view.` })
-                          .then(() => { setClaimNote({ kind: "success", text: action === "ACCEPT" ? "The supplier accepted the claim." : "The supplier rejected the claim." }); void loadData(); setOpenClaim({ ...openClaim, status: action === "ACCEPT" ? "SUPPLIER_ACCEPTED" : "REJECTED" }); })
-                          .catch((cause: unknown) => setClaimNote({ kind: "error", text: cause instanceof Error ? cause.message : "The supplier response failed." }))
-                          .finally(() => setClaimBusy(null));
-                      }} />
-                    ))}
-                  </>
+                  <p className="ws-claim-desc">With the supplier. They have the claim and the photo. The refund is worked out for the damaged units only, and PayPal sends each update as it happens.</p>
                 )}
+                {openClaim.status === "SETTLED" && <p className="ws-claim-desc">Settled. The supplier accepted the claim.</p>}
+                {openClaim.status === "REJECTED" && <p className="ws-claim-desc">The supplier rejected this claim.</p>}
               </div>
             </div>
           </>

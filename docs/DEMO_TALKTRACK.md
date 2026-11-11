@@ -59,9 +59,9 @@ Your 20 second hook plays first, then this 2 minute 37 second screen recording. 
 
 ## 6. Disputes (2:16 to 2:32, 16 seconds, 28 words)
 
-**Say:** A delivery arrives crushed. One sentence, Mosaic fills the claim, I attach the photo, approve it, and the supplier accepts. The refund is proportional to what was damaged.
+**Say:** A delivery arrives crushed. One sentence, Mosaic fills the claim, I attach the photo and approve it. It goes to the supplier with the evidence. The refund is only for what was damaged.
 
-- If asked about the refund: this sample claim has no PayPal hold behind it, so it records locally. With a real hold it goes through PayPal.
+- The claim shows 'With supplier' and waits for their answer. Point at the Settled column for an earlier claim that finished. If asked about the refund: it is proportional to the damaged units and goes through PayPal when a real hold is behind the order.
 - **Sponsor and tech to name:** PayPal refund or partial capture, and the Disputes webhook.
 
 ## 7. Close (2:32 to 2:37, 5 seconds, 10 words)
