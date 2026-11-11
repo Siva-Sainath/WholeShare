@@ -14,6 +14,7 @@ import { createOrderAuthorization, authorizeOrderHold } from "../lib/paypal-brid
 import { authorizePledgeOrder, createPledgeOrder, getPledgeQuote } from "../lib/paypal-checkout.js";
 import { durableHarness, describeHarness } from "../lib/durable-harness.js";
 import { handleMcpMessage, listMcpTools } from "../lib/mcp-server.js";
+import { getInferenceStatus, startInferenceProbe } from "../lib/inference-status.js";
 import { needsSeed, restoreWorkspace, seedWorkspaceForProfile, isDemoBusiness } from "../lib/workspace-seed.js";
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../lib/tool-registry.js";
 import { kernelResearchService } from "../lib/kernel-service.js";
@@ -830,6 +831,14 @@ export function createWebServer() {
         const { policies: _policies, modelPreferences: _models, aiAgents: _agents, ...allowed } = body && typeof body === "object" ? body : {};
         if (allowed.profile && typeof allowed.profile === "object") {
           const { paypalMerchantEmail: _a, paypalPayerId: _b, paypalConnectedAt: _c, paypalConnectMode: _d, smeId: _e, ...profile } = allowed.profile;
+          // Whatever a visitor types is kept short and plain before it is stored or used to build a workspace.
+          for (const key of ["businessName", "industry", "city", "country", "product", "contactEmail"]) {
+            if (key in profile) profile[key] = String(profile[key] ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, key === "product" ? 80 : 120);
+          }
+          if ("units" in profile) {
+            const units = Math.round(Number(profile.units));
+            profile.units = Number.isFinite(units) && units > 0 ? Math.min(units, 100000) : 12;
+          }
           allowed.profile = profile;
         }
         let updated = updateUserSettings(allowed);
@@ -1962,6 +1971,11 @@ export function createWebServer() {
       return;
     }
 
+    if (pathname === "/api/v1/mosaic/status" && req.method === "GET") {
+      sendJson(res, 200, getInferenceStatus());
+      return;
+    }
+
     if (pathname === "/api/v1/mosaic/suggestions" && req.method === "GET") {
       try {
         sendJson(res, 200, { suggestions: await buildSuggestions() });
@@ -2902,6 +2916,6 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
     void restoreWorkspace();
     setInterval(() => { try { rebaseStoryShipments(); } catch { /* next hour */ } }, 3600 * 1000).unref();
-    durableHarness.warmUp().then(() => console.log("[mosaic] model warmed")).catch((error) => console.warn(`[mosaic] warm-up skipped: ${error.message}`));
+    startInferenceProbe();
   });
 }

@@ -1,4 +1,4 @@
-// Adds the Flushing, Queens story to the sample data: independent restaurants pooling orders to reach supplier tiers.
+// Adds the New York, Queens story to the sample data: independent restaurants pooling orders to reach supplier tiers.
 // Additive and repeatable. Everything it writes is sample data and is labelled that way.
 //   groups   -> data/seeded-clans.json            (ids clan-flushing-*)
 //   members  -> data/generated/clan-members.json  (named local businesses)
@@ -12,7 +12,7 @@ const root = process.cwd();
 const read = (path) => JSON.parse(readFileSync(resolve(root, path), "utf8"));
 const write = (path, value) => writeFileSync(resolve(root, path), `${JSON.stringify(value, null, 2)}\n`, "utf8");
 
-const CITY = { city: "Flushing", countryCode: "US", settlementCurrency: "USD", lat: 40.7675, lng: -73.8331, corridorId: "Port Newark / JFK Air Cargo" };
+const CITY = { city: "New York", countryCode: "US", settlementCurrency: "USD", lat: 40.7675, lng: -73.8331, corridorId: "Port Newark / JFK Air Cargo" };
 const NOW = Date.now();
 const daysAgo = (n) => new Date(NOW - n * 86400000).toISOString();
 
@@ -31,15 +31,15 @@ const SUPPLIERS = [
 
 // unit = the pack a restaurant actually buys. Prices in cents.
 const GROUPS = [
-  { key: "containers-garden-state", name: "Flushing Takeout Containers 32 oz (Garden State)", sku: "Kraft Takeout Container 32 oz with Lid (case of 150)", vertical: "PACKAGING_MATERIALS", hs: "4819.20", base: 3150, target: 80, current: 38, tiers: [[20, 8], [40, 14], [80, 22]], days: 5, supplier: "sup-flushing-garden-state-packaging", trust: 0.97 },
-  { key: "containers-eastern", name: "Flushing Takeout Containers 32 oz (Eastern Imports)", sku: "Kraft Takeout Container 32 oz with Lid (case of 150)", vertical: "PACKAGING_MATERIALS", hs: "4819.20", base: 2790, target: 80, current: 41, tiers: [[20, 10], [40, 18], [80, 26]], days: 12, supplier: "sup-flushing-eastern-wholesale-imports", trust: 0.86 },
-  { key: "gloves", name: "Flushing Nitrile Gloves (case of 1,000)", sku: "Nitrile Exam Gloves Powder Free Black Medium (case of 1,000)", vertical: "RESTAURANT_EQUIPMENT", hs: "4015.12", base: 6400, target: 60, current: 32, tiers: [[20, 8], [40, 14], [60, 20]], days: 7, supplier: "sup-flushing-hudson-safety", trust: 0.94 },
-  { key: "rice", name: "Flushing Jasmine Rice 25 lb", sku: "Jasmine Rice Hom Mali 25 lb Bag", vertical: "FOOD_AND_BEVERAGE", hs: "1006.30", base: 2450, target: 120, current: 84, tiers: [[40, 8], [80, 14], [120, 20]], days: 24, supplier: "sup-flushing-bangkok-rice", trust: 0.95, crossBorder: true },
-  { key: "cooking-oil", name: "Flushing Soybean Cooking Oil 35 lb", sku: "Soybean Cooking Oil 35 lb Jug", vertical: "FOOD_AND_BEVERAGE", hs: "1507.90", base: 4600, target: 60, current: 39, tiers: [[20, 6], [40, 12], [60, 18]], days: 4, supplier: "sup-flushing-queens-foodservice", trust: 0.9 },
-  { key: "cups", name: "Flushing Clear Cups 16 oz with Lids", sku: "Clear PET Cups 16 oz with Dome Lids (case of 1,000)", vertical: "PACKAGING_MATERIALS", hs: "3924.10", base: 5800, target: 50, current: 29, tiers: [[10, 6], [30, 12], [50, 18]], days: 5, supplier: "sup-flushing-brooklyn-cup", trust: 0.88 }
+  { key: "containers-garden-state", name: "New York Takeout Containers 32 oz (Garden State)", sku: "Kraft Takeout Container 32 oz with Lid (case of 150)", vertical: "PACKAGING_MATERIALS", hs: "4819.20", base: 3150, target: 80, current: 38, tiers: [[20, 8], [40, 14], [80, 22]], days: 5, supplier: "sup-flushing-garden-state-packaging", trust: 0.97 },
+  { key: "containers-eastern", name: "New York Takeout Containers 32 oz (Eastern Imports)", sku: "Kraft Takeout Container 32 oz with Lid (case of 150)", vertical: "PACKAGING_MATERIALS", hs: "4819.20", base: 2790, target: 80, current: 41, tiers: [[20, 10], [40, 18], [80, 26]], days: 12, supplier: "sup-flushing-eastern-wholesale-imports", trust: 0.86 },
+  { key: "gloves", name: "New York Nitrile Gloves (case of 1,000)", sku: "Nitrile Exam Gloves Powder Free Black Medium (case of 1,000)", vertical: "RESTAURANT_EQUIPMENT", hs: "4015.12", base: 6400, target: 60, current: 32, tiers: [[20, 8], [40, 14], [60, 20]], days: 7, supplier: "sup-flushing-hudson-safety", trust: 0.94 },
+  { key: "rice", name: "New York Jasmine Rice 25 lb", sku: "Jasmine Rice Hom Mali 25 lb Bag", vertical: "FOOD_AND_BEVERAGE", hs: "1006.30", base: 2450, target: 120, current: 84, tiers: [[40, 8], [80, 14], [120, 20]], days: 24, supplier: "sup-flushing-bangkok-rice", trust: 0.95, crossBorder: true },
+  { key: "cooking-oil", name: "New York Soybean Cooking Oil 35 lb", sku: "Soybean Cooking Oil 35 lb Jug", vertical: "FOOD_AND_BEVERAGE", hs: "1507.90", base: 4600, target: 60, current: 39, tiers: [[20, 6], [40, 12], [60, 18]], days: 4, supplier: "sup-flushing-queens-foodservice", trust: 0.9 },
+  { key: "cups", name: "New York Clear Cups 16 oz with Lids", sku: "Clear PET Cups 16 oz with Dome Lids (case of 1,000)", vertical: "PACKAGING_MATERIALS", hs: "3924.10", base: 5800, target: 50, current: 29, tiers: [[10, 6], [30, 12], [50, 18]], days: 5, supplier: "sup-flushing-brooklyn-cup", trust: 0.88 }
 ];
 
-const BUSINESSES = ["Jade Garden Noodle Bar", "Sweet Pearl Bubble Tea", "Main Street Dumpling House", "Lucky Panda Takeout", "Chengdu Spice House", "Flushing Bakery & Buns", "Taste of Xi'an", "Harmony Hot Pot", "Pearl River Seafood", "Golden Wok Express"];
+const BUSINESSES = ["Jade Garden Noodle Bar", "Sweet Pearl Bubble Tea", "Main Street Dumpling House", "Lucky Panda Takeout", "Chengdu Spice House", "New York Bakery & Buns", "Taste of Xi'an", "Harmony Hot Pot", "Pearl River Seafood", "Golden Wok Express"];
 const PERSONA = { smeId: "sme_austin_01", name: "Golden Lotus Kitchen" };
 
 const discountAt = (group, units) => group.tiers.reduce((best, [min, pct]) => (units >= min ? Math.max(best, pct) : best), 0);
@@ -73,7 +73,7 @@ GROUPS.forEach((group, index) => {
     discountTiers: group.tiers.map(([minUnits, discountPct]) => ({ minUnits, discountPct })),
     estimatedDeliveryDays: group.days, supplierId: supplier.id.replace("sup-flushing-", "supp-fl-"), supplierName: supplier.name, supplierTrustScore: group.trust,
     memberCount: 0, status: "FORMING", isCrossBorder: Boolean(group.crossBorder), createdAt: daysAgo(12 - index), demo: true,
-    fulfilment: { mode: "SINGLE_POINT", points: [{ label: "Back door, Main St", address: "", city: "Flushing", countryCode: "US" }] }
+    fulfilment: { mode: "SINGLE_POINT", points: [{ label: "Back door, Main St", address: "", city: "New York", countryCode: "US" }] }
   };
   const list = buildMembers(group, index);
   clan.memberCount = list.length;

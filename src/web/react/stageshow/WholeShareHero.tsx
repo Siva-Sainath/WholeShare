@@ -24,18 +24,18 @@ const TARGET = 2000
 
 type Group = { id: string; name: string; meta: string; price: string; off: string; coffee: boolean; Icon: typeof Coffee }
 const GROUPS: Group[] = [
-  { id: 'rice', name: 'Jasmine rice 25 lb', meta: 'Flushing · 84 of 120 bags', price: '$21.07', off: '14% off', coffee: false, Icon: Wheat },
-  { id: 'garden', name: 'Kraft takeout containers 32 oz (Garden State)', meta: 'Flushing · 38 of 80 cases', price: '$28.98', off: '8% off', coffee: true, Icon: Boxes },
-  { id: 'gloves', name: 'Nitrile gloves, case of 1,000', meta: 'Flushing · 32 of 60 cases', price: '$58.88', off: '8% off', coffee: false, Icon: LayoutGrid },
-  { id: 'oil', name: 'Soybean cooking oil 35 lb', meta: 'Flushing · 39 of 60 jugs', price: '$43.24', off: '6% off', coffee: false, Icon: Droplets },
-  { id: 'eastern', name: 'Kraft takeout containers 32 oz (Eastern Imports)', meta: 'Flushing · 41 of 80 cases', price: '$22.88', off: '18% off', coffee: true, Icon: Boxes },
-  { id: 'cups', name: 'Clear PET cups 16 oz with lids', meta: 'Flushing · 29 of 50 cases', price: '$54.52', off: '6% off', coffee: false, Icon: Coffee }
+  { id: 'rice', name: 'Jasmine rice 25 lb', meta: 'New York · 84 of 120 bags', price: '$21.07', off: '14% off', coffee: false, Icon: Wheat },
+  { id: 'garden', name: 'Takeout containers 32 oz (Garden State)', meta: 'New York · 38 of 80 cases', price: '$28.98', off: '8% off', coffee: true, Icon: Boxes },
+  { id: 'gloves', name: 'Nitrile gloves (1,000)', meta: 'New York · 32 of 60 cases', price: '$58.88', off: '8% off', coffee: false, Icon: LayoutGrid },
+  { id: 'oil', name: 'Soybean cooking oil 35 lb', meta: 'New York · 39 of 60 jugs', price: '$43.24', off: '6% off', coffee: false, Icon: Droplets },
+  { id: 'eastern', name: 'Takeout containers 32 oz (Eastern Imports)', meta: 'New York · 41 of 80 cases', price: '$22.88', off: '18% off', coffee: true, Icon: Boxes },
+  { id: 'cups', name: 'Clear PET cups 16 oz with lids', meta: 'New York · 29 of 50 cases', price: '$54.52', off: '6% off', coffee: false, Icon: Coffee }
 ]
 
 type Joined = { id: string; name: string; meta: string; amount: string; tone: 'neutral' | 'success'; label: string; Icon: typeof Coffee }
 const JOINED: Joined[] = [
   { id: 'rice', name: 'Jasmine rice 25 lb', meta: '150 bags', amount: '$3,675.00', tone: 'neutral', label: 'Pledged', Icon: Wheat },
-  { id: 'gloves', name: 'Nitrile gloves, case of 1,000', meta: '10 cases', amount: '$640.00', tone: 'neutral', label: 'Pledged', Icon: LayoutGrid },
+  { id: 'gloves', name: 'Nitrile gloves (1,000)', meta: '10 cases', amount: '$640.00', tone: 'neutral', label: 'Pledged', Icon: LayoutGrid },
   { id: 'cups', name: 'Clear PET cups 16 oz', meta: '75 cases', amount: '$2,047.50', tone: 'success', label: 'Authorized', Icon: Coffee }
 ]
 
@@ -130,11 +130,13 @@ export function WholeShareHero() {
                             meta={<Text className="wh-price">{g.price}</Text>}
                             selected={s.sheet && g.id === 'garden'}
                           >
-                            {g.id === 'garden' && s.filtered ? (
-                              <Button variant="secondary" size="small" data-target="join" data-cursor="pointer">Join</Button>
-                            ) : (
-                              <Badge tone="neutral">{g.off}</Badge>
-                            )}
+                            <span className="wh-trail">
+                              {g.id === 'garden' && s.filtered ? (
+                                <Button variant="secondary" size="small" data-target="join" data-cursor="pointer">Join</Button>
+                              ) : (
+                                <Badge tone="neutral">{g.off}</Badge>
+                              )}
+                            </span>
                           </Row>
                         </Collapse>
                       ))}
@@ -153,16 +155,16 @@ export function WholeShareHero() {
                           title={<Text>{g.name}</Text>}
                           subtitle={<Text>{`${g.meta} · ${g.amount}`}</Text>}
                         >
-                          <Badge tone={g.tone}>{g.label}</Badge>
+                          <span className="wh-trail"><Badge tone={g.tone}>{g.label}</Badge></span>
                         </Row>
                       ))}
                       <Collapse open={held && !s.sheet} reveal="drop">
                         <Row
                           lead={<span className="wh-tile"><Boxes size={18} strokeWidth={1.8} /></span>}
-                          title={<Text>Kraft takeout containers 32 oz</Text>}
+                          title={<Text>Takeout containers 32 oz</Text>}
                           subtitle={<Text>10 cases · $289.80</Text>}
                         >
-                          <Badge tone="success">Authorized</Badge>
+                          <span className="wh-trail"><Badge tone="success">Authorized</Badge></span>
                         </Row>
                       </Collapse>
                     </Card>
@@ -175,7 +177,7 @@ export function WholeShareHero() {
               <div className="wh-pledge">
                 <div className="wh-copy">
                   <div className="wh-label">Pledge to this group</div>
-                  <Text wrap className="wh-strong">Kraft takeout containers 32 oz (Garden State)</Text>
+                  <Text wrap className="wh-strong">Takeout containers 32 oz (Garden State)</Text>
                 </div>
                 <Field label="Units" value={s.units} placeholder="0" focused={s.sheet && !s.units} box={{ 'data-target': 'units-field', 'data-cursor': 'ibeam' }} />
                 <div className="wh-sum">

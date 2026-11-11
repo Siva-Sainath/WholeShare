@@ -19,10 +19,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 mkdirSync(OUT, { recursive: true });
 
 const BEATS = [
-  { id: "01-find", prompt: "Which takeout container groups in Flushing can we still join?", hold: 3000 },
-  { id: "02-compare", prompt: "Compare the two Flushing takeout container groups for 12 cases", hold: 4000 },
+  { id: "01-find", prompt: "Which takeout container groups in New York can we still join?", hold: 3000 },
+  { id: "02-compare", prompt: "Compare the two New York takeout container groups for 12 cases", hold: 4000 },
   { id: "03-join", prompt: "Join the Garden State container group with 12 cases", hold: 2500, stopAt: "pledge-drawer" },
-  { id: "04-start-group", prompt: "Start a jasmine rice group with my neighbour Lucky Panda, delivered to our two back doors at 135-20 Roosevelt Ave and 41-12 Main St in Flushing, 120 bags", hold: 3500 },
+  { id: "04-start-group", prompt: "Start a jasmine rice group with my neighbour Lucky Panda, delivered to our two back doors at 135-20 Roosevelt Ave and 41-12 Main St in New York, 120 bags", hold: 3500 },
   { id: "05-delivery", prompt: "Move the container delivery up a day", hold: 3000 },
   { id: "05b-undo", prompt: "Undo that", hold: 2500 },
   { id: "06-dispute", prompt: "Our delivered containers arrived crushed, 8 cartons, file a claim", attach: "src/web/public/img/products/boxes.jpg", hold: 4000 }

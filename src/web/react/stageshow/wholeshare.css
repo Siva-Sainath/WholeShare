@@ -40,3 +40,6 @@
 .wh-pay { width: 100%; }
 .wh-inline { display: inline-flex; align-items: center; gap: 8px; }
 .wh-sheet { position: absolute; left: 636px; top: 150px; width: 300px; padding: 16px !important; border-radius: 12px; }
+/* Every row ends in a control of the same width, so prices and rows line up whatever the control is. */
+.wh-trail { display: inline-flex; justify-content: flex-end; align-items: center; width: 88px; flex: none; }
+.wh-price { display: inline-block; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }

@@ -9,6 +9,7 @@ import { MosaicLogo } from "./MosaicLogo";
 import { PayPalAttribution } from "./PayPalAttribution";
 import { HeroBackdrop } from "./HeroBackdrop";
 import { WholeShareHero } from "../stageshow/WholeShareHero";
+import { InferenceStatus } from "./InferenceStatus";
 import { Button } from "@astryxdesign/core/Button";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 
@@ -95,6 +96,12 @@ function formatCategory(cat?: string): string {
   return map[cat] ?? cat.replaceAll("_", " ").toLowerCase();
 }
 
+// The built-in demo groups share one id prefix, so they lead the list for visitors who have not set up their own city.
+const isStory = (clan: { id: string }): boolean => clan.id.startsWith("clan-flushing-");
+
+// Visitors with their own city see groups there first. Everyone else starts with the built-in demo groups.
+const nearScore = (clan: { id: string; city?: string | null }, home: string): number => (home === "New York" && isStory(clan) ? 2 : 0) + (clan.city === home ? 1 : 0);
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -107,13 +114,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [catalogTotal, setCatalogTotal] = useState<number | null>(null);
-  const [homeCity, setHomeCity] = useState("Flushing");
+  const [homeCity, setHomeCity] = useState("New York");
 
   useEffect(() => {
     let cancelled = false;
-    // Groups near the visitor come first: their own city once they have set up a profile, otherwise the Flushing story market.
+    // Groups near the visitor come first: their own city once they have set up a profile, otherwise the New York story market.
     const profileCity = fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { city?: string } }) => String(p.profile?.city ?? "").trim()).catch(() => "");
-    profileCity.then((own) => Promise.all([fetchClansPage().catch(() => null), fetchClansPage({ city: own || "Flushing" }).catch(() => null), fetchLedger().catch(() => []), fetchMcpTools().catch(() => []), own || "Flushing"])).then(([page, local, l, t, home]) => {
+    profileCity.then((own) => Promise.all([fetchClansPage().catch(() => null), fetchClansPage({ city: own || "New York" }).catch(() => null), fetchLedger().catch(() => []), fetchMcpTools().catch(() => []), own || "New York"])).then(([page, local, l, t, home]) => {
       if (cancelled) return;
       setHomeCity(home);
       const seen = new Set<string>();
@@ -136,11 +143,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const openGroups = useMemo(
     () => clans
       .filter((c) => c.status === "FORMING" && c.progressPct > 0 && c.progressPct < 100)
-      .sort((a, b) => Number(b.city === homeCity) - Number(a.city === homeCity) || b.progressPct - a.progressPct),
+      .sort((a, b) => nearScore(b, homeCity) - nearScore(a, homeCity) || b.progressPct - a.progressPct),
     [clans, homeCity]
   );
   const featured = openGroups.find((c) => c.id === "clan-flushing-containers-eastern") ?? openGroups[0] ?? null;
-  const localGroups = openGroups.filter((c) => c.city === homeCity);
+  const localGroups = openGroups.filter((c) => nearScore(c, homeCity) > 0);
   const gridGroups = localGroups.length >= 4 ? localGroups.slice(0, 6) : openGroups.filter((c) => c.id !== featured?.id).slice(0, 6);
 
   const toolGroups = useMemo(() => {
@@ -172,6 +179,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       // Session storage is optional.
     }
     onNavigate("discover");
+  };
+
+  // One click into the built-in demo business, with its pledges, shipments and reports already in place.
+  const useDemoBusiness = async () => {
+    try {
+      await fetch("/api/v1/user/settings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12, onboardingConfirmed: true } })
+      });
+      window.localStorage.setItem("wholeshare_onboarding_confirmed", "true");
+    } catch {
+      // The demo still opens if the save fails.
+    }
+    window.location.hash = "discover";
+    window.location.reload();
   };
 
   const scrollTo = (id: string) => (event: React.MouseEvent) => {
@@ -297,6 +320,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 <button key={prompt} type="button" className="lp-link" onClick={() => askMosaic(prompt)}>{prompt}</button>
               ))}
             </div>
+            <InferenceStatus />
           </div>
 
           <div className="lp-frame lp-frame--demo" aria-label="Animated demo: ask Mosaic for takeout container groups, join one, PayPal holds the funds">
@@ -310,6 +334,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           {FACTS.map((fact) => (
             <div key={fact.title} className="lp-fact lp-reveal"><b>{fact.title}</b>{fact.body}</div>
           ))}
+        </div>
+      </section>
+
+      <section className="lp-section" id="start">
+        <div className="lp-wrap">
+          <div className="lp-section-head lp-reveal">
+            <p className="lp-eyebrow">Try it your way</p>
+            <h2 className="lp-h2">Bring your own business, or use ours.</h2>
+          </div>
+          <div className="lp-try-grid">
+            <div className="lp-try-card lp-reveal">
+              <h3>Use your own business</h3>
+              <p>Say what you buy and where you are. WholeShare builds a workspace around it from the real catalog, so everything you see is yours.</p>
+              <ul>
+                <li>Pledges in groups that match your product</li>
+                <li>A delivery on the way, a late one and one ready to inspect</li>
+                <li>Reports, schedules and claims for your business only</li>
+              </ul>
+              <div className="lp-try-actions"><Button variant="secondary" label="Set up my business" onClick={() => onNavigate("onboarding")} /></div>
+            </div>
+            <div className="lp-try-card lp-reveal">
+              <h3>Use the demo business</h3>
+              <p>Golden Lotus Kitchen, a restaurant in New York that pools takeout containers with its neighbours. Open it and try every step.</p>
+              <ul>
+                <li>Find and compare two container groups</li>
+                <li>Join one and approve the hold on PayPal</li>
+                <li>Move a delivery, file a damage claim, read the reports</li>
+              </ul>
+              <div className="lp-try-actions"><Button variant="secondary" label="Open the demo business" onClick={() => void useDemoBusiness()} /></div>
+            </div>
+          </div>
         </div>
       </section>
 

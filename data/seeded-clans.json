@@ -43,11 +43,11 @@
   },
   {
     "id": "clan-flushing-cups",
-    "name": "Flushing Clear Cups 16 oz with Lids",
+    "name": "New York Clear Cups 16 oz with Lids",
     "industryVertical": "PACKAGING_MATERIALS",
     "canonicalSku": "Clear PET Cups 16 oz with Dome Lids (case of 1,000)",
     "hsCodePrefix": "3924.10",
-    "city": "Flushing",
+    "city": "New York",
     "countryCode": "US",
     "settlementCurrency": "USD",
     "lat": 40.7675,
@@ -85,7 +85,7 @@
         {
           "label": "Back door, Main St",
           "address": "",
-          "city": "Flushing",
+          "city": "New York",
           "countryCode": "US"
         }
       ]
@@ -93,11 +93,11 @@
   },
   {
     "id": "clan-flushing-cooking-oil",
-    "name": "Flushing Soybean Cooking Oil 35 lb",
+    "name": "New York Soybean Cooking Oil 35 lb",
     "industryVertical": "FOOD_AND_BEVERAGE",
     "canonicalSku": "Soybean Cooking Oil 35 lb Jug",
     "hsCodePrefix": "1507.90",
-    "city": "Flushing",
+    "city": "New York",
     "countryCode": "US",
     "settlementCurrency": "USD",
     "lat": 40.7675,
@@ -135,7 +135,7 @@
         {
           "label": "Back door, Main St",
           "address": "",
-          "city": "Flushing",
+          "city": "New York",
           "countryCode": "US"
         }
       ]
@@ -143,11 +143,11 @@
   },
   {
     "id": "clan-flushing-rice",
-    "name": "Flushing Jasmine Rice 25 lb",
+    "name": "New York Jasmine Rice 25 lb",
     "industryVertical": "FOOD_AND_BEVERAGE",
     "canonicalSku": "Jasmine Rice Hom Mali 25 lb Bag",
     "hsCodePrefix": "1006.30",
-    "city": "Flushing",
+    "city": "New York",
     "countryCode": "US",
     "settlementCurrency": "USD",
     "lat": 40.7675,
@@ -185,7 +185,7 @@
         {
           "label": "Back door, Main St",
           "address": "",
-          "city": "Flushing",
+          "city": "New York",
           "countryCode": "US"
         }
       ]
@@ -193,11 +193,11 @@
   },
   {
     "id": "clan-flushing-gloves",
-    "name": "Flushing Nitrile Gloves (case of 1,000)",
+    "name": "New York Nitrile Gloves (case of 1,000)",
     "industryVertical": "RESTAURANT_EQUIPMENT",
     "canonicalSku": "Nitrile Exam Gloves Powder Free Black Medium (case of 1,000)",
     "hsCodePrefix": "4015.12",
-    "city": "Flushing",
+    "city": "New York",
     "countryCode": "US",
     "settlementCurrency": "USD",
     "lat": 40.7675,
@@ -235,7 +235,7 @@
         {
           "label": "Back door, Main St",
           "address": "",
-          "city": "Flushing",
+          "city": "New York",
           "countryCode": "US"
         }
       ]
@@ -243,11 +243,11 @@
   },
   {
     "id": "clan-flushing-containers-eastern",
-    "name": "Flushing Takeout Containers 32 oz (Eastern Imports)",
+    "name": "New York Takeout Containers 32 oz (Eastern Imports)",
     "industryVertical": "PACKAGING_MATERIALS",
     "canonicalSku": "Kraft Takeout Container 32 oz with Lid (case of 150)",
     "hsCodePrefix": "4819.20",
-    "city": "Flushing",
+    "city": "New York",
     "countryCode": "US",
     "settlementCurrency": "USD",
     "lat": 40.7675,
@@ -285,7 +285,7 @@
         {
           "label": "Back door, Main St",
           "address": "",
-          "city": "Flushing",
+          "city": "New York",
           "countryCode": "US"
         }
       ]
@@ -293,11 +293,11 @@
   },
   {
     "id": "clan-flushing-containers-garden-state",
-    "name": "Flushing Takeout Containers 32 oz (Garden State)",
+    "name": "New York Takeout Containers 32 oz (Garden State)",
     "industryVertical": "PACKAGING_MATERIALS",
     "canonicalSku": "Kraft Takeout Container 32 oz with Lid (case of 150)",
     "hsCodePrefix": "4819.20",
-    "city": "Flushing",
+    "city": "New York",
     "countryCode": "US",
     "settlementCurrency": "USD",
     "lat": 40.7675,
@@ -335,7 +335,7 @@
         {
           "label": "Back door, Main St",
           "address": "",
-          "city": "Flushing",
+          "city": "New York",
           "countryCode": "US"
         }
       ]

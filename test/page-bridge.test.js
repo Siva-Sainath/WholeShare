@@ -12,10 +12,10 @@ function capture() {
 
 test("the page runs the tool and its result comes back to the caller", async () => {
   const spy = capture();
-  const pending = callPageTool("grid_filter", { column: "city", value: "Flushing" });
+  const pending = callPageTool("grid_filter", { column: "city", value: "New York" });
   assert.equal(spy.sent.length, 1);
   assert.equal(spy.sent[0].tool, "grid_filter");
-  assert.deepEqual(spy.sent[0].args, { column: "city", value: "Flushing" });
+  assert.deepEqual(spy.sent[0].args, { column: "city", value: "New York" });
   assert.equal(resolvePageTool(spy.sent[0].callId, { ok: true, result: { rowsShown: 6 } }), true);
   assert.deepEqual(await pending, { status: "SUCCESS", result: { rowsShown: 6 } });
   spy.restore();

@@ -70,6 +70,8 @@ function columnsFor(rows: Row[], source?: string): ColDef[] {
         minWidth: index === 0 ? 260 : isMoney ? 110 : 110,
         flex: index === 0 ? 2.4 : typeof sample === "string" && field !== "status" ? 1.4 : 1,
         pinned: index === 0 ? ("left" as const) : undefined,
+        wrapText: index === 0,
+        autoHeight: index === 0,
         cellClass: typeof sample === "number" ? "ws-tabular-nums" : undefined,
         enableRowGroup: typeof sample !== "number",
         enableValue: typeof sample === "number",

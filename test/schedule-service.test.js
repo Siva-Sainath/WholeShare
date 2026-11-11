@@ -70,6 +70,6 @@ test("books the dock of a receiving point and rejects a point the group does not
   const { rebaseStoryShipments } = await import("../src/lib/story-clock.js");
   rebaseStoryShipments();
   const booked = bookSlot({ shipment: "takeout container", date: "2026-11-21", hour: 8 });
-  assert.match(booked.slot.dock, /Flushing \(Back door, Main St\)/);
+  assert.match(booked.slot.dock, /New York \(Back door, Main St\)/);
   assert.throws(() => bookSlot({ shipment: "takeout container", date: "2026-11-21", hour: 9, point: "Loading bay 9" }), /receives at/);
 });

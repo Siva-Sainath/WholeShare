@@ -375,7 +375,7 @@ class WholeshareActionDispatcher {
     this.applyStoryLedger();
   }
 
-  // The seeded pledges tell the Flushing story: independent restaurants pooling orders. Ids and SKUs stay as they are.
+  // The seeded pledges tell the New York story: independent restaurants pooling orders. Ids and SKUs stay as they are.
   applyStoryLedger() {
     for (const [id, story] of Object.entries(STORY_LEDGER)) {
       const coalition = this.coalitions.get(id);

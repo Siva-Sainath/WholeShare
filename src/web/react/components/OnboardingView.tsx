@@ -535,7 +535,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
               label="Use the demo business"
               onClick={() => {
                 void saveUserSettingsApi({
-                  profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "Flushing", country: "United States", currency: "USD", product: "takeout containers", units: 12 }
+                  profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12 }
                 }).catch(() => undefined).then(() => onComplete());
               }}
             />

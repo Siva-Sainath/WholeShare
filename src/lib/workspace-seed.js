@@ -8,7 +8,7 @@ import { loadUserSettings, updateUserSettings } from "./user-settings.js";
 // Just in time workspace for whoever is using the site. When a business finishes onboarding, it gets its own pledges,
 // an order in transit, a delivered order inside its inspection window and a late one, all built from the real catalog groups
 // that match what it buys. AG Grid, Bryntum, Insights and Mosaic read the same stores, so they all show this business.
-// The demo business keeps the Flushing story, and a restart rebuilds the same workspace from the saved profile.
+// The demo business keeps the New York story, and a restart rebuilds the same workspace from the saved profile.
 
 const DEMO_BUSINESS = "Golden Lotus Kitchen";
 const STOP = new Set(["the", "and", "for", "with", "bulk", "pack", "case", "size", "grade", "premium", "organic", "from"]);
@@ -51,7 +51,7 @@ export function needsSeed(profile) {
 export async function seedWorkspaceForProfile(profile) {
   const businessName = String(profile?.businessName ?? "").trim();
   if (isDemoBusiness(profile) || !businessName) {
-    // Switching back to the demo business, or clearing the profile, brings the Flushing story back.
+    // Switching back to the demo business, or clearing the profile, brings the New York story back.
     if (profile.workspaceSeeded) {
       if (profile.smeId && profile.smeId !== "sme_austin_01") getDeliveryStorage().removeByMember(profile.smeId);
       actionDispatcher.resetState();
@@ -73,12 +73,18 @@ export async function seedWorkspaceForProfile(profile) {
   const ranked = [...open].sort((a, b) => score(b, words, city) - score(a, words, city));
   const picked = [];
   const seenProducts = new Set();
-  for (const group of ranked) {
-    if (seenProducts.has(group.product)) continue;
+  const take = (group) => {
+    if (picked.length >= 3 || seenProducts.has(group.product) || picked.includes(group)) return;
     seenProducts.add(group.product);
     picked.push(group);
-    if (picked.length === 3) break;
-  }
+  };
+  // Groups that really sell what the business buys come first. Any that are left are filled from the same category, then the same city.
+  const matches = ranked.filter((group) => score(group, words, city) >= 10);
+  matches.forEach(take);
+  const categories = new Set(matches.map((group) => group.category).filter(Boolean));
+  if (categories.size > 0) ranked.filter((group) => categories.has(group.category)).forEach(take);
+  if (city) ranked.filter((group) => String(group.city ?? "").toLowerCase() === city).forEach(take);
+  ranked.forEach(take);
   if (picked.length === 0) return { seeded: false, reason: "no open groups" };
 
   // The ledger becomes this business's pledges, with a few neighbours in each group.

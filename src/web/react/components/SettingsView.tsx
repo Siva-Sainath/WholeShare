@@ -19,7 +19,7 @@ interface AgentInviteRecord {
 
 const DEMO_BUSINESS = "Golden Lotus Kitchen";
 const DEMO_EMAIL = "orders@goldenlotuskitchen.example";
-const DEMO_CITY = "Flushing";
+const DEMO_CITY = "New York";
 const DEMO_PAYPAL = "sb-merchant@business.example.com";
 
 function displayOrEmpty(value: string | undefined, demo: string): string {

@@ -52,7 +52,6 @@ export const MosaicDeepWorkView: React.FC<MosaicDeepWorkViewProps> = ({ initialQ
   const [prompt, setPrompt] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [business, setBusiness] = useState("");
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   const seeded = useRef(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const animated = useRef<Set<string>>(new Set());
@@ -166,8 +165,8 @@ export const MosaicDeepWorkView: React.FC<MosaicDeepWorkViewProps> = ({ initialQ
           </div>
         </div>
       ) : (
-        <div className="ws-chat-thread" ref={scrollRef}>
-          <ChatLayout scrollRef={scrollRef} density="balanced" composer={<div className="ws-chat-composer ws-chat-composer--dock">{composer}</div>}>
+        <div className="ws-chat-thread">
+          <ChatLayout style={{ height: "100%" }} density="balanced" composer={<div className="ws-chat-composer ws-chat-composer--dock">{composer}</div>}>
             <div ref={listRef}>
               <ChatMessageList isStreaming={busy}>
                 {messages.map((message) =>

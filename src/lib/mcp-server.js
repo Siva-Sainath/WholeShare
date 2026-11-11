@@ -17,7 +17,7 @@ const INSTRUCTIONS = [
 
 const ASK_MOSAIC = {
   name: "ask_mosaic",
-  description: "Give the person's assistant a whole request in plain words, for example 'Find the cheaper Flushing container group and prepare a pledge for 12 cases'. It plans, uses the tools and returns what it did.",
+  description: "Give the person's assistant a whole request in plain words, for example 'Find the cheaper New York container group and prepare a pledge for 12 cases'. It plans, uses the tools and returns what it did.",
   inputSchema: { type: "object", properties: { request: { type: "string", description: "What the person wants done, in plain words." } }, required: ["request"], additionalProperties: false },
   annotations: { title: "Ask Mosaic", readOnlyHint: false, destructiveHint: false, openWorldHint: true }
 };
