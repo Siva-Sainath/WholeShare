@@ -7,7 +7,7 @@ import { loadStudioState, saveStudioState } from "../lib/studio-state.js";
 import { bookSlot, extendInspection, getScheduleState, moveDelivery, resolveConflicts, undoLast } from "../lib/schedule-service.js";
 import { buildConnectUrl, completeConnect, disconnectPayPal, connectionStatus } from "../lib/paypal-connect.js";
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from "node:fs";
-import { resolve, extname, dirname, basename } from "node:path";
+import { resolve, extname, dirname, basename, sep } from "node:path";
 import crypto from "node:crypto";
 import { actionDispatcher } from "../lib/web-actions.js";
 import { createOrderAuthorization, authorizeOrderHold } from "../lib/paypal-bridge.js";
@@ -34,7 +34,7 @@ import {
   removeAgentConnection
 } from "../lib/user-settings.js";
 import { ClaimsAdapter } from "../adapter/claims.adapter.ts";
-import { getModelUsage, getModelSpend } from "../lib/model-client.js";
+import { getModelUsage, getModelSpend, assertModelBudget, recordModelUsage } from "../lib/model-client.js";
 import { describeProvider, mosaicBaseUrl, mosaicChatCompletionsUrl, mosaicHeaders, mosaicRequestExtras } from "../lib/mosaic-config.js";
 import { getEvidence, saveEvidence } from "../lib/evidence-store.js";
 import { getGeneratedMembers } from "../lib/clan-members.js";
@@ -123,6 +123,41 @@ const agentInviteCreateLimiter = new TokenBucketRateLimiter({ capacity: 10, refi
 const agentOnboardLimiter = new TokenBucketRateLimiter({ capacity: 20, refillRatePerSec: 20 / 3600 });
 
 // Browser calls from this app send a matching Origin. External agents must present a live invite token.
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const LOCKED_IN_PRODUCTION = [/^\/api\/v1\/model\/chat-completions$/, /^\/api\/v1\/agent\/step-up/, /^\/api\/v1\/qwen\//];
+
+// The UI runs these tools through /agent/action and these actions through /paypal/toolkit. Nothing else is reachable that way.
+const UI_ACTION_TOOLS = new Set(["generate_step_up_invoice", "settle_supplier_payout", "create_subscription", "create_subscription_plan", "capture_order_hold"]);
+const UI_TOOLKIT_ACTIONS = new Set(["list_invoices", "list_disputes", "send_invoice_reminder"]);
+
+// A malformed percent escape in a path must be a 404, not a crash.
+function safeDecode(text) {
+  try { return decodeURIComponent(text); } catch { return "\u0000invalid"; }
+}
+
+// One bad request must never take the whole service down for everyone else.
+process.on("unhandledRejection", (reason) => console.error("[server] unhandled rejection:", reason instanceof Error ? reason.message : reason));
+process.on("uncaughtException", (error) => console.error("[server] uncaught exception:", error.message));
+
+// The rightmost X-Forwarded-For entry is the one the platform's own proxy added. The leftmost is whatever the caller sent.
+function clientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",").map((part) => part.trim()).filter(Boolean);
+  return forwarded.length ? forwarded[forwarded.length - 1] : req.socket.remoteAddress || "127.0.0.1";
+}
+
+// PayPal identity details are shown masked. A stranger who loads the page must not be able to read them.
+function maskEmail(email) {
+  const text = String(email || "");
+  const at = text.indexOf("@");
+  return at > 1 ? `${text[0]}***${text.slice(at)}` : text ? "***" : "";
+}
+function publicSettings(settings) {
+  const profile = { ...(settings.profile || {}) };
+  delete profile.paypalPayerId;
+  profile.paypalMerchantEmail = maskEmail(profile.paypalMerchantEmail);
+  return { ...settings, profile };
+}
+
 function isSameOriginOrInvited(req) {
   const origin = req.headers.origin || "";
   if (origin) {
@@ -369,8 +404,28 @@ export function createWebServer() {
   kernelResearchService.start();
   
   return http.createServer(async (req, res) => {
-    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    let url;
+    try {
+      url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    } catch {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Bad request." }));
+      return;
+    }
     const pathname = url.pathname;
+
+    // Security headers on every response.
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    if (req.headers["x-forwarded-proto"] === "https") res.setHeader("Strict-Transport-Security", "max-age=15552000");
+
+    // Raw model and approval routes exist for local development only. A public deployment does not offer them.
+    if (IS_PRODUCTION && LOCKED_IN_PRODUCTION.some((pattern) => pattern.test(pathname))) {
+      sendJson(res, 404, { error: "Not available in this deployment." });
+      return;
+    }
 
     // CORS Headers
     const reqOrigin = req.headers.origin || "";
@@ -532,7 +587,11 @@ export function createWebServer() {
     }
 
     if (pathname === "/api/ai/responses" && req.method === "POST") {
+      const callerIp = clientIp(req);
+      const rateCheck = agentRateLimiter.isAllowed(callerIp);
+      if (!rateCheck.allowed) { res.setHeader("Retry-After", String(rateCheck.retryAfterSec)); sendJson(res, 429, { error: { message: "Too many requests. Try again in a moment." } }); return; }
       try {
+        assertModelBudget();
         const body = await readJsonBody(req);
         
         let isOnline = false;
@@ -546,7 +605,7 @@ export function createWebServer() {
         if (!isOnline) {
           sendJson(res, 503, {
             error: {
-              message: `Mosaic model at ${mosaicBaseUrl()} is currently offline. Start the model server to enable AI responses.`
+              message: "The assistant is offline right now. Try again in a moment."
             }
           });
           return;
@@ -581,7 +640,11 @@ export function createWebServer() {
         const requestedModel = typeof body.model === "string" ? body.model : "";
         const defaultModel = "mlx-community/Qwen3.5-4B-MLX-4bit";
         const selectedModel = requestedModel && requestedModel.includes("Qwen") ? requestedModel : defaultModel;
-        const maxTokens = Math.max(Number(body.max_tokens) || 800, 800);
+        const maxTokens = Math.min(Math.max(Number(body.max_tokens) || 800, 256), 1500);
+        // Size limits: a visitor cannot send a huge prompt through this route.
+        let budgetChars = 60000;
+        for (const message of messages) { message.content = String(message.content ?? "").slice(0, Math.max(0, Math.min(8000, budgetChars))); budgetChars -= message.content.length; }
+        messages.length = Math.min(messages.length, 24);
 
         const requestPayload = {
           ...mosaicRequestExtras(),
@@ -605,11 +668,13 @@ export function createWebServer() {
 
         if (!mlxResponse.ok) {
           const errText = await mlxResponse.text();
-          sendJson(res, 502, { error: { message: "MLX request failed with status " + mlxResponse.status + ": " + errText } });
+          console.error(`[studio-ai] model request failed with status ${mlxResponse.status}: ${errText.slice(0, 200)}`);
+          sendJson(res, 502, { error: { message: "The assistant could not answer right now. Try again in a moment." } });
           return;
         }
 
         const completion = await mlxResponse.json();
+        if (completion.usage) recordModelUsage(completion.usage);
         const firstChoice = completion.choices?.[0];
         const assistantMessage = firstChoice?.message?.content || "";
         const toolCalls = firstChoice?.message?.tool_calls || [];
@@ -630,7 +695,11 @@ export function createWebServer() {
           usage: completion.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
         });
       } catch (err) {
-        sendJson(res, 500, { error: { message: err instanceof Error ? err.message : "Internal error processing AI response" } });
+        const limited = err instanceof Error && /development budget/.test(err.message);
+        console.error("[studio-ai]", err instanceof Error ? err.message : err);
+        sendJson(res, limited ? 429 : 500, { error: { message: limited ? "The assistant has reached its usage limit for now." : "The assistant could not answer right now." } });
+      } finally {
+        agentRateLimiter.release(callerIp);
       }
       return;
     }
@@ -673,7 +742,7 @@ export function createWebServer() {
         return;
       }
       try {
-        const orderId = decodeURIComponent(paypalAuthorizationMatch[1]);
+        const orderId = safeDecode(paypalAuthorizationMatch[1]);
         const result = await authorizePledgeOrder(orderId);
         actionDispatcher.broadcast("PAYPAL_PLEDGE_AUTHORIZED", result);
         sendJson(res, 200, result);
@@ -696,16 +765,22 @@ export function createWebServer() {
     }
 
     if (pathname === "/api/v1/user/settings" && req.method === "GET") {
-      sendJson(res, 200, loadUserSettings());
+      sendJson(res, 200, publicSettings(loadUserSettings()));
       return;
     }
 
     if (pathname === "/api/v1/user/settings" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
-        const updated = updateUserSettings(body);
-        actionDispatcher.broadcast("USER_SETTINGS_UPDATED", updated);
-        sendJson(res, 200, { status: "SUCCESS", settings: updated });
+        // Spend policies, model choice and connected agents are set by the operator, and the PayPal identity only by the connect flow.
+        const { policies: _policies, modelPreferences: _models, aiAgents: _agents, ...allowed } = body && typeof body === "object" ? body : {};
+        if (allowed.profile && typeof allowed.profile === "object") {
+          const { paypalMerchantEmail: _a, paypalPayerId: _b, paypalConnectedAt: _c, paypalConnectMode: _d, smeId: _e, ...profile } = allowed.profile;
+          allowed.profile = profile;
+        }
+        const updated = updateUserSettings(allowed);
+        actionDispatcher.broadcast("USER_SETTINGS_UPDATED", { updatedAt: new Date().toISOString() });
+        sendJson(res, 200, { status: "SUCCESS", settings: publicSettings(updated) });
       } catch (err) {
         sendJson(res, 400, { error: err.message });
       }
@@ -847,7 +922,7 @@ export function createWebServer() {
     }
 
     if (pathname.startsWith("/api/v1/evidence/") && req.method === "GET") {
-      const found = getEvidence(decodeURIComponent(pathname.substring("/api/v1/evidence/".length)));
+      const found = getEvidence(safeDecode(pathname.substring("/api/v1/evidence/".length)));
       if (!found) {
         sendJson(res, 404, { error: "Evidence not found." });
         return;
@@ -1126,6 +1201,7 @@ export function createWebServer() {
     if (pathname === "/api/v1/agent/action" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
+        if (!UI_ACTION_TOOLS.has(String(body.tool))) { sendJson(res, 403, { error: "That tool is not available through this route." }); return; }
         const result = await executeTool(body.tool, body.args || {});
         sendJson(res, 200, result);
       } catch (err) {
@@ -1145,8 +1221,8 @@ export function createWebServer() {
     }
 
     if ((pathname === "/api/v1/agent/chat" || pathname === "/api/v1/agent/prompt") && req.method === "POST") {
-      const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
-      const rateCheck = agentRateLimiter.isAllowed(clientIp);
+      const callerIp = clientIp(req);
+      const rateCheck = agentRateLimiter.isAllowed(callerIp);
       if (!rateCheck.allowed) {
         res.setHeader("Retry-After", String(rateCheck.retryAfterSec));
         sendJson(res, 429, {
@@ -1158,19 +1234,19 @@ export function createWebServer() {
 
       try {
         const body = await readJsonBody(req);
-        const prompt = body.prompt || "Reflect ledger state and evaluate active coalitions.";
-        const sessionId = body.sessionId || `sess_${Date.now()}`;
+        const prompt = String(body.prompt || "Reflect ledger state and evaluate active coalitions.").slice(0, 4000);
+        const sessionId = /^sess_[A-Za-z0-9_-]{6,64}$/.test(String(body.sessionId || "")) ? body.sessionId : `sess_${crypto.randomUUID()}`;
         const result = await durableHarness.startSession({
           prompt,
           sessionId,
-          maxTurns: body.maxTurns || 2,
+          maxTurns: Math.min(Math.max(Number(body.maxTurns) || 2, 1), 6),
           metadata: body.metadata || {}
         });
         sendJson(res, 200, result);
       } catch (err) {
         sendJson(res, 500, { error: err.message });
       } finally {
-        agentRateLimiter.release(clientIp);
+        agentRateLimiter.release(callerIp);
       }
       return;
     }
@@ -1225,7 +1301,7 @@ export function createWebServer() {
 
     if (pathname.startsWith("/api/v1/data/") && req.method === "GET") {
       try {
-        const id = decodeURIComponent(pathname.slice("/api/v1/data/".length));
+        const id = safeDecode(pathname.slice("/api/v1/data/".length));
         let filter = [];
         const rawFilter = url.searchParams.get("filter");
         if (rawFilter) filter = JSON.parse(rawFilter);
@@ -1244,7 +1320,8 @@ export function createWebServer() {
     }
 
     if (pathname === "/api/v1/paypal/connect/status" && req.method === "GET") {
-      sendJson(res, 200, connectionStatus());
+      const status = connectionStatus();
+      sendJson(res, 200, { ...status, email: maskEmail(status.email), payerId: status.payerId ? "connected" : "" });
       return;
     }
 
@@ -1575,6 +1652,7 @@ export function createWebServer() {
     if (pathname === "/api/v1/kernel/research" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
+        if (loadUserSettings().agentPermissions?.allowAutonomousResearch !== true) { sendJson(res, 403, { error: "Web research is switched off. Turn on 'Research suppliers on the web' in Settings." }); return; }
         const result = await executeTool("kernel_request_research", body);
         sendJson(res, 202, result);
       } catch (err) {
@@ -1671,6 +1749,7 @@ export function createWebServer() {
     if (pathname === "/api/v1/paypal/toolkit" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
+        if (!UI_TOOLKIT_ACTIONS.has(String(body.action))) { sendJson(res, 403, { error: "That PayPal action is not available through this route." }); return; }
         const result = await executeTool("paypal_execute_toolkit_action", body);
         sendJson(res, 200, result);
       } catch (err) {
@@ -1743,7 +1822,7 @@ export function createWebServer() {
 
     if (pathname.startsWith("/api/v1/snapshot/") && req.method === "GET") {
       try {
-        const component = decodeURIComponent(pathname.slice("/api/v1/snapshot/".length));
+        const component = safeDecode(pathname.slice("/api/v1/snapshot/".length));
         const format = url.searchParams.get("format") || "json";
         const filter = url.searchParams.get("filter") ? JSON.parse(url.searchParams.get("filter")) : [];
         const snapshot = await buildSnapshot(component, { filter, limit: url.searchParams.get("limit") || 100 });
@@ -2008,8 +2087,8 @@ export function createWebServer() {
     if (pathname === "/api/v1/agent-invites" && req.method === "POST") {
       try {
         const body = await readJsonBody(req);
-        const createdBy = body.createdBy || "demo-workspace";
-        const rateCheck = agentInviteCreateLimiter.isAllowed(createdBy);
+        const createdBy = String(body.createdBy || "demo-workspace").replace(/[<>"'`&]/g, "").slice(0, 40) || "demo-workspace";
+        const rateCheck = agentInviteCreateLimiter.isAllowed(clientIp(req));
         if (!rateCheck.allowed) {
           sendJson(res, 429, {
             error: "Rate limit exceeded. Maximum 10 invites per hour.",
@@ -2598,7 +2677,7 @@ export function createWebServer() {
       return;
     }
     let filePath = pathname === "/" ? resolve(PUBLIC_DIR, "index.html") : resolve(PUBLIC_DIR, pathname.slice(1));
-    if (!filePath.startsWith(PUBLIC_DIR)) {
+    if (filePath !== PUBLIC_DIR && !filePath.startsWith(PUBLIC_DIR + sep)) {
       sendJson(res, 403, { error: "Forbidden" });
       return;
     }
@@ -2613,7 +2692,15 @@ export function createWebServer() {
     }
 
     try {
-      let content = readFileSync(filePath);
+      // The bundle is large. Serve the precompressed copy the build wrote when the browser accepts it.
+      const accepts = String(req.headers["accept-encoding"] || "");
+      let encoding = "";
+      let source = filePath;
+      if (extname(filePath) !== ".html") {
+        if (/\bbr\b/.test(accepts) && existsSync(`${filePath}.br`)) { source = `${filePath}.br`; encoding = "br"; }
+        else if (/\bgzip\b/.test(accepts) && existsSync(`${filePath}.gz`)) { source = `${filePath}.gz`; encoding = "gzip"; }
+      }
+      let content = readFileSync(source);
       const ext = extname(filePath);
       if (ext === ".html") {
         let htmlStr = content.toString("utf-8");
@@ -2630,6 +2717,7 @@ export function createWebServer() {
         var token = window.location.hash.substring(7);
         if (!token) return;
         if (document.querySelector("[data-ws-agent-native]")) return;
+        var esc = function(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function(c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
         var container = document.getElementById("ws-agent-container");
         if (!container) {
           container = document.createElement("div");
@@ -2647,14 +2735,14 @@ export function createWebServer() {
           .then(function(res) { return res.json(); })
           .then(function(manifest) {
             if (manifest.error) {
-              container.innerHTML = '<div style="max-width:700px;margin:40px auto;padding:24px;font-family:sans-serif;color:#fff;background:#18181b;border:1px solid #ef4444;border-radius:8px;"><h2>Invitation Unavailable</h2><p>' + manifest.error + '</p></div>';
+              container.innerHTML = '<div style="max-width:700px;margin:40px auto;padding:24px;font-family:sans-serif;color:#fff;background:#18181b;border:1px solid #ef4444;border-radius:8px;"><h2>Invitation Unavailable</h2><p>' + esc(manifest.error) + '</p></div>';
               return;
             }
             container.innerHTML = '<div class="ws-view-pane ws-capability-view" style="max-width:800px;margin:32px auto;padding:24px;font-family:sans-serif;color:#fff;">' +
               '<p class="ws-eyebrow" style="color:#10b981;font-size:12px;font-weight:600;letter-spacing:1px;">WHOLESHARE AGENT INVITATION</p>' +
               '<h1 class="ws-view-title" style="font-size:24px;margin:8px 0 16px 0;">Join a wholesale buying group</h1>' +
-              '<p style="color:#a1a1aa;font-size:15px;margin-bottom:20px;">' + manifest.what + '</p>' +
-              '<div style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-bottom:20px;font-size:13px;">Invited by <strong>' + manifest.invitedBy + '</strong>. Valid until ' + new Date(manifest.expiresAt).toLocaleDateString() + '.</div>' +
+              '<p style="color:#a1a1aa;font-size:15px;margin-bottom:20px;">' + esc(manifest.what) + '</p>' +
+              '<div style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;margin-bottom:20px;font-size:13px;">Invited by <strong>' + esc(manifest.invitedBy) + '</strong>. Valid until ' + new Date(manifest.expiresAt).toLocaleDateString() + '.</div>' +
               '<form id="agent-onboard-form" class="ws-capability-card" style="display:flex;flex-direction:column;gap:14px;background:#18181b;padding:20px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);">' +
               '<h2>Business profile intake</h2>' +
               '<p style="color:#888;font-size:13px;margin:0;">Provide six standard facts to match with active volume buying syndicates.</p>' +
@@ -2704,11 +2792,11 @@ export function createWebServer() {
                   form.style.display = "none";
                   var cont = document.getElementById("agent-matches-container");
                   cont.style.display = "block";
-                  cont.innerHTML = '<div style="padding:16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;margin-bottom:16px;"><strong>Profile onboarded</strong><p style="margin:4px 0 0 0;">' + res.data.summary + '</p></div>' +
+                  cont.innerHTML = '<div style="padding:16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;margin-bottom:16px;"><strong>Profile onboarded</strong><p style="margin:4px 0 0 0;">' + esc(res.data.summary) + '</p></div>' +
                     '<h2>Top Matched Buying Groups</h2>' +
                     res.data.matches.map(function(m) {
                       return '<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
-                        '<div><strong>' + m.clanName + '</strong> (' + m.score + '/100 Match)<p style="margin:4px 0 0 0;font-size:12px;color:#888;">' + m.reason + '</p></div>' +
+                        '<div><strong>' + esc(m.clanName) + '</strong> (' + esc(m.score) + '/100 Match)<p style="margin:4px 0 0 0;font-size:12px;color:#888;">' + esc(m.reason) + '</p></div>' +
                         '<div style="text-align:right;">$' + (m.unitPriceCents/100).toFixed(2) + ' / unit</div>' +
                         '</div>';
                     }).join("");
@@ -2730,7 +2818,13 @@ export function createWebServer() {
           content = Buffer.from(htmlStr, "utf-8");
         }
       }
-      res.writeHead(200, { "Content-Type": MIME_TYPES[ext] || "text/plain" });
+      const headers = { "Content-Type": MIME_TYPES[ext] || "text/plain" };
+      if (ext !== ".html") {
+        headers["Cache-Control"] = "public, max-age=300";
+        headers.Vary = "Accept-Encoding";
+        if (encoding) headers["Content-Encoding"] = encoding;
+      }
+      res.writeHead(200, headers);
       res.end(content);
     } catch {
       sendJson(res, 404, { error: "Not found" });

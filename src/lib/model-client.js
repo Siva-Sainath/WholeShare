@@ -360,3 +360,6 @@ export class WholeshareModelClient {
 }
 
 export const modelClient = new WholeshareModelClient();
+
+// The Studio assistant route shares the same development budget as the harness.
+export { guardBudget as assertModelBudget, recordSpend as recordModelUsage };

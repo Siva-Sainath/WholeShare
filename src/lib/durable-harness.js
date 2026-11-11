@@ -84,6 +84,13 @@ function parseCallArgs(call) {
   }
 }
 
+// What goes back into the model's history. Never undefined, never huge, and no server file paths.
+function capToolMessage(result) {
+  let text = JSON.stringify(result ?? {}, (key, value) => (key === "filePath" || key === "proof" ? undefined : value)) ?? "{}";
+  if (text.length > 8000) text = JSON.stringify({ truncated: true, note: "The result was too long, so it was cut.", start: text.slice(0, 7000) });
+  return text;
+}
+
 // A browser read takes several seconds. After two pages the model has to answer with what it has.
 function kernelBudget(toolName, count) {
   if ((toolName !== "kernel_research_web_fact" && toolName !== "kernel_read_supplier_site") || count <= 2) return null;
@@ -133,6 +140,7 @@ function permissionBlock(toolName) {
 
 export const FOCUSED_TOOL_DECLARATIONS = WHOLESHARE_TOOL_DECLARATIONS.filter((tool) => FOCUSED_TOOL_NAMES.has(tool.function?.name));
 const focusedSessions = new Set();
+const stepUpApprovedSessions = new Set();
 const sessionEvidence = new Map();
 
 // A vision capable hosted model gets the attached photos itself, so it can describe real damage in the claim notes.
@@ -355,7 +363,8 @@ Follow this operational protocol for sourcing, verification, and escrow:
 
         messages.push({
           role: "tool",
-          content: JSON.stringify(s.toolResult || {})
+          tool_call_id: `call_${s.stepIndex}`,
+          content: capToolMessage(s.toolResult)
         });
       }
     }
@@ -379,6 +388,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
       throw new Error(`Session ${sessionId} is not awaiting step-up verification.`);
     }
 
+    stepUpApprovedSessions.add(sessionId);
     await updateAgentSessionStatus(sessionId, "RUNNING", { approvalToken });
 
     actionDispatcher.broadcast("AGENT_STEP_UP_APPROVED", {
@@ -406,7 +416,8 @@ Follow this operational protocol for sourcing, verification, and escrow:
         });
         messages.push({
           role: "tool",
-          content: JSON.stringify(s.toolResult || {})
+          tool_call_id: `call_${s.stepIndex}`,
+          content: capToolMessage(s.toolResult)
         });
       }
     }
@@ -439,16 +450,25 @@ Follow this operational protocol for sourcing, verification, and escrow:
       const stepStartTime = Date.now();
 
       try {
+        const toolsAllowed = forceTool !== "none";
         const response = await this.callModelWithTools(messages, sessionId, forceTool);
         forceTool = null;
         const durationMs = Date.now() - stepStartTime;
 
         const assistantMessage = response.message || {};
         const thinking = assistantMessage.thinking || "";
-        const content = assistantMessage.content || "";
+        let content = assistantMessage.content || "";
         let toolCalls = assistantMessage.tool_calls || [];
-        if (toolCalls.length === 0 && content) {
+        // Text that looks like a tool call only counts when tools are allowed this turn.
+        if (toolCalls.length === 0 && content && toolsAllowed) {
           toolCalls = parseToolCallsFromContent(content);
+        }
+        // A model may only run the tools it was offered. Anything else, including a name it invented, is dropped.
+        if (focusedSessions.has(sessionId)) {
+          const attempted = toolCalls.length;
+          toolCalls = toolCalls.filter((call) => FOCUSED_TOOL_NAMES.has(call.function?.name || call.name));
+          if (attempted > 0 && toolCalls.length === 0) content = "I can only use the tools WholeShare offers here, so I did not do that.";
+          else if (!toolsAllowed && content && /^\s*[{[]/.test(content)) content = "";
         }
         toolCalls = toolCalls.map((call, position) => (call.id ? call : { ...call, id: `call_${Date.now()}_${position}` }));
         let assistantRecorded = false;
@@ -502,6 +522,15 @@ Follow this operational protocol for sourcing, verification, and escrow:
 
         for (const call of toolCalls) {
           const toolName = call.function?.name || call.name;
+          // At most five tool calls per question, even when the model sends many in one turn.
+          if (focusedSessions.has(sessionId) && toolsRun >= 5) {
+            if (!assistantRecorded) {
+              assistantRecorded = true;
+              messages.push({ role: "assistant", content: content || "", tool_calls: toolCalls.map((each) => ({ ...each, function: { ...(each.function || { name: each.name }), arguments: JSON.stringify(parseCallArgs(each)) } })) });
+            }
+            messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ skipped: "Enough tools have run for this question. Answer from what you have." }) });
+            continue;
+          }
           if (toolName === "present" && finalMessage) {
             if (!assistantRecorded) {
               assistantRecorded = true;
@@ -511,13 +540,18 @@ Follow this operational protocol for sourcing, verification, and escrow:
             continue;
           }
           let toolArgs = {};
+          let argsInvalid = false;
           try {
             toolArgs = typeof call.function?.arguments === "string"
               ? JSON.parse(call.function.arguments)
               : (call.function?.arguments || call.arguments || {});
           } catch {
             toolArgs = {};
+            argsInvalid = true;
           }
+          // The step-up approval comes from the person through resumeWithStepUpApproval, never from the model's own arguments.
+          delete toolArgs.stepUpApproved;
+          if (toolName === "page_tool" && focusedSessions.has(sessionId)) toolArgs = { ...toolArgs, sessionId };
 
           actionDispatcher.broadcast("AGENT_TOOL_CALL", {
             sessionId,
@@ -598,14 +632,14 @@ Follow this operational protocol for sourcing, verification, and escrow:
               durationMs: Date.now() - stepStartTime
             });
 
-            messages.push({
-              role: "assistant",
-              content: content || "",
-              tool_calls: [call]
-            });
+            if (!assistantRecorded) {
+              assistantRecorded = true;
+              messages.push({ role: "assistant", content: content || "", tool_calls: toolCalls.map((each) => ({ ...each, function: { ...(each.function || { name: each.name }), arguments: JSON.stringify(parseCallArgs(each)) } })) });
+            }
 
             messages.push({
               role: "tool",
+              tool_call_id: call.id,
               content: JSON.stringify({
                 status: "REJECTED_BY_INTERCEPTOR",
                 violations: interception.violations,
@@ -618,12 +652,15 @@ Follow this operational protocol for sourcing, verification, and escrow:
               throw new Error(`Max reflexive attempts exceeded on tool ${toolName}.`);
             }
 
-            turn++;
             continue;
           }
 
-          const targetAmount = toolArgs.amountCents || toolArgs.maxAutoAuthorizeUsd * 100 || 0;
-          if (targetAmount > STEP_UP_THRESHOLD_CENTS && toolArgs.stepUpApproved !== true && toolName === "authorize_paypal_escrow") {
+          const targetAmount = Number(toolArgs.amountCents || toolArgs.maxAutoAuthorizeUsd * 100 || 0);
+          if (toolName === "authorize_paypal_escrow" && (!Number.isFinite(targetAmount) || targetAmount <= 0) && !stepUpApprovedSessions.has(sessionId)) {
+            messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ error: "A valid amount is required to authorize an escrow." }) });
+            continue;
+          }
+          if (targetAmount > STEP_UP_THRESHOLD_CENTS && !stepUpApprovedSessions.has(sessionId) && toolName === "authorize_paypal_escrow") {
             const invoice = await executeTool("generate_step_up_invoice", {
               buyerId: toolArgs.coalitionId || "coalition_flour_01",
               amountCents: targetAmount,
@@ -665,7 +702,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
             const attached = sessionEvidence.get(sessionId) ?? [];
             toolArgs = { ...toolArgs, photoUrls: attached.map((item) => item.uri), detectedTracking: attached.flatMap((item) => item.detectedTrackingNumbers ?? [])[0] };
           }
-          const toolResult = (focusedSessions.has(sessionId) && permissionBlock(toolName)) || productGuard(toolName, toolArgs, messages) || kernelBudget(toolName, (kernelCalls[0] += /^kernel_/.test(toolName) ? 1 : 0)) || await (prefetched.get(call) ?? withDeadline(toolName, executeTool(toolName, toolArgs)));
+          const toolResult = (argsInvalid && { error: "The tool arguments were not valid JSON. Call the tool again with valid arguments." }) || (focusedSessions.has(sessionId) && permissionBlock(toolName)) || productGuard(toolName, toolArgs, messages) || kernelBudget(toolName, (kernelCalls[0] += /^kernel_/.test(toolName) ? 1 : 0)) || await (prefetched.get(call) ?? withDeadline(toolName, executeTool(toolName, toolArgs)));
 
           if (toolResult && toolResult.status === "ERROR") {
             const verifierError = toolResult.error || "Tool execution failed policy invariant.";
@@ -723,7 +760,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
           messages.push({
             role: "tool",
             tool_call_id: call.id,
-            content: JSON.stringify(toolMessage)
+            content: capToolMessage(toolMessage)
           });
           if (toolResult?.needsInput) finalMessage = toolResult.question;
           // A tool that already says what happened ends the turn without another model call.

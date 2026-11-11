@@ -1,3 +1,4 @@
+import { registerOwnSession } from "./mosaicLive";
 import { getCanvas } from "./canvasStore";
 import { listWebMcpTools } from "./webmcp";
 import type { McpToolDeclaration } from "./api";
@@ -288,10 +289,12 @@ export async function allowMosaicPermission(permission: string): Promise<void> {
 }
 
 export async function askMosaic(prompt: string, source: string, evidence: Array<Record<string, unknown>> = [], history: Array<{ role: "user" | "assistant"; text: string }> = []): Promise<MosaicReply> {
+  const ownSessionId = `sess_${crypto.randomUUID()}`;
+  registerOwnSession(ownSessionId);
   const response = await fetch("/api/v1/agent/chat", {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ prompt, maxTurns: 6, metadata: { source, context: { ...screenContext(), evidenceAttached: evidence.length, evidence, history } } })
+    body: JSON.stringify({ prompt, sessionId: ownSessionId, maxTurns: 6, metadata: { source, context: { ...screenContext(), evidenceAttached: evidence.length, evidence, history } } })
   });
   const raw = await response.text();
   let payload: Record<string, unknown>;

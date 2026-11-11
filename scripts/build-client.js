@@ -1,5 +1,6 @@
 import { build } from "esbuild";
-import { readdirSync, writeFileSync } from "node:fs";
+import { readdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { brotliCompressSync, gzipSync, constants } from "node:zlib";
 
 // Group product photos by type so a group picks one of several photos of the same kind of product.
 const photos = readdirSync("src/web/public/img/products").filter((name) => name.endsWith(".jpg"));
@@ -26,6 +27,8 @@ await build({
   bundle: true,
   outfile: "src/web/public/app.bundle.js",
   format: "iife",
+  minify: true,
+  legalComments: "none",
   jsx: "automatic",
   target: "es2022",
   define: {
@@ -43,3 +46,11 @@ await build({
   loader: { ".woff2": "dataurl", ".woff": "dataurl", ".ttf": "dataurl" },
   logLevel: "info"
 });
+
+// Precompress the large files once at build time. The server sends them when the browser accepts brotli or gzip.
+for (const file of ["src/web/public/app.bundle.js", "src/web/public/app.bundle.css", "src/web/public/bryntum.css"]) {
+  if (!existsSync(file)) continue;
+  const raw = readFileSync(file);
+  writeFileSync(`${file}.br`, brotliCompressSync(raw, { params: { [constants.BROTLI_PARAM_QUALITY]: 9 } }));
+  writeFileSync(`${file}.gz`, gzipSync(raw, { level: 9 }));
+}

@@ -400,6 +400,7 @@ class WholeshareActionDispatcher {
     };
 
     this.eventLog.push(event);
+    if (this.eventLog.length > 500) this.eventLog.splice(0, this.eventLog.length - 500);
 
     if (this.listeners) {
       for (const listener of this.listeners) {

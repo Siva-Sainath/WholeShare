@@ -2116,7 +2116,7 @@ export async function executeTool(toolName, args = {}) {
       return { status: "SUCCESS", action: "PROFILE_UPDATED", updated: next, previous, speak, note: "Saved. The Settings page is open so the user can review it." };
     }
 
-    case "page_tool": return await callPageTool(args.tool, args.args && typeof args.args === "object" ? args.args : {});
+    case "page_tool": return await callPageTool(args.tool, args.args && typeof args.args === "object" ? args.args : {}, 8000, args.sessionId);
 
     case "send_invoice_reminder": {
       const rows = (await querySource("paypal_invoices", { limit: 500 })).rows;

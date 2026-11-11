@@ -23,6 +23,13 @@ const MAX_ITEMS = 8;
 let state: LiveState = { active: false, items: [] };
 const listeners = new Set<() => void>();
 const pendingArgs = new Map<string, Record<string, unknown>>();
+// Every visitor shares one event stream. A chat only reacts to the sessions it started itself.
+const ownSessions = new Set<string>();
+export function registerOwnSession(sessionId: string): void {
+  ownSessions.add(sessionId);
+  if (ownSessions.size > 50) ownSessions.delete(ownSessions.values().next().value as string);
+}
+const isMine = (payload: Record<string, unknown>): boolean => typeof payload.sessionId === "string" && ownSessions.has(payload.sessionId);
 let source: EventSource | null = null;
 let clearTimer: number | undefined;
 
@@ -62,7 +69,7 @@ function parse(event: MessageEvent<string>): { payload: Record<string, unknown> 
 
 function onToolCall(event: MessageEvent<string>): void {
   const parsed = parse(event);
-  if (!parsed) return;
+  if (!parsed || !isMine(parsed.payload)) return;
   const { sessionId, stepIndex, toolName, args } = parsed.payload as { sessionId: string; stepIndex: number; toolName: string; args: Record<string, unknown> };
   const key = `${sessionId}:${stepIndex}:${toolName}`;
   pendingArgs.set(key, args || {});
@@ -73,7 +80,7 @@ function onToolCall(event: MessageEvent<string>): void {
 
 async function onToolResult(event: MessageEvent<string>): Promise<void> {
   const parsed = parse(event);
-  if (!parsed) return;
+  if (!parsed || !isMine(parsed.payload)) return;
   const { sessionId, stepIndex, toolName, result } = parsed.payload as { sessionId: string; stepIndex: number; toolName: string; result: Record<string, unknown> };
   const key = `${sessionId}:${stepIndex}:${toolName}`;
   const step: AgentStep = { stepIndex, toolName, toolArgs: pendingArgs.get(key) ?? {}, toolResult: result ?? null, interceptorStatus: "PASSED" };
@@ -103,8 +110,9 @@ export function startMosaicLive(): void {
   // The model asked this page to run one of its tools (filter a grid, zoom the Scheduler, edit a Studio report).
   source.addEventListener("PAGE_TOOL_CALL", (event) => {
     const parsed = parse(event as MessageEvent<string>);
-    if (!parsed) return;
+    if (!parsed || !isMine(parsed.payload)) return;
     const { callId, tool, args } = parsed.payload as { callId: string; tool: string; args: Record<string, unknown> };
+    if (!/^(grid|bryntum|studio)_/.test(String(tool))) return;
     void callWebMcpTool(tool, args ?? {})
       .then((result) => ({ callId, ok: true, result }))
       .catch((error: unknown) => ({ callId, ok: false, error: error instanceof Error ? error.message : "The page tool failed." }))
@@ -113,13 +121,13 @@ export function startMosaicLive(): void {
   });
   source.addEventListener("AGENT_TEXT_DELTA", (event) => {
     const parsed = parse(event as MessageEvent<string>);
-    if (!parsed) return;
+    if (!parsed || !isMine(parsed.payload)) return;
     const { text, reset } = parsed.payload as { text?: string; reset?: boolean };
     emit({ ...state, active: true, draft: reset ? "" : `${state.draft ?? ""}${text ?? ""}` });
   });
   source.addEventListener("AGENT_TOOL_PROGRESS", (event) => {
     const parsed = parse(event as MessageEvent<string>);
-    if (!parsed) return;
+    if (!parsed || !isMine(parsed.payload)) return;
     const { toolName, message } = parsed.payload as { toolName?: string; message?: string };
     emit({ ...state, items: state.items.map((item) => (item.pending && item.tool === toolName ? { ...item, detail: message } : item)) });
   });

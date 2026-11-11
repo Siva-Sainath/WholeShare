@@ -116,3 +116,6 @@ GLOSSARY.md
 experiments.tsv
 skills-lock.json
 .scratch/test-webhook-storage/
+
+src/web/public/*.br
+src/web/public/*.gz
