@@ -588,7 +588,7 @@ export const DisputesView: React.FC = () => {
         <h2 id="dispute-board" style={{ ...sectionTitleStyle, marginBottom: "12px", scrollMarginTop: "96px" }}>Dispute workflow</h2>
         <p style={{ fontSize: "12px", color: STITCH_COLORS.muted, margin: "0 0 12px" }}>
           Drag a card forward to act on it: Draft to With supplier approves the claim, and With supplier to Settled or Rejected records the supplier's decision. The server checks every move.
-        </p>
+        {claims.length === 0 ? " No claims yet. File one from the next tabs or ask Mosaic, and a card appears in Draft." : ""}</p>
         <div id="bryntumTaskBoardMount" style={{ height: `${fillHeight()}px`, width: "100%" }} />
       </section>
       )}

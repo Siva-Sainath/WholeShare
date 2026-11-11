@@ -5,6 +5,7 @@ import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { Switch } from "@astryxdesign/core/Switch";
 import { HarnessPanel } from "./HarnessPanel";
+import { AgentSurfaces } from "./AgentSurfaces";
 
 interface Invite {
   token: string;
@@ -170,6 +171,7 @@ export const AgentsView: React.FC = () => {
         </div>
       )}
 
+      <AgentSurfaces />
       <HarnessPanel />
 
       <div style={{ ...card, padding: 0, gap: 0 }}>

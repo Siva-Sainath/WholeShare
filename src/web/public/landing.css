@@ -300,3 +300,17 @@
 .lp-try-actions { margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
 @media (max-width: 760px) { .lp-try-grid { grid-template-columns: minmax(0, 1fr); } }
 .lp-try-card ul { list-style: disc; }
+
+/* ---------- Sample businesses ---------- */
+.lp-samples { margin-top: 28px; display: grid; gap: 14px; }
+.lp-samples-head { margin: 0; font: 400 15px/24px 'Geist', sans-serif; color: var(--lp-muted); }
+.lp-samples-head strong { color: var(--lp-ink); font-weight: 600; }
+.lp-samples-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.lp-sample { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(12px) saturate(1.4); -webkit-backdrop-filter: blur(12px) saturate(1.4); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9); transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms; }
+.lp-sample:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(0, 112, 186, 0.35), 0 14px 32px -20px rgba(0, 112, 186, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.lp-sample-open { display: grid; gap: 2px; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+.lp-sample-open b { font: 600 14px/20px 'Geist', sans-serif; color: var(--lp-ink); }
+.lp-sample-open span { font: 400 13px/18px 'Geist', sans-serif; color: var(--lp-muted); }
+.lp-sample-files { display: flex; gap: 12px; font: 500 12px/16px 'Geist', sans-serif; }
+.lp-sample-files a { color: var(--lp-blue); text-decoration: none; }
+.lp-sample-files a:hover { text-decoration: underline; }

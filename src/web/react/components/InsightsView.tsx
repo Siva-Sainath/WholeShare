@@ -41,11 +41,12 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string; city?: string } }) => {
+    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string; city?: string; workspaceGroups?: string[] } }) => {
       if (!live) return;
-      const own = { product: String(p.profile?.product ?? "").trim(), city: String(p.profile?.city ?? "").trim() };
-      setProfile(own.product || own.city ? own : null);
-      setScope(own.product || own.city ? "mine" : "all");
+      const own = { product: String(p.profile?.product ?? "").trim(), city: String(p.profile?.city ?? "").trim(), groupIds: Array.isArray(p.profile?.workspaceGroups) ? p.profile.workspaceGroups : [] };
+      const known = Boolean(own.product || own.city || own.groupIds.length);
+      setProfile(known ? own : null);
+      setScope(known ? "mine" : "all");
     }).catch(() => { if (live) setScope("all"); });
     return () => { live = false; };
   }, []);

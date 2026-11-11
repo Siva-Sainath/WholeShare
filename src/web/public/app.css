@@ -5639,3 +5639,16 @@ body:has([role="dialog"][aria-modal="true"]) .ws-fab, body:has(.astryx-dialog) .
 .ws-canvas { width: min(540px, 40vw); }
 /* The chat already shows every step as it happens, so the floating activity pill is not needed there. */
 body:has([data-ws-view="mosaic-chat"]) .ws-live { display: none; }
+
+/* ---------- Agents: the three ways an agent can work here ---------- */
+.ws-surfaces { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ws-surface { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 16px; border-radius: 18px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), 0 12px 32px -22px rgba(15, 31, 46, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.ws-surface-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; color: #0070BA; background: rgba(0, 112, 186, 0.1); }
+.ws-surface-body { display: grid; gap: 6px; min-width: 0; }
+.ws-surface-body b { font: 600 14px/20px 'Geist', sans-serif; }
+.ws-surface-note { font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-surface-names { display: flex; flex-wrap: wrap; gap: 4px; }
+.ws-surface-names code { font: 500 11px/16px 'Geist Mono', monospace; padding: 2px 7px; border-radius: 6px; background: rgba(15, 31, 46, 0.05); color: #0F1F2E; }
+.ws-surface-count { display: grid; justify-items: end; font: 600 24px/28px 'Geist', sans-serif; font-variant-numeric: tabular-nums; }
+.ws-surface-count small { font: 500 11px/14px 'Geist', sans-serif; color: #5C6A79; }
+@media (max-width: 1100px) { .ws-surfaces { grid-template-columns: minmax(0, 1fr); } }

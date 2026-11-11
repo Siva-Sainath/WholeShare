@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { actionDispatcher } from "./web-actions.js";
 import { querySource } from "./data-sources.js";
 import { getGeneratedMembers } from "./clan-members.js";
+import { getClanById } from "./matchmaking/clanStore.ts";
 import { getDeliveryStorage } from "../storage/delivery.storage.ts";
 import { loadUserSettings, updateUserSettings } from "./user-settings.js";
 
@@ -16,6 +17,19 @@ const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^a-z0-9]+/).f
 const slug = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "business";
 const hash = (text) => crypto.createHash("sha256").update(String(text)).digest("hex");
 
+// Catalog categories are coarse (flour and plastic resin share one), so related groups are found by what the product is.
+const KINDS = [
+  ["food", /flour|wheat|rice|coffee|\btea\b|\boils?\b|nuts?\b|pecan|almond|cashew|pistachio|walnut|spice|saffron|cardamom|pepper|honey|syrup|sugar|milk|dairy|cocoa|chocolate|vanilla|dates|olive|bean|grain|oats?|sesame|vinegar|jam|fruit|vegetable|bread|bakery|butter|cheese|egg|tulip|herb|matcha/i],
+  ["packaging", /packag|carton|box|bag|pouch|bottle|jar|container|cup|lid|wrap|film|pallet|label|tape|takeout|napkin|tissue/i],
+  ["textiles", /fabric|textile|cotton|denim|silk|wool|merino|yarn|jute|hessian|garment|apparel|thread|linen/i],
+  ["electronics", /circuit|pcb|resistor|capacitor|battery|sensor|led\b|cable|wire|microcontroller|semiconductor|display|connector|inverter/i],
+  ["energy", /solar|photovoltaic|geothermal|heat pump|wind|turbine|hydroponic|grow light/i],
+  ["industrial", /bolt|nut\b|screw|rod|steel|aluminium|aluminum|resin|pellet|bearing|pump|valve|welding|tool|carbide|titanium|machin|casting|tile|cement|lumber|timber|rebar|concrete/i],
+  ["medical", /glove|nitrile|mask|surgical|dental|scalpel|syringe|medical|scissors|gauze/i],
+  ["kitchen", /kitchen|restaurant|oven|fryer|prep table|cookware|grinder|knife|induction/i]
+];
+const kindOf = (text) => KINDS.find(([, pattern]) => pattern.test(String(text ?? "")))?.[0] ?? "";
+
 export function isDemoBusiness(profile) {
   return String(profile?.businessName ?? "").trim() === DEMO_BUSINESS;
 }
@@ -25,11 +39,14 @@ export function workspaceOwnerId(profile) {
 }
 
 // How well a group fits the business: what it buys first, then where it is.
-function score(group, words, city) {
+// Same country is a softer signal than same city. Groups priced in USD can take a PayPal sandbox pledge, so they edge ahead.
+function score(group, words, city, country = "") {
   const text = `${group.product} ${group.name}`.toLowerCase();
   const matched = words.filter((word) => new RegExp(`\\b${word}s?\\b`).test(text)).length;
   const here = city && String(group.city ?? "").toLowerCase() === city ? 1 : 0;
-  return matched * 10 + here * 4 + Math.min(Number(group.fillPct) || 0, 99) / 100;
+  const sameCountry = country && String(group.country ?? "").toLowerCase() === country ? 1 : 0;
+  const pledgeable = getClanById(group.id)?.settlementCurrency === "USD" ? 1 : 0;
+  return matched * 10 + here * 4 + sameCountry * 2 + pledgeable * 1.5 + Math.min(Number(group.fillPct) || 0, 99) / 100;
 }
 
 function trackingFor(seed) {
@@ -62,6 +79,7 @@ export async function seedWorkspaceForProfile(profile) {
   }
   if (!businessName) return { seeded: false, reason: "empty" };
   const city = String(profile.city ?? "").trim().toLowerCase();
+  const country = String(profile.country ?? "").trim().toLowerCase();
   const words = wordsOf(profile.product);
   const units = Math.max(1, Math.min(Number(profile.units) || 12, 5000));
   const smeId = workspaceOwnerId(profile);
@@ -70,7 +88,7 @@ export async function seedWorkspaceForProfile(profile) {
 
   const { rows } = await querySource("groups", { limit: 2000 });
   const open = rows.filter((group) => group.status === "FORMING" && Number(group.fillPct) < 100 && Number(group.targetUnits) > 0);
-  const ranked = [...open].sort((a, b) => score(b, words, city) - score(a, words, city));
+  const ranked = [...open].sort((a, b) => score(b, words, city, country) - score(a, words, city, country));
   const picked = [];
   const seenProducts = new Set();
   const take = (group) => {
@@ -78,12 +96,13 @@ export async function seedWorkspaceForProfile(profile) {
     seenProducts.add(group.product);
     picked.push(group);
   };
-  // Groups that really sell what the business buys come first. Any that are left are filled from the same category, then the same city.
-  const matches = ranked.filter((group) => score(group, words, city) >= 10);
+  // Groups that really sell what the business buys come first. Any that are left are filled with the same kind of product, then the same city and country.
+  const matches = ranked.filter((group) => score(group, words, city, country) >= 10);
   matches.forEach(take);
-  const categories = new Set(matches.map((group) => group.category).filter(Boolean));
-  if (categories.size > 0) ranked.filter((group) => categories.has(group.category)).forEach(take);
+  const kinds = new Set([kindOf(`${profile.product} ${profile.industry}`), ...matches.map((group) => kindOf(`${group.product} ${group.name}`))].filter(Boolean));
+  if (kinds.size > 0) ranked.filter((group) => kinds.has(kindOf(`${group.product} ${group.name}`))).forEach(take);
   if (city) ranked.filter((group) => String(group.city ?? "").toLowerCase() === city).forEach(take);
+  if (country) ranked.filter((group) => String(group.country ?? "").toLowerCase() === country).forEach(take);
   ranked.forEach(take);
   if (picked.length === 0) return { seeded: false, reason: "no open groups" };
 

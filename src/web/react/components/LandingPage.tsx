@@ -10,6 +10,7 @@ import { PayPalAttribution } from "./PayPalAttribution";
 import { HeroBackdrop } from "./HeroBackdrop";
 import { WholeShareHero } from "../stageshow/WholeShareHero";
 import { InferenceStatus } from "./InferenceStatus";
+import { SampleBusinesses, type SampleProfile } from "./SampleBusinesses";
 import { Button } from "@astryxdesign/core/Button";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 
@@ -182,12 +183,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   };
 
   // One click into the built-in demo business, with its pledges, shipments and reports already in place.
-  const useDemoBusiness = async () => {
+  const openBusiness = async (profile: SampleProfile) => {
     try {
       await fetch("/api/v1/user/settings", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12, onboardingConfirmed: true } })
+        body: JSON.stringify({ profile: { ...profile, onboardingConfirmed: true } })
       });
       window.localStorage.setItem("wholeshare_onboarding_confirmed", "true");
     } catch {
@@ -196,6 +197,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     window.location.hash = "discover";
     window.location.reload();
   };
+
+  const useDemoBusiness = () => openBusiness({ businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "New York", country: "United States", currency: "USD", product: "takeout containers", units: 12 });
 
   const scrollTo = (id: string) => (event: React.MouseEvent) => {
     event.preventDefault();
@@ -281,7 +284,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <a href="#faq" onClick={scrollTo("faq")}>FAQ</a>
           </div>
           <div className="lp-nav-actions">
-            <Button size="sm" label="Business profile" onClick={() => onNavigate("onboarding")} />
+            <Button size="sm" label="Use your business" onClick={() => onNavigate("onboarding")} />
             <span className="lp-gold"><Button size="sm" variant="primary" label="Browse groups" onClick={() => goDiscover()} /></span>
           </div>
         </nav>
@@ -306,7 +309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </p>
             <div className="lp-hero-cta">
               <span className="lp-gold"><Button size="lg" variant="primary" label="Browse open buying groups" onClick={() => goDiscover()} /></span>
-              <Button size="lg" label="See how it works" onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })} />
+              <Button size="lg" label="Use your own business" onClick={() => onNavigate("onboarding")} />
             </div>
             <form className="lp-ask" onSubmit={(event) => { event.preventDefault(); askMosaic(query); }}>
               <MosaicLogo size={26} wordmark={false} intro={false} loop={false} />
@@ -346,7 +349,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           <div className="lp-try-grid">
             <div className="lp-try-card lp-reveal">
               <h3>Use your own business</h3>
-              <p>Say what you buy and where you are. WholeShare builds a workspace around it from the real catalog, so everything you see is yours.</p>
+              <p>Say what you buy and where you are, in any city or country. WholeShare builds a workspace around it from the real catalog, so every screen, grid and board shows your business.</p>
               <ul>
                 <li>Pledges in groups that match your product</li>
                 <li>A delivery on the way, a late one and one ready to inspect</li>
@@ -365,6 +368,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               <div className="lp-try-actions"><Button variant="secondary" label="Open the demo business" onClick={() => void useDemoBusiness()} /></div>
             </div>
           </div>
+          <SampleBusinesses onOpen={(profile) => void openBusiness(profile)} />
         </div>
       </section>
 

@@ -47,19 +47,21 @@ const REGISTRY_ID: Record<string, string> = { invoices: "paypal_invoices" };
 
 // Reports can be limited to the groups that matter to this business: its product and its city. Null means everything.
 let scopedGroupIds: Set<string> | null = null;
-export interface BusinessScope { product: string; city: string }
+export interface BusinessScope { product: string; city: string; groupIds?: string[] }
 const STOP = new Set(["the", "and", "for", "with", "bulk", "pack", "case", "size", "grade", "premium", "organic"]);
 
 export function scopeGroups(groups: Row[], scope: BusinessScope | null): Row[] {
   scopedGroupIds = null;
-  if (!scope || (!scope.product && !scope.city)) return groups;
+  if (!scope || (!scope.product && !scope.city && !(scope.groupIds?.length))) return groups;
+  const own = new Set(scope.groupIds ?? []);
   const words = scope.product.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word));
   const city = scope.city.trim().toLowerCase();
   const picked = groups.filter((group) => {
     const text = `${group.product ?? ""} ${group.name ?? ""}`.toLowerCase();
     const byProduct = words.length > 0 && words.some((word) => new RegExp(`\\b${word}s?\\b`).test(text));
     const byCity = city !== "" && String(group.city ?? "").toLowerCase() === city;
-    return words.length > 0 ? byProduct : byCity;
+    // The business's own pledged groups are always in its reports, whatever they are called.
+    return own.has(String(group.id)) || (words.length > 0 ? byProduct : byCity);
   });
   if (picked.length === 0) return groups;
   scopedGroupIds = new Set(picked.map((group) => String(group.id)));
