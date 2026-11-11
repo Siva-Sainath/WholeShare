@@ -52,7 +52,7 @@ export const GroupNameCell = (params: ICellRendererParams<LedgerClan>) => {
   return (
     <span className="ws-cell-stack">
       <span className="ws-cell-title">{row.skuName}</span>
-      <span className="ws-cell-sub">{row.sku}</span>
+      <span className="ws-cell-sub">{(row.members?.length ?? 0)} {(row.members?.length ?? 0) === 1 ? "business" : "businesses"} pooled</span>
     </span>
   );
 };

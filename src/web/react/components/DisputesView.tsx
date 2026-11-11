@@ -107,10 +107,8 @@ const subtleButtonStyle: React.CSSProperties = {
 };
 
 const claimColumns: ColDef<ClaimRecord>[] = [
-  { field: "claimId", headerName: "Claim", flex: 1.3, minWidth: 150, cellStyle: { fontWeight: 500 } },
-  { field: "product", headerName: "Product", flex: 2, minWidth: 180, filter: true, enableRowGroup: true },
-  { field: "city", headerName: "City", flex: 0.9, minWidth: 110, enableRowGroup: true },
-  { field: "memberId", headerName: "Member", flex: 1, minWidth: 120 },
+  { field: "claimId", headerName: "Claim", flex: 1.4, minWidth: 210, cellStyle: { fontWeight: 500 } },
+  { field: "product", headerName: "Product", flex: 2.2, minWidth: 270, filter: true, enableRowGroup: true },
   { field: "damagedUnits", headerName: "Damaged", flex: 0.8, minWidth: 100, cellClass: "ws-tabular-nums" },
   {
     field: "unitPrice",
@@ -121,10 +119,10 @@ const claimColumns: ColDef<ClaimRecord>[] = [
     valueFormatter: (params: ValueFormatterParams) => formatUsdNumber(params.value)
   },
   {
-    field: "orderValue",
+    field: "claimedAmount",
     headerName: "Claim value",
     flex: 1,
-    minWidth: 120,
+    minWidth: 130,
     cellClass: "ws-tabular-nums",
     valueFormatter: (params: ValueFormatterParams) => formatUsdNumber(params.value)
   },
@@ -139,7 +137,7 @@ const claimColumns: ColDef<ClaimRecord>[] = [
     field: "createdAt",
     headerName: "Filed",
     flex: 1.2,
-    minWidth: 150,
+    minWidth: 180,
     sort: "desc",
     sortable: true,
     valueFormatter: (params: ValueFormatterParams) => formatDate(params.value)
