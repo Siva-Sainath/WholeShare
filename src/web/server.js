@@ -16,6 +16,7 @@ import { durableHarness, describeHarness } from "../lib/durable-harness.js";
 import { handleMcpMessage, listMcpTools } from "../lib/mcp-server.js";
 import { getInferenceStatus, startInferenceProbe } from "../lib/inference-status.js";
 import { migrateStoryNames } from "../lib/story-migrate.js";
+import { ensureStorySamples } from "../lib/story-seed.js";
 import { extractOnboardingProfile } from "../lib/onboarding-extract.js";
 import { applyPledgesToLedger, listPledges, markDelivered, recordPledge, releasePayment, settleClaimPayment } from "../lib/pledge-ledger.js";
 import { needsSeed, restoreWorkspace, seedWorkspaceForProfile, isDemoBusiness } from "../lib/workspace-seed.js";
@@ -3089,6 +3090,7 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
     // The sample business only has its New York story. Older sample shipments for other products are removed once.
     try { getDeliveryStorage().removeWhere((record) => record.memberId === "sme_austin_01" && !String(record.clanId).startsWith("clan-nyc-")); } catch { /* the shipments stay as they were */ }
     try { const moved = migrateStoryNames(); if (moved) console.log(`[story] renamed the demo market in ${moved} saved file(s)`); } catch (error) { console.warn(`[story] rename skipped: ${error.message}`); }
+    try { const added = ensureStorySamples(); if (added) console.log(`[story] added ${added} sample shipment and claim record(s) for the demo business`); } catch (error) { console.warn(`[story] sample records not added: ${error.message}`); }
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
     void restoreWorkspace().finally(() => { try { applyPledgesToLedger(); } catch { /* the ledger still shows the story */ } });
     setInterval(() => { try { rebaseStoryShipments(); } catch { /* next hour */ } }, 3600 * 1000).unref();

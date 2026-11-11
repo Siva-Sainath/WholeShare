@@ -10,7 +10,7 @@ const shared = {
   accentColor: STITCH_COLORS.blue,
   borderColor: "#EDE9DF",
   fontFamily: STITCH_TYPOGRAPHY.sans,
-  fontSize: 13
+  fontSize: 14
 };
 
 export const wsGridTheme = themeQuartz.withParams({
@@ -19,7 +19,7 @@ export const wsGridTheme = themeQuartz.withParams({
   headerBackgroundColor: STITCH_COLORS.canvas,
   headerTextColor: STITCH_COLORS.muted,
   headerFontFamily: STITCH_TYPOGRAPHY.sans,
-  headerFontSize: 12,
+  headerFontSize: 13,
   headerFontWeight: 600,
   rowHoverColor: "rgba(0, 112, 186, 0.045)",
   selectedRowBackgroundColor: "rgba(0, 112, 186, 0.09)",
@@ -40,7 +40,7 @@ const SANS = STITCH_TYPOGRAPHY.sans;
 
 export const wsStudioTheme = studioTheme.withParams({
   fontFamily: SANS,
-  fontSize: 13,
+  fontSize: 14,
   accentColor: STITCH_COLORS.blue,
   backgroundColor: STITCH_COLORS.card,
   foregroundColor: STITCH_COLORS.ink,
@@ -55,9 +55,9 @@ export const wsStudioTheme = studioTheme.withParams({
   studioWidgetTitleFontSize: 15,
   studioWidgetTitleFontWeight: 600,
   studioWidgetSubtitleFontFamily: SANS,
-  studioWidgetSubtitleFontSize: 12,
+  studioWidgetSubtitleFontSize: 13,
   studioWidgetCaptionFontFamily: SANS,
-  studioWidgetCaptionFontSize: 13,
+  studioWidgetCaptionFontSize: 14,
   studioWidgetBorderRadius: 12,
   gridFontFamily: SANS,
   gridFontSize: 13,
