@@ -7,6 +7,9 @@ interface ImageRule {
 import manifest from "./productImageManifest.json";
 
 const IMAGE_RULES: ImageRule[] = [
+  { pattern: /takeout|clamshell|to-go|togo/i, file: "takeout" },
+  { pattern: /\bcups?\b|bubble tea/i, file: "cups" },
+  { pattern: /soybean|cooking oil|frying oil|vegetable oil|canola/i, file: "cooking-oil" },
   { pattern: /cashew/i, file: "cashew" },
   { pattern: /almond|macadamia|pecan/i, file: "almond" },
   { pattern: /walnut|hazelnut/i, file: "walnut" },
@@ -88,5 +91,6 @@ export function imageFor(product: string, category?: string, seed: string = prod
   const file = hit?.file ?? (category ? CATEGORY_FALLBACK[category] : undefined);
   const variants = file ? (manifest as Record<string, string[]>)[file] : undefined;
   if (!variants || variants.length === 0) return null;
-  return `/img/products/${variants[seedOf(seed) % variants.length]}.jpg`;
+  const pick = variants[seedOf(seed) % variants.length];
+  return `/img/products/${pick.includes(".") ? pick : `${pick}.jpg`}`;
 }

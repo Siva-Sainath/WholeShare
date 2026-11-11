@@ -3,11 +3,13 @@ import { readdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { brotliCompressSync, gzipSync, constants } from "node:zlib";
 
 // Group product photos by type so a group picks one of several photos of the same kind of product.
-const photos = readdirSync("src/web/public/img/products").filter((name) => name.endsWith(".jpg"));
+// Photos are .jpg. Drawn illustrations for products with no good photo are .svg and keep their extension.
+const photos = readdirSync("src/web/public/img/products").filter((name) => name.endsWith(".jpg") || name.endsWith(".svg"));
 const manifest = {};
 for (const name of photos) {
-  const base = name.replace(/\.jpg$/, "").replace(/-\d+$/, "");
-  (manifest[base] ??= []).push(name.replace(/\.jpg$/, ""));
+  const isSvg = name.endsWith(".svg");
+  const base = name.replace(/\.(jpg|svg)$/, "").replace(/-\d+$/, "");
+  (manifest[base] ??= []).push(isSvg ? name : name.replace(/\.jpg$/, ""));
 }
 for (const list of Object.values(manifest)) list.sort();
 writeFileSync("src/web/react/productImageManifest.json", JSON.stringify(manifest, null, 1));

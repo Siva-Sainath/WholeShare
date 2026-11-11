@@ -3,7 +3,7 @@ import { Bot, Check, Copy, KeyRound, Plug, ShieldCheck, Trash2 } from "lucide-re
 import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
-import { fetchMcpTools } from "../api";
+import { Switch } from "@astryxdesign/core/Switch";
 import { HarnessPanel } from "./HarnessPanel";
 
 interface Invite {
@@ -52,8 +52,7 @@ Body: { "token": "${token}", "agentName": "<your name>", ...fields from the mani
 
 Step 4. To price a pledge, call POST ${origin}/api/v1/agent/pledge-quote. A quote is not an authorization.
 
-Optional. WholeShare also speaks MCP (Model Context Protocol). The server lists ${mcpCount} tools at:
-GET ${origin}/api/v1/mcp
+Optional. If you speak MCP (Model Context Protocol), connect to ${origin}/mcp with the header Authorization: Bearer ${token}. It offers ${mcpCount} tools plus ask_mosaic, which hands a whole request to the buyer's own assistant. The buyer must have switched on outside agent access in Settings. Tools the buyer has not allowed return a blocked message that names the switch.
 
 Rules: money never moves without the human approving on PayPal's own site. Never invent a PayPal order id, a tracking number or a shipment date. All amounts are USD cents as integers.`;
 }
@@ -81,6 +80,7 @@ export const AgentsView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [access, setAccess] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -94,7 +94,8 @@ export const AgentsView: React.FC = () => {
 
   useEffect(() => {
     void load();
-    fetchMcpTools().then((tools) => setToolCount(tools.length)).catch(() => setToolCount(null));
+    fetch("/api/v1/user/settings").then((response) => response.json()).then((settings: { agentPermissions?: { externalAgentAccessEnabled?: boolean } }) => setAccess(settings.agentPermissions?.externalAgentAccessEnabled === true)).catch(() => setAccess(null));
+    fetch("/api/v1/mcp/info").then((response) => response.json()).then((info: { tools?: unknown[] }) => setToolCount(info.tools?.length ?? null)).catch(() => setToolCount(null));
   }, [load]);
 
   const create = async () => {
@@ -199,12 +200,28 @@ export const AgentsView: React.FC = () => {
         )}
       </div>
 
-      <div style={{ ...card, padding: 16, gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center" }}>
-        <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Plug size={16} color="#0070BA" /><b style={{ fontSize: 14 }}>MCP endpoint</b><span style={{ fontSize: 12, color: "#5C6A79" }}>{toolCount === null ? "tool list unavailable" : `${toolCount} tools`}</span></div>
-          <p style={{ ...mono, padding: "6px 10px" }}>{origin}/api/v1/mcp</p>
+      <div style={{ ...card, padding: 16, gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 12, alignItems: "center" }}>
+          <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Plug size={16} color="#0070BA" /><b style={{ fontSize: 14 }}>MCP server</b><span style={{ fontSize: 12, color: "#5C6A79" }}>{toolCount === null ? "tool list unavailable" : `${toolCount} tools`}</span></div>
+            <p style={{ ...mono, padding: "6px 10px" }}>{origin}/mcp</p>
+            <span style={{ fontSize: 12, color: "#5C6A79" }}>Send the agent invite token as a Bearer token. Tools follow your Settings permissions, and money never moves without you on PayPal.</span>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <Button size="sm" label={copied === "mcp" ? "Copied" : "Copy URL"} icon={<Copy size={14} />} onClick={() => void copy("mcp", `${origin}/mcp`)} />
+            {fresh && <Button size="sm" label={copied === "mcpcfg" ? "Copied" : "Copy client config"} icon={<Copy size={14} />} onClick={() => void copy("mcpcfg", JSON.stringify({ mcpServers: { wholeshare: { url: `${origin}/mcp`, headers: { Authorization: `Bearer ${fresh.token}` } } } }, null, 2))} />}
+          </div>
         </div>
-        <Button size="sm" label={copied === "mcp" ? "Copied" : "Copy URL"} icon={<Copy size={14} />} onClick={() => void copy("mcp", `${origin}/api/v1/mcp`)} />
+        <Switch
+          label="Let connected agents use WholeShare for me"
+          description="Off by default. When on, an agent with a live invite can search, compare and prepare pledges, within the permissions above."
+          value={access === true}
+          isDisabled={access === null}
+          onChange={(checked) => {
+            setAccess(checked);
+            void fetch("/api/v1/user/settings", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agentPermissions: { externalAgentAccessEnabled: checked } }) }).catch(() => setAccess(!checked));
+          }}
+        />
       </div>
       <p style={{ margin: 0, fontSize: 12, color: "#5C6A79", display: "flex", alignItems: "center", gap: 6 }}><ShieldCheck size={14} /> Agents cannot approve or capture payments, invent PayPal ids or tracking numbers, or use revoked links. Onboarding is limited to 20 requests per hour per link.</p>
     </section>

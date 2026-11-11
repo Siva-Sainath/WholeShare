@@ -5495,3 +5495,134 @@ body:has(.ws-canvas) .ws-live { right: auto; left: 24px; }
 .ws-sandbox-badge { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #FFF4D6; border: 1px solid #F1DDA4; color: #7A5600; font: 600 11px/16px 'Geist', sans-serif; letter-spacing: 0.02em; white-space: nowrap; }
 @media (max-width: 1300px) { .ws-sandbox-badge { display: none; } }
 @media (max-width: 1500px) { .ws-appbar-search { display: none; } }
+
+/* ---------- Glass: floating command bar, glass header and cards, soft canvas glow ---------- */
+.ws-workspace-shell {
+  background:
+    radial-gradient(900px 520px at 6% -8%, rgba(0, 112, 186, 0.11), transparent 62%),
+    radial-gradient(760px 460px at 96% -4%, rgba(255, 196, 57, 0.16), transparent 62%),
+    radial-gradient(900px 600px at 50% 112%, rgba(0, 112, 186, 0.07), transparent 60%),
+    #FAF8F3;
+  background-attachment: fixed;
+  padding-bottom: 96px;
+}
+.ws-workspace-shell > div { background: transparent !important; }
+.ws-appbar {
+  background: rgba(250, 248, 243, 0.66) !important;
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid rgba(15, 31, 46, 0.07) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 8px 32px -18px rgba(15, 31, 46, 0.22);
+}
+.ws-stat, .astryx-card, .ws-insights-stage {
+  background: rgba(255, 255, 255, 0.66) !important;
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), 0 12px 36px -20px rgba(15, 31, 46, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ws-stat:hover, button.astryx-card:hover, a.astryx-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(0, 112, 186, 0.22), 0 18px 44px -20px rgba(0, 112, 186, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.ws-fab {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 12px;
+  width: min(520px, calc(100vw - 32px)); height: 54px; padding: 0 10px 0 8px;
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(22px) saturate(1.7);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.07), 0 18px 48px -14px rgba(15, 31, 46, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  color: #0F1F2E; font: 500 15px/20px 'Geist', 'Inter', sans-serif; text-align: left; cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ws-fab:hover { transform: translateX(-50%) translateY(-2px); box-shadow: 0 0 0 1px rgba(0, 112, 186, 0.3), 0 24px 56px -14px rgba(0, 112, 186, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.95); }
+.ws-fab:active { transform: translateX(-50%) scale(0.98); }
+.ws-fab:focus-visible { outline: 2px solid #0070BA; outline-offset: 3px; }
+.ws-fab-orb { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(145deg, #FFE08A, #FFC439); color: #0F1F2E; box-shadow: 0 6px 16px -6px rgba(255, 196, 57, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.8); flex: none; }
+.ws-fab-text { flex: 1; color: #3A4A5B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-fab-key { flex: none; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(15, 31, 46, 0.12); background: rgba(255, 255, 255, 0.7); color: #5C6A79; font: 600 12px/16px 'Geist Mono', monospace; }
+@media (max-width: 640px) { .ws-fab-key { display: none; } .ws-fab { bottom: 16px; } }
+
+.ws-cmd-backdrop { background: rgba(250, 248, 243, 0.38) !important; backdrop-filter: blur(14px) saturate(1.25) !important; -webkit-backdrop-filter: blur(14px) saturate(1.25) !important; }
+.ws-cmd { background: rgba(255, 255, 255, 0.74) !important; backdrop-filter: blur(26px) saturate(1.6); -webkit-backdrop-filter: blur(26px) saturate(1.6); border: 1px solid rgba(255, 255, 255, 0.9) !important; box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.08), 0 40px 100px -24px rgba(15, 31, 46, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important; }
+
+@media (prefers-reduced-motion: reduce) { .ws-fab, .ws-stat, .astryx-card { transition: none; } }
+@media (prefers-reduced-transparency: reduce) {
+  .ws-fab, .ws-appbar, .ws-stat, .astryx-card, .ws-insights-stage, .ws-cmd { backdrop-filter: none !important; background: #FFFFFF !important; }
+}
+.ws-workspace-shell main > section:not([class]) { background: transparent !important; }
+
+/* ---------- Toasts replace the old blue banners ---------- */
+.ws-toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; align-items: center; gap: 12px; max-width: min(520px, calc(100vw - 32px)); padding: 10px 12px 10px 14px; border-radius: 14px; color: #0F1F2E; background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.07), 0 18px 44px -16px rgba(15, 31, 46, 0.3); animation: ws-toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.ws-toast svg { flex: none; color: #5C6A79; }
+.ws-toast--error svg { color: #B3261E; }
+.ws-toast-text { display: grid; gap: 2px; min-width: 0; font: 400 13px/18px 'Geist', 'Inter', sans-serif; }
+.ws-toast-text strong { font-weight: 600; font-size: 14px; }
+.ws-toast-text span { color: #5C6A79; }
+.ws-toast-close { border: 0; background: transparent; color: #5C6A79; cursor: pointer; padding: 4px; border-radius: 8px; display: grid; place-items: center; }
+.ws-toast-close:hover { background: rgba(15, 31, 46, 0.06); }
+@keyframes ws-toast-in { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* ---------- Agents: how Mosaic works ---------- */
+.ws-harness { display: grid; gap: 16px; padding: 20px; border-radius: 20px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), 0 14px 40px -22px rgba(15, 31, 46, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.ws-harness-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+.ws-harness-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: #0070BA; background: linear-gradient(145deg, rgba(0, 112, 186, 0.14), rgba(0, 112, 186, 0.04)); border: 1px solid rgba(0, 112, 186, 0.18); }
+.ws-harness-title { display: grid; gap: 4px; min-width: 0; }
+.ws-harness-title b { font: 600 16px/22px 'Geist', sans-serif; }
+.ws-harness-title span { font: 400 14px/20px 'Geist', sans-serif; color: #5C6A79; max-width: 64ch; }
+.ws-harness-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.ws-harness-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.ws-harness-tile { display: grid; gap: 2px; text-align: left; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(15, 31, 46, 0.08); cursor: pointer; font: inherit; color: inherit; transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms, background 160ms; }
+.ws-harness-tile:hover { transform: translateY(-2px); border-color: rgba(0, 112, 186, 0.4); }
+.ws-harness-tile[data-open] { border-color: #0070BA; background: rgba(0, 112, 186, 0.07); }
+.ws-harness-count { font: 600 28px/32px 'Geist', sans-serif; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ws-harness-label { font: 600 14px/20px 'Geist', sans-serif; }
+.ws-harness-note { font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-harness-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ws-harness-chips span { font: 400 13px/18px 'Geist', sans-serif; padding: 4px 10px; border-radius: 999px; background: rgba(15, 31, 46, 0.05); border: 1px solid rgba(15, 31, 46, 0.06); }
+.ws-harness-more { display: inline-flex; align-items: center; gap: 6px; font: 500 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-harness-rules { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+@media (max-width: 720px) { .ws-harness-head { grid-template-columns: auto minmax(0, 1fr); } .ws-harness-badges { grid-column: 1 / -1; justify-content: flex-start; } }
+
+/* ---------- Glass AI helper boxes and the claim summary ---------- */
+.ws-ai-fill { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(0, 112, 186, 0.07), rgba(255, 255, 255, 0.6) 60%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0, 112, 186, 0.16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85); }
+.ws-claim-aside { align-self: start; position: sticky; top: 96px; display: grid; gap: 14px; padding: 20px; border-radius: 20px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), 0 14px 40px -22px rgba(15, 31, 46, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.ws-claim-eyebrow { font: 600 11px/16px 'Geist Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: #5C6A79; }
+.ws-claim-total { display: grid; gap: 2px; }
+.ws-claim-total span { font: 600 36px/40px 'Geist', sans-serif; letter-spacing: -0.02em; color: #0F1F2E; }
+.ws-claim-total small { font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-claim-rows { display: grid; gap: 8px; margin: 0; }
+.ws-claim-rows div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(15, 31, 46, 0.08); font: 400 13px/18px 'Geist', sans-serif; }
+.ws-claim-rows dt { color: #5C6A79; }
+.ws-claim-rows dd { margin: 0; font-weight: 600; }
+.ws-claim-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-claim-checks li { display: flex; align-items: center; gap: 10px; }
+.ws-claim-checks li span { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(15, 31, 46, 0.25); flex: none; display: grid; place-items: center; }
+.ws-claim-checks li[data-done] { color: #0F1F2E; }
+.ws-claim-checks li[data-done] span { background: #0070BA; border-color: #0070BA; }
+.ws-claim-checks li[data-done] span::after { content: ""; width: 4px; height: 7px; border: solid #fff; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.ws-claim-foot { margin: 0; font: 400 12px/18px 'Geist', sans-serif; color: #5C6A79; }
+
+/* ---------- Mosaic chat, built on the Astryx chat templates ---------- */
+.ws-chat { display: flex; flex-direction: column; height: calc(100dvh - 150px); min-height: 520px; }
+.ws-chat-start { margin: auto; width: min(720px, 100%); display: grid; gap: 28px; padding: 8px 0 32px; }
+.ws-chat-greeting { display: grid; gap: 6px; }
+.ws-chat-greeting p { margin: 0; display: flex; align-items: center; gap: 10px; font: 500 18px/24px 'Geist', sans-serif; color: #5C6A79; }
+.ws-chat-greeting h1 { margin: 0; font: 600 44px/48px 'Geist', sans-serif; letter-spacing: -0.03em; color: #0F1F2E; }
+.ws-chat-orb { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; background: linear-gradient(145deg, #3AA6E6, #0070BA); box-shadow: 0 8px 20px -8px rgba(0, 112, 186, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+.ws-chat-composer { border-radius: 24px; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.07), 0 22px 56px -22px rgba(15, 31, 46, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.95); }
+.ws-chat-composer--dock { max-width: 760px; margin: 0 auto; width: 100%; }
+.ws-chat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.ws-chat-card { display: grid; gap: 4px; text-align: left; }
+.ws-chat-card strong { font: 600 15px/22px 'Geist', sans-serif; color: #0F1F2E; }
+.ws-chat-card span { font: 400 13px/18px 'Geist', sans-serif; color: #5C6A79; }
+.ws-chat-thread { flex: 1; min-height: 0; overflow-y: auto; border-radius: 24px; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3); box-shadow: 0 0 0 1px rgba(15, 31, 46, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.ws-chat-allow { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+@media (max-width: 640px) { .ws-chat-greeting h1 { font-size: 32px; line-height: 36px; } }
+.ws-product-photo { position: relative; }
+.ws-product-photo img[data-art] { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 6px 0; box-sizing: border-box; }
+.ws-product-photo:has(img[data-art]) { background: linear-gradient(135deg, #EAF3FA, #FAF8F3); }

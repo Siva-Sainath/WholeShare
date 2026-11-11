@@ -221,7 +221,7 @@ export const CreateGroupBuyModal: React.FC<CreateGroupBuyModalProps> = ({ isOpen
 
         {step === 1 && (
           <div style={{ display: "grid", gap: 14 }}>
-            <div style={{ display: "grid", gap: 8, padding: 12, borderRadius: 12, background: "#EBF4FA", border: "1px solid #CFE3F1" }}>
+            <div className="ws-ai-fill">
               <TextArea label="Tell Mosaic what you want to buy" placeholder="We are 12 workshops in Pune and want 2,000 stainless steel M10 nuts, around $0.35 each, and need suppliers found on the web." value={describe} onChange={(value) => setDescribe(value)} rows={2} />
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <Button variant="secondary" size="sm" label={filling ? "Reading" : "Fill the form with Mosaic"} icon={<Sparkles size={14} />} onClick={() => void fillWithMosaic()} isDisabled={filling || describe.trim().length < 6} />

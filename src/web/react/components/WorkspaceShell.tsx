@@ -7,7 +7,6 @@ import { Button } from "@astryxdesign/core/Button";
 import { ImageCredits } from "./ImageCredits";
 import { CommandBar } from "./CommandBar";
 import { allowMosaicPermission, askMosaic, describeTool } from "../mosaicAgent";
-import { SandboxBadge } from "./PayPalAttribution";
 import { BarChart3, Bot, LayoutGrid, Scale, Settings as SettingsIcon, Sparkles, Users, Wallet } from "lucide-react";
 import type { MosaicReply } from "../mosaicAgent";
 import {
@@ -57,51 +56,27 @@ interface WorkspaceShellProps {
   children: React.ReactNode;
 }
 
-export const ActionNoticeBanner: React.FC<{ notice: ActionNotice | null | undefined; onClose?: () => void }> = ({ notice: actionNotice, onClose: onCloseNotice }) => (
-  <>
-          {actionNotice && (
-            <aside
-              className={`ws-action-notice ${actionNotice.status === "error" ? "ws-notice-error" : ""}`}
-              style={{
-                margin: "0 0 16px",
-                padding: "14px 18px",
-                borderRadius: "8px",
-                background: actionNotice.status === "error" ? "#FFDAD6" : actionNotice.status === "success" ? "#EBF4FA" : "#F4EFEB",
-                border: `1px solid ${actionNotice.status === "error" ? "rgba(186,26,26,0.3)" : "#E7E2D8"}`,
-                color: "#0F1F2E"
-              }}
-              role={actionNotice.status === "error" ? "alert" : "status"}
-              aria-live="polite"
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {actionNotice.status === "error" && <AlertTriangle size={16} color="#BA1A1A" />}
-                  {actionNotice.status === "success" && <CheckCircle2 size={16} color="#0070BA" />}
-                  {actionNotice.status === "info" && <Info size={16} color="#0070BA" />}
-                  <strong className="ws-notice-heading" style={{ fontSize: "14px", fontFamily: "var(--ws-font-sans)" }}>{actionNotice.title}</strong>
-                </div>
-                {onCloseNotice && (
-                  <button className="ws-notice-close" onClick={onCloseNotice} aria-label="Dismiss notice" style={{ background: "none", border: "none", color: "#5C6A79", cursor: "pointer", padding: "2px" }}>
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              {actionNotice.message && <p className="ws-notice-message" style={{ margin: "0 0 6px", fontSize: "13px", color: "#5C6A79", fontFamily: "var(--ws-font-sans)" }}>{actionNotice.message}</p>}
-              {actionNotice.error && <p className="ws-notice-message" style={{ margin: 0, fontSize: "13px", color: "#BA1A1A" }}>{actionNotice.error}</p>}
-              {actionNotice.data && (
-                <div style={{ marginTop: "8px", padding: "8px 12px", background: "rgba(255,255,255,0.6)", borderRadius: "6px", fontSize: "12px", display: "grid", gap: "4px" }}>
-                  {flattenNotice(actionNotice.data).slice(0, 8).map(([key, val]) => (
-                    <div key={key} style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                      <span style={{ color: "#5C6A79", fontSize: "12px" }}>{key}</span>
-                      <span style={{ color: "#0F1F2E", fontWeight: 500 }}>{val}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </aside>
-          )}
-  </>
-);
+// Success is never announced: the screen already shows the change. Only a failure or an approval note appears, as a small glass toast.
+export const ActionNoticeBanner: React.FC<{ notice: ActionNotice | null | undefined; onClose?: () => void }> = ({ notice, onClose }) => {
+  const visible = Boolean(notice && notice.status !== "success");
+  useEffect(() => {
+    if (!visible || !onClose) return;
+    const timer = window.setTimeout(onClose, 7000);
+    return () => window.clearTimeout(timer);
+  }, [visible, notice?.timestamp, onClose]);
+  if (!notice || !visible) return null;
+  const failed = notice.status === "error";
+  return (
+    <aside className={`ws-toast ${failed ? "ws-toast--error" : ""}`} role={failed ? "alert" : "status"} aria-live="polite">
+      {failed ? <AlertTriangle size={16} aria-hidden="true" /> : <Info size={16} aria-hidden="true" />}
+      <div className="ws-toast-text">
+        <strong>{notice.title}</strong>
+        {(notice.error || notice.message) && <span>{notice.error || notice.message}</span>}
+      </div>
+      {onClose && <button type="button" className="ws-toast-close" onClick={onClose} aria-label="Dismiss"><X size={14} /></button>}
+    </aside>
+  );
+};
 
 const NOTICE_WORDS: Record<string, string> = { allowAutonomous: "May ", agentPermissions: "" };
 
@@ -211,6 +186,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
 
   return (
     <div id="workspaceShell" className="ws-workspace-shell bg-brand-bg min-h-screen flex antialiased">
+      <CommandBar hideTrigger={activeView === "mosaic-chat"} />
       <div className="flex flex-col flex-1 min-h-screen bg-brand-bg">
         <header className="ws-appbar sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-brand-border" aria-label="Workspace navigation">
           <div className="ws-appbar-inner">
@@ -249,8 +225,6 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
                 <input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Search buying groups" aria-label="Search buying groups" />
               </form>
               )}
-              <CommandBar />
-              <SandboxBadge />
               <button type="button" className="ws-appbar-identity" onClick={() => onNavigate("settings")} aria-label="Business profile and settings">
                 <span className="ws-appbar-identity-text">
                   <b>{businessName || "Set up your profile"}</b>

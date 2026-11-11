@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { BadgeDollarSign, FileText, Lock, PackageCheck, RefreshCw, Scale } from "lucide-react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ActiveView } from "../types";
-import { fetchClans, fetchLedger, fetchMcpTools, type ClanRecord, type LedgerClan, type McpToolDeclaration } from "../api";
+import { fetchClansPage, fetchLedger, fetchMcpTools, type ClanRecord, type LedgerClan, type McpToolDeclaration } from "../api";
 import { ACTION_CATEGORIES, describeTool } from "../mosaicAgent";
 import { MosaicLogo } from "./MosaicLogo";
 import { PayPalAttribution } from "./PayPalAttribution";
@@ -21,7 +21,7 @@ interface LandingPageProps {
 
 const HEADLINE: string[][] = [["Pool", "demand."], ["Buy", "with", "clarity."]];
 
-const EXAMPLE_PROMPTS = ["Show me takeout container groups", "Which Flushing groups can we still join?", "What is the status of my escrow?", "Show me the shipments"];
+const EXAMPLE_PROMPTS = ["Show me takeout container groups", "Which groups can we still join near me?", "What is the status of my escrow?", "Show me the shipments"];
 
 const FACTS = [
   { title: "PayPal approved", body: "You approve every authorization on PayPal's own site." },
@@ -106,12 +106,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const [tools, setTools] = useState<McpToolDeclaration[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [catalogTotal, setCatalogTotal] = useState<number | null>(null);
+  const [homeCity, setHomeCity] = useState("Flushing");
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchClans().catch(() => []), fetchLedger().catch(() => []), fetchMcpTools().catch(() => [])]).then(([c, l, t]) => {
+    // Groups near the visitor come first: their own city once they have set up a profile, otherwise the Flushing story market.
+    const profileCity = fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { city?: string } }) => String(p.profile?.city ?? "").trim()).catch(() => "");
+    profileCity.then((own) => Promise.all([fetchClansPage().catch(() => null), fetchClansPage({ city: own || "Flushing" }).catch(() => null), fetchLedger().catch(() => []), fetchMcpTools().catch(() => []), own || "Flushing"])).then(([page, local, l, t, home]) => {
       if (cancelled) return;
-      setClans(c);
+      setHomeCity(home);
+      const seen = new Set<string>();
+      const merged = [...(local?.clans ?? []), ...(page?.clans ?? [])].filter((clan) => (seen.has(clan.id) ? false : (seen.add(clan.id), true)));
+      setClans(merged);
+      setCatalogTotal(page?.total ?? null);
       setLedger(l);
       setTools(t);
       setLoading(false);
@@ -122,15 +130,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   }, []);
 
   const escrowDollars = ledger.length > 0 ? ledger.reduce((sum, row) => sum + (row.totalEscrowCents || 0), 0) / 100 : null;
-  const groupCount = clans.length > 0 ? clans.length : null;
+  const groupCount = catalogTotal ?? (clans.length > 0 ? clans.length : null);
   const avgDiscount = clans.length > 0 ? clans.reduce((sum, c) => sum + c.discountTierPct, 0) / clans.length : null;
 
   const openGroups = useMemo(
-    () => clans.filter((c) => c.status === "FORMING" && c.progressPct > 0 && c.progressPct < 100).sort((a, b) => b.progressPct - a.progressPct),
-    [clans]
+    () => clans
+      .filter((c) => c.status === "FORMING" && c.progressPct > 0 && c.progressPct < 100)
+      .sort((a, b) => Number(b.city === homeCity) - Number(a.city === homeCity) || b.progressPct - a.progressPct),
+    [clans, homeCity]
   );
-  const featured = openGroups[0] ?? null;
-  const gridGroups = openGroups.slice(1, 7);
+  const featured = openGroups.find((c) => c.id === "clan-flushing-containers-eastern") ?? openGroups[0] ?? null;
+  const localGroups = openGroups.filter((c) => c.city === homeCity);
+  const gridGroups = localGroups.length >= 4 ? localGroups.slice(0, 6) : openGroups.filter((c) => c.id !== featured?.id).slice(0, 6);
 
   const toolGroups = useMemo(() => {
     const counts = new Map<string, number>();
@@ -231,7 +242,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     };
   }, [loading, escrowDollars, groupCount, avgDiscount]);
 
-  const impliedRetailCents = featured ? Math.round(featured.unitPriceCents / (1 - Math.min(featured.discountTierPct, 90) / 100)) : null;
+  const pooledCents = featured ? Math.round(featured.unitPriceCents * (1 - Math.min(featured.discountTierPct, 90) / 100)) : null;
 
   return (
     <div className="lp" ref={rootRef} data-ws-view="landing">
@@ -312,13 +323,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </p>
           </div>
           <div className="lp-card lp-compare lp-reveal">
-            {featured && impliedRetailCents ? (
+            {featured && pooledCents ? (
               <>
                 <p className="lp-label" style={{ marginBottom: 8 }}>{featured.name}</p>
-                <div className="lp-compare-row"><span>Implied retail price</span><b className="lp-num lp-strike">{usd(impliedRetailCents)}</b></div>
-                <div className="lp-compare-row lp-compare-row--win"><span>Pooled unit price</span><b className="lp-num">{usd(featured.unitPriceCents)}</b></div>
-                <div className="lp-compare-row"><span>Listed discount</span><b className="lp-num">{featured.discountTierPct}%</b></div>
-                <p className="lp-note" style={{ marginTop: 16 }}>Implied retail is derived from the listed discount.</p>
+                <div className="lp-compare-row"><span>Buying alone (list price)</span><b className="lp-num lp-strike">{usd(featured.unitPriceCents)}</b></div>
+                <div className="lp-compare-row lp-compare-row--win"><span>Pooled price at the top tier</span><b className="lp-num">{usd(pooledCents)}</b></div>
+                <div className="lp-compare-row"><span>Top tier discount</span><b className="lp-num">{featured.discountTierPct}%</b></div>
+                <p className="lp-note" style={{ marginTop: 16 }}>The top tier applies when the group reaches its target. Today it is {featured.progressPct}% of the way.</p>
               </>
             ) : (
               <p className="lp-meta">{loading ? "Loading a live example" : "No open group available to compare."}</p>
@@ -398,11 +409,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <p className="lp-label">{formatCategory(group.category)}</p>
                   <h3>{group.name}</h3>
                   <p className="lp-meta">{group.city ?? "Location not listed"}. {group.membersCount} members.</p>
-                  <p className="lp-price lp-num">{usd(group.unitPriceCents)}</p>
+                  <p className="lp-price lp-num">{usd(group.unitPriceCents)} <span className="lp-meta" style={{ fontWeight: 400 }}>list</span></p>
                   <div className="lp-bar"><span style={{ width: `${group.progressPct}%` }} /></div>
                   <div className="lp-bar-row">
                     <span className="lp-num">{group.progressPct}% pledged</span>
-                    <span className="lp-num">{group.discountTierPct}% off</span>
+                    <span className="lp-num">up to {group.discountTierPct}% off</span>
                   </div>
                 </button>
               ))}

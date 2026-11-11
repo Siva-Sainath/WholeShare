@@ -99,6 +99,16 @@ npm start                   # http://localhost:3000
 
 Deploy on Render with `render.yaml` (one Node service and a persistent disk, no database). `scripts/render-start.sh` keeps the app's JSON state on the disk.
 
+## Connect your own agent (MCP)
+
+WholeShare runs an MCP server (JSON-RPC 2.0 over HTTP) at `/mcp`, so an outside agent can search, compare and prepare pledges for you.
+
+1. Open **Agents**, switch on **Let connected agents use WholeShare for me**, and choose **Create agent link**.
+2. Point your MCP client at `https://<your-host>/mcp` with the header `Authorization: Bearer <invite token>`. **Copy client config** on the Agents page gives you the JSON for clients that take a `url` and `headers`.
+3. The agent sees 22 tools: the data and planning tools Mosaic uses, plus `ask_mosaic`, which hands a whole request to your assistant. Tools follow the permission switches in Settings. A blocked tool names the switch to turn on.
+
+Nothing here can move money. A pledge ends as a PayPal approval that you give on PayPal. Revoked or expired invites stop working immediately.
+
 ## Limits, stated plainly
 
 - Groups, members and directory suppliers are **generated sample data**. Web leads from Kernel are real pages but unverified. PayPal invoices and orders are real sandbox objects.

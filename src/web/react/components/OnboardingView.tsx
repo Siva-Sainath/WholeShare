@@ -373,6 +373,8 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
       contactEmail: answers.contactEmail || "",
       city: answers.city || "",
       country: answers.country || "",
+      product: answers.product || "",
+      units: units > 0 ? units : undefined,
       onboardingConfirmed: true
     };
     if (prefill?.vertical) profile.industry = prefill.vertical;
@@ -533,7 +535,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
               label="Use the demo business"
               onClick={() => {
                 void saveUserSettingsApi({
-                  profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "Flushing", country: "United States", currency: "USD" }
+                  profile: { businessName: "Golden Lotus Kitchen", industry: "Restaurant", contactEmail: "owner@goldenlotus.example", city: "Flushing", country: "United States", currency: "USD", product: "takeout containers", units: 12 }
                 }).catch(() => undefined).then(() => onComplete());
               }}
             />

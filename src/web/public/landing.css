@@ -256,9 +256,10 @@
 .lp-hero::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 42% 50% at 50% 40%, rgba(250, 248, 243, 0.9) 0%, rgba(250, 248, 243, 0.5) 60%, rgba(250, 248, 243, 0) 100%); }
 .lp-gold button { background: #FFC439 !important; color: #0F1F2E !important; border-color: #FFC439 !important; }
 .lp-gold button:hover { background: #F2B82F !important; border-color: #F2B82F !important; }
-.lp-faq-item { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 12px; padding: 8px 24px; }
+.lp-faq-item { background: var(--lp-card); border: 1px solid var(--lp-border); border-radius: 12px; padding: 6px 24px; transition: border-color 200ms var(--lp-ease); }
+.lp-faq-item:hover { border-color: var(--lp-ink); }
 .lp-faq-q { font: 500 18px/28px 'Geist', sans-serif; color: var(--lp-ink); }
-.lp-faq-a { padding: 0 0 16px; font: 400 16px/24px 'Geist', sans-serif; color: var(--lp-muted); max-width: 680px; }
+.lp-faq-a { margin: 0; padding: 2px 0 16px; font: 400 16px/24px 'Geist', sans-serif; color: var(--lp-muted); max-width: 680px; }
 .lp-hero-cta > * { display: inline-flex; }
 
 .lp-steps-line { height: 2px; background: linear-gradient(90deg, #0070BA, #FFC439); border-radius: 1px; margin: 0 0 24px; }

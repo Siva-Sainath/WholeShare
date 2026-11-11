@@ -10,7 +10,7 @@ import { AG_STUDIO_LICENSE_KEY } from "../agGridLicense";
 import { wsStudioTheme } from "../theme/gridTheme";
 import { buildMosaicStudioAi } from "../studioAiHarness";
 import { registerStudioTools } from "../studioWebMcp";
-import { fetchSourceRows, loadStudioData, StudioLoad, STUDIO_REPORT_STATE } from "../studioReports";
+import { fetchSourceRows, loadStudioData, StudioLoad, STUDIO_REPORT_STATE, type BusinessScope } from "../studioReports";
 
 async function loadSavedState(): Promise<unknown | null> {
   try {
@@ -31,6 +31,8 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
   const [hasSaved, setHasSaved] = useState(false);
   const [pageId, setPageId] = useState<string>("");
   const [liveNote, setLiveNote] = useState<string>("Live");
+  const [profile, setProfile] = useState<BusinessScope | null>(null);
+  const [scope, setScope] = useState<"mine" | "all" | null>(null);
   const engineRef = useRef<{ applyTransaction: (tx: unknown) => Promise<unknown> } | null>(null);
   const known = useRef<Map<string, Map<string, string>>>(new Map());
   const studioToolsRelease = useRef<(() => void) | null>(null);
@@ -38,8 +40,20 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
   const apiRef = useRef<{ getState: () => unknown; setState: (state: unknown) => void; clearHistory?: () => void } | null>(null);
 
   useEffect(() => {
+    let live = true;
+    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string; city?: string } }) => {
+      if (!live) return;
+      const own = { product: String(p.profile?.product ?? "").trim(), city: String(p.profile?.city ?? "").trim() };
+      setProfile(own.product || own.city ? own : null);
+      setScope(own.product || own.city ? "mine" : "all");
+    }).catch(() => { if (live) setScope("all"); });
+    return () => { live = false; };
+  }, []);
+
+  useEffect(() => {
+    if (scope === null) return;
     let cancelled = false;
-    Promise.all([loadStudioData(), loadSavedState()])
+    Promise.all([loadStudioData(scope === "mine" ? profile : null), loadSavedState()])
       .then(([studio, state]) => {
         if (cancelled) return;
         for (const source of (studio.data as { sources: Array<{ id: string; data: Array<Record<string, unknown>> }> }).sources) {
@@ -55,7 +69,7 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
       })
       .catch((cause: unknown) => { if (!cancelled) setError(cause instanceof Error ? cause.message : "Could not load the data for reports."); });
     return () => { cancelled = true; };
-  }, [page]);
+  }, [page, scope, profile]);
 
   useEffect(() => {
     (window as unknown as { __wholeshareScreen?: unknown }).__wholeshareScreen = { view: "insights", editMode };
@@ -144,15 +158,11 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
       <header className="ws-insights-head">
         <div>
           <h1>Insights</h1>
-          <p>Reports on PayPal invoices, holds, groups, deliveries and claims. Ask the assistant to build or change a chart, or open Edit mode.</p>
+          <p>Reports on PayPal invoices, holds, groups, deliveries and claims. Use Edit reports to change a chart, or ask Mosaic.</p>
         </div>
         <div className="ws-insights-actions">
           {load && <Badge variant="green" label={liveNote} />}
           {load && <Badge variant="blue" label={`${load.counts.groups.toLocaleString("en-US")} groups · ${load.counts.members.toLocaleString("en-US")} pledges · ${load.counts.invoices} PayPal invoices`} />}
-          <Button variant="secondary" label="Ask the assistant" onClick={() => {
-            const tab = Array.from(document.querySelectorAll<HTMLElement>(".ws-insights-stage *")).find((node) => node.children.length < 3 && (node.textContent ?? "").trim() === "AI Assistant");
-            tab?.click();
-          }} />
           <Button variant="secondary" label={editMode ? "Done editing" : "Edit reports"} onClick={() => setEditMode((value) => !value)} />
           {editMode && <span className="lp-gold"><Button variant="primary" label={saved === "saving" ? "Saving" : saved === "saved" ? "Saved" : "Save my reports"} onClick={() => void save()} /></span>}
           {editMode && hasSaved && <Button variant="ghost" label="Reset to shipped reports" onClick={() => void reset()} />}
@@ -160,6 +170,13 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
       </header>
 
       {load?.invoiceError && <Banner status="warning" title="PayPal invoices are not in these reports" description={load.invoiceError} collapsible={false} />}
+
+      {profile && (
+        <SegmentedControl label="Data shown" value={scope ?? "all"} onChange={(value) => { setLoad(null); setScope(value as "mine" | "all"); }}>
+          <SegmentedControlItem value="mine" label={`My business${profile.product ? `: ${profile.product}` : ""}${profile.city ? ` in ${profile.city}` : ""}`} />
+          <SegmentedControlItem value="all" label="All groups" />
+        </SegmentedControl>
+      )}
 
       {load && initial && (
         <SegmentedControl label="Report page" value={pageId} onChange={goToPage}>

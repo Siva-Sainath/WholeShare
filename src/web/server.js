@@ -13,7 +13,7 @@ import { actionDispatcher } from "../lib/web-actions.js";
 import { createOrderAuthorization, authorizeOrderHold } from "../lib/paypal-bridge.js";
 import { authorizePledgeOrder, createPledgeOrder, getPledgeQuote } from "../lib/paypal-checkout.js";
 import { durableHarness, describeHarness } from "../lib/durable-harness.js";
-import { handleMcpMessage } from "../lib/mcp-server.js";
+import { handleMcpMessage, listMcpTools } from "../lib/mcp-server.js";
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../lib/tool-registry.js";
 import { kernelResearchService } from "../lib/kernel-service.js";
 import { loadAllFeatures } from "../lib/feature-map.js";
@@ -516,6 +516,11 @@ export function createWebServer() {
       return;
     }
 
+    if (pathname === "/api/v1/mcp/info" && req.method === "GET") {
+      sendJson(res, 200, { endpoint: "/mcp", auth: "Bearer agent invite token", tools: listMcpTools().map((tool) => ({ name: tool.name, title: tool.title, readOnly: tool.annotations.readOnlyHint })) });
+      return;
+    }
+
     // WebMCP Endpoints for Qwen Integration
     if (pathname === "/api/v1/mcp" && req.method === "GET") {
       sendJson(res, 200, {
@@ -890,7 +895,10 @@ export function createWebServer() {
       const byClan = new Map(getAllClans().map((clan) => [clan.id, clan]));
       const claims = claimsStorage.getAll().map((claim) => {
         const clan = byClan.get(claim.clanId);
-        return clan ? { ...claim, product: clan.canonicalSku, city: clan.city, supplierName: clan.supplierName } : claim;
+        if (clan) return { ...claim, product: clan.name || clan.canonicalSku, city: clan.city, supplierName: clan.supplierName };
+        // Older claims can point at a group that has since been renamed. Show the group id as words rather than a blank cell.
+        const words = String(claim.clanId || "").replace(/^clan-/, "").replace(/-\d+$/, "").replace(/-/g, " ").trim();
+        return { ...claim, product: words ? words.charAt(0).toUpperCase() + words.slice(1) : "Unknown group", city: "" };
       });
       sendJson(res, 200, { count: claims.length, claims });
       return;

@@ -150,6 +150,16 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({ externalQuery, exter
   const [category, setCategory] = useState(externalCategory || "All categories");
   const [city, setCity] = useState("All cities");
   const [visibleCount, setVisibleCount] = useState(6);
+  // A business that said what it buys starts on groups for that product. Clearing the search shows everything.
+  useEffect(() => {
+    if (externalQuery) return;
+    let live = true;
+    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string } }) => {
+      const product = String(p.profile?.product ?? "").trim();
+      if (live && product) setQuery((current) => current || product);
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [externalQuery]);
   const [total, setTotal] = useState(0);
   const [facets, setFacets] = useState<ClanFacets | null>(null);
   const firstFetch = useRef(true);

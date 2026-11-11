@@ -107,24 +107,24 @@ const subtleButtonStyle: React.CSSProperties = {
 };
 
 const claimColumns: ColDef<ClaimRecord>[] = [
-  { field: "claimId", headerName: "Claim ID", flex: 1.2, minWidth: 120, cellStyle: { fontWeight: 500 } },
+  { field: "claimId", headerName: "Claim", flex: 1.3, minWidth: 150, cellStyle: { fontWeight: 500 } },
   { field: "product", headerName: "Product", flex: 2, minWidth: 180, filter: true, enableRowGroup: true },
-  { field: "city", headerName: "City", flex: 0.8, minWidth: 90, enableRowGroup: true },
-  { field: "memberId", headerName: "Member ID", flex: 1, minWidth: 95 },
-  { field: "damagedUnits", headerName: "Damaged units", flex: 0.8, minWidth: 80, cellClass: "ws-tabular-nums" },
+  { field: "city", headerName: "City", flex: 0.9, minWidth: 110, enableRowGroup: true },
+  { field: "memberId", headerName: "Member", flex: 1, minWidth: 120 },
+  { field: "damagedUnits", headerName: "Damaged", flex: 0.8, minWidth: 100, cellClass: "ws-tabular-nums" },
   {
     field: "unitPrice",
-    headerName: "Unit price (USD)",
+    headerName: "Unit price",
     flex: 0.9,
-    minWidth: 90,
+    minWidth: 110,
     cellClass: "ws-tabular-nums",
     valueFormatter: (params: ValueFormatterParams) => formatUsdNumber(params.value)
   },
   {
     field: "orderValue",
-    headerName: "Claim amount (USD)",
+    headerName: "Claim value",
     flex: 1,
-    minWidth: 105,
+    minWidth: 120,
     cellClass: "ws-tabular-nums",
     valueFormatter: (params: ValueFormatterParams) => formatUsdNumber(params.value)
   },
@@ -132,14 +132,14 @@ const claimColumns: ColDef<ClaimRecord>[] = [
     field: "status",
     headerName: "Status",
     flex: 0.9,
-    minWidth: 90,
+    minWidth: 120,
     cellRenderer: ClaimStatusCell
   },
   {
     field: "createdAt",
     headerName: "Filed",
-    flex: 1.1,
-    minWidth: 110,
+    flex: 1.2,
+    minWidth: 150,
     sort: "desc",
     sortable: true,
     valueFormatter: (params: ValueFormatterParams) => formatDate(params.value)
@@ -389,9 +389,9 @@ export const DisputesView: React.FC = () => {
             rowClass="ws-clickable-row"
             onRowClicked={(event) => { if (event.data) { setOpenClaim(event.data); setClaimNote(null); } }}
             defaultColDef={{
-              flex: 1,
-              wrapHeaderText: true,
-              autoHeaderHeight: true,
+              wrapHeaderText: false,
+              suppressHeaderMenuButton: true,
+              suppressHeaderFilterButton: true,
               sortable: true,
               filter: true,
               resizable: true,
@@ -401,7 +401,7 @@ export const DisputesView: React.FC = () => {
             getRowId={(params) => params.data.claimId}
             onGridReady={(event) => { gridRelease.current?.(); gridRelease.current = registerGrid("claims", "Damage claims", event.api); }}
             onGridPreDestroyed={() => { gridRelease.current?.(); gridRelease.current = null; }}
-            autoSizeStrategy={{ type: "fitGridWidth" }}
+            autoSizeStrategy={{ type: "fitGridWidth", defaultMinWidth: 110 }}
             animateRows={true}
             cellSelection
             rowGroupPanelShow="onlyWhenGrouping"
@@ -422,7 +422,7 @@ export const DisputesView: React.FC = () => {
           </p>
 
           <form onSubmit={handleSubmitClaim} style={{ display: "grid", gap: "12px" }}>
-            <div style={{ display: "grid", gap: 8, padding: 12, borderRadius: 12, background: "#EBF4FA", border: "1px solid #CFE3F1" }}>
+            <div className="ws-ai-fill">
               <TextArea label="Tell Mosaic what happened" placeholder="Eleven of the 40 boxes arrived crushed at the corners" value={claimText} onChange={(value) => setClaimText(value)} rows={2} />
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <Button variant="secondary" size="sm" label={claimFilling ? "Reading" : "Fill the form with Mosaic"} onClick={() => void fillClaimWithMosaic()} isDisabled={claimFilling || claimText.trim().length < 6} />
@@ -503,30 +503,28 @@ export const DisputesView: React.FC = () => {
           )}
         </div>
 
-        <div style={{ background: STITCH_COLORS.surface, padding: "18px", borderRadius: STITCH_RADIUS.xl, border: `1px solid ${STITCH_COLORS.border}`, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <div>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 600, color: STITCH_COLORS.ink }}>
-              Pro-rata refund preview
-            </h3>
-            <div style={{ display: "grid", gap: "10px", fontSize: "13px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${STITCH_COLORS.border}`, paddingBottom: "6px" }}>
-                <span style={{ color: STITCH_COLORS.muted }}>Damaged units:</span>
-                <span className="ws-tabular-nums" style={{ fontWeight: 600, color: STITCH_COLORS.ink }}>{Number(damagedUnits || 0)} units</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${STITCH_COLORS.border}`, paddingBottom: "6px" }}>
-                <span style={{ color: STITCH_COLORS.muted }}>Agreed unit price:</span>
-                <span className="ws-tabular-nums" style={{ fontWeight: 600, color: STITCH_COLORS.ink }}>{formatUsdNumber(unitPrice)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${STITCH_COLORS.border}`, paddingBottom: "6px" }}>
-                <span style={{ color: STITCH_COLORS.muted }}>Claim refund value:</span>
-                <span className="ws-tabular-nums" style={{ fontWeight: 600, color: STITCH_COLORS.goldDeep }}>{formatUsdNumber(totalClaimValue)}</span>
-              </div>
-            </div>
-            <p style={{ marginTop: "16px", padding: "12px", borderRadius: STITCH_RADIUS.lg, background: STITCH_COLORS.blueLight, fontSize: "12px", color: STITCH_COLORS.muted, lineHeight: 1.5 }}>
-              The governance procedure calculates pro-rata refunds automatically upon inspector verification. Funds for intact units proceed to supplier settlement. Disputed amounts release back to buyer credit.
-            </p>
+        <aside className="ws-claim-aside" aria-label="Claim summary">
+          <span className="ws-claim-eyebrow">Refund preview</span>
+          <div className="ws-claim-total">
+            <span className="ws-tabular-nums">{formatUsdNumber(totalClaimValue)}</span>
+            <small>pro-rata refund for the damaged units</small>
           </div>
-        </div>
+          <dl className="ws-claim-rows">
+            <div><dt>Damaged units</dt><dd className="ws-tabular-nums">{Number(damagedUnits || 0)}</dd></div>
+            <div><dt>Agreed unit price</dt><dd className="ws-tabular-nums">{formatUsdNumber(unitPrice)}</dd></div>
+          </dl>
+          <ul className="ws-claim-checks" aria-label="Before you submit">
+            {[
+              ["Delivered shipment chosen", Boolean(clanId)],
+              ["Photo of the damage", Boolean(photoProofUri)],
+              ["Carrier tracking number", Boolean(trackingNumber)],
+              ["Damage reason", Boolean(reason)]
+            ].map(([label, done]) => (
+              <li key={String(label)} data-done={done ? "true" : undefined}><span aria-hidden="true" />{label}</li>
+            ))}
+          </ul>
+          <p className="ws-claim-foot">Claims must be filed within the 48 hour inspection window. A person approves the refund, and PayPal returns it only for the damaged units.</p>
+        </aside>
       </section>
       )}
 

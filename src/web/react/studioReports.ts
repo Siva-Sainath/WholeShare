@@ -45,9 +45,37 @@ const DATE_FIELDS: Record<string, string[]> = {
 };
 const REGISTRY_ID: Record<string, string> = { invoices: "paypal_invoices" };
 
+// Reports can be limited to the groups that matter to this business: its product and its city. Null means everything.
+let scopedGroupIds: Set<string> | null = null;
+export interface BusinessScope { product: string; city: string }
+const STOP = new Set(["the", "and", "for", "with", "bulk", "pack", "case", "size", "grade", "premium", "organic"]);
+
+export function scopeGroups(groups: Row[], scope: BusinessScope | null): Row[] {
+  scopedGroupIds = null;
+  if (!scope || (!scope.product && !scope.city)) return groups;
+  const words = scope.product.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word));
+  const city = scope.city.trim().toLowerCase();
+  const picked = groups.filter((group) => {
+    const text = `${group.product ?? ""} ${group.name ?? ""}`.toLowerCase();
+    const byProduct = words.length > 0 && words.some((word) => text.includes(word));
+    const byCity = city !== "" && String(group.city ?? "").toLowerCase() === city;
+    return words.length > 0 ? byProduct : byCity;
+  });
+  if (picked.length === 0) return groups;
+  scopedGroupIds = new Set(picked.map((group) => String(group.id)));
+  return picked;
+}
+
+function inScope(tableId: string, rows: Row[]): Row[] {
+  if (!scopedGroupIds) return rows;
+  if (tableId === "groups") return rows.filter((row) => scopedGroupIds?.has(String(row.id)));
+  if (tableId === "members" || tableId === "claims" || tableId === "shipments") return rows.filter((row) => scopedGroupIds?.has(String(row.groupId)));
+  return rows;
+}
+
 // Fresh rows for one Studio table, shaped exactly like the rows it was first loaded with.
 export async function fetchSourceRows(tableId: string): Promise<Row[]> {
-  const rows = await loadRows(REGISTRY_ID[tableId] ?? tableId, tableId === "invoices" ? 200 : 20000);
+  const rows = inScope(tableId, await loadRows(REGISTRY_ID[tableId] ?? tableId, tableId === "invoices" ? 200 : 20000));
   return pretty(derive(tableId, DATE_FIELDS[tableId] ? dates(rows, DATE_FIELDS[tableId]) : rows));
 }
 
@@ -68,8 +96,12 @@ export interface StudioLoad {
   invoiceError: string | null;
 }
 
-export async function loadStudioData(): Promise<StudioLoad> {
-  const [groups, members, ledger, claims, shipments] = await Promise.all([loadRows("groups"), loadRows("members"), loadRows("ledger"), loadRows("claims"), loadRows("shipments")]);
+export async function loadStudioData(scope: BusinessScope | null = null): Promise<StudioLoad> {
+  const [allGroups, allMembers, ledger, allClaims, allShipments] = await Promise.all([loadRows("groups"), loadRows("members"), loadRows("ledger"), loadRows("claims"), loadRows("shipments")]);
+  const groups = scopeGroups(allGroups, scope);
+  const members = inScope("members", allMembers);
+  const claims = inScope("claims", allClaims);
+  const shipments = inScope("shipments", allShipments);
   let invoices: Row[] = [];
   let invoiceError: string | null = null;
   try {

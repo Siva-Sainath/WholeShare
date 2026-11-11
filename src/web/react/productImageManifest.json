@@ -57,6 +57,12 @@
   "container-2",
   "container-3"
  ],
+ "cooking-oil": [
+  "cooking-oil.svg"
+ ],
+ "cups": [
+  "cups.svg"
+ ],
  "dates": [
   "dates",
   "dates-2",
@@ -202,6 +208,9 @@
  "street-light": [
   "street-light",
   "street-light-3"
+ ],
+ "takeout": [
+  "takeout.svg"
  ],
  "tea": [
   "tea",

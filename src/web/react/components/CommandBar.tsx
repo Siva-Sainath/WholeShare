@@ -5,22 +5,16 @@ import { allowMosaicPermission, askMosaic, MosaicReply } from "../mosaicAgent";
 
 // One place to say what you want. Mosaic does it and shows the result beside the page.
 
-const EXAMPLES: Array<{ label: string; prompt: string }> = [
-  { label: "Compare the container groups", prompt: "Compare the two Flushing takeout container groups for 12 cases" },
-  { label: "What can Flushing still join?", prompt: "Which Flushing groups can we still join?" },
-  { label: "My open PayPal invoices", prompt: "List my open PayPal invoices" },
-  { label: "Show my pledges", prompt: "Show my pledges" },
-  { label: "Claims waiting for me", prompt: "Show my claims that are still drafts" },
-  { label: "What arrives this week?", prompt: "Show the shipments arriving soon" }
-];
+type Example = { label: string; prompt: string };
 
-export const CommandBar: React.FC = () => {
+export const CommandBar: React.FC<{ hideTrigger?: boolean }> = ({ hideTrigger = false }) => {
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MosaicReply | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [examples, setExamples] = useState<Example[]>([]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -36,7 +30,10 @@ export const CommandBar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (open) window.setTimeout(() => inputRef.current?.focus(), 30);
+    if (!open) return;
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+    // The suggestions come from this business's own product, city and activity.
+    fetch("/api/v1/mosaic/suggestions").then((r) => r.json()).then((p: { suggestions?: Array<{ text: string }> }) => setExamples((p.suggestions ?? []).map((item) => ({ label: item.text, prompt: item.text })))).catch(() => setExamples([]));
   }, [open]);
 
   const send = async (text: string) => {
@@ -63,10 +60,13 @@ export const CommandBar: React.FC = () => {
 
   return (
     <>
-      <button type="button" className="ws-copilot-trigger ws-copilot-trigger--compact" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-expanded={open}>
-        <Sparkles size={14} style={{ marginRight: 6, verticalAlign: "-2px" }} />
-        Ask Mosaic
-      </button>
+      {!hideTrigger && !open && (
+        <button type="button" className="ws-fab" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-expanded={open} aria-label="Ask Mosaic">
+          <span className="ws-fab-orb" aria-hidden="true"><Sparkles size={15} /></span>
+          <span className="ws-fab-text">Ask Mosaic anything</span>
+          <kbd className="ws-fab-key" aria-hidden="true">{navigator.platform.includes("Mac") ? "⌘" : "Ctrl"} K</kbd>
+        </button>
+      )}
 
       {open && (
         <div className="ws-cmd-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
@@ -91,7 +91,7 @@ export const CommandBar: React.FC = () => {
                 <>
                   <p className="ws-cmd-label">Try asking</p>
                   <div className="ws-cmd-examples">
-                    {EXAMPLES.map((example) => (
+                    {examples.map((example) => (
                       <button key={example.label} type="button" onClick={() => void send(example.prompt)}>{example.label}</button>
                     ))}
                   </div>

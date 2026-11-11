@@ -60,15 +60,16 @@ function columnsFor(rows: Row[], source?: string): ColDef[] {
   const preset = (source && PRESETS[source]) || [];
   const fields = preset.length > 0 ? preset.filter((field) => field in first) : Object.keys(first).filter((field) => !HIDDEN_FIELDS.has(field)).slice(0, 6);
   return fields
-    .map((field) => {
+    .map((field, index) => {
       const sample = first[field];
       const isMoney = field.endsWith("Usd");
       const isDate = /At$/.test(field);
       return {
         field,
         headerName: humanize(field),
-        minWidth: isMoney ? 110 : 120,
-        flex: typeof sample === "string" && field !== "status" ? 1.4 : 1,
+        minWidth: index === 0 ? 260 : isMoney ? 110 : 110,
+        flex: index === 0 ? 2.4 : typeof sample === "string" && field !== "status" ? 1.4 : 1,
+        pinned: index === 0 ? ("left" as const) : undefined,
         cellClass: typeof sample === "number" ? "ws-tabular-nums" : undefined,
         enableRowGroup: typeof sample !== "number",
         enableValue: typeof sample === "number",
@@ -102,7 +103,7 @@ const GridArtifact: React.FC<{ rows: Row[]; source?: string }> = ({ rows, source
         theme={wsGridTheme}
         rowData={rows}
         columnDefs={columnDefs}
-        defaultColDef={{ sortable: true, filter: true, resizable: true, enableCellChangeFlash: true, enableRowGroup: true, enableValue: true }}
+        defaultColDef={{ suppressHeaderMenuButton: true, suppressHeaderFilterButton: true, sortable: true, filter: true, resizable: true, enableCellChangeFlash: true, enableRowGroup: true, enableValue: true }}
         getRowId={(params) => String((params.data as Row).id ?? JSON.stringify(params.data))}
         onGridReady={(event) => { release.current?.(); release.current = registerGrid("canvas", `Side panel: ${source ?? "data"}`, event.api); }}
         onGridPreDestroyed={() => { release.current?.(); release.current = null; }}

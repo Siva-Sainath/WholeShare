@@ -34,7 +34,8 @@ const inspect = () => {
     if (r.right > window.innerWidth + 2 || r.left < -2) out.push({ kind: "control-off-screen", detail: label(el) });
   }
   // Two controls drawn on top of each other.
-  const controls = [...document.querySelectorAll("button, a[href], input, select, textarea")].filter((el) => visible(el) && !el.closest(skip) && !el.closest("[hidden]"));
+  // The floating Ask Mosaic bar sits above the page by design, and the page keeps room below its content for it.
+  const controls = [...document.querySelectorAll("button, a[href], input, select, textarea")].filter((el) => visible(el) && !el.closest(skip) && !el.closest("[hidden]") && !el.closest(".ws-fab") && !el.classList.contains("ws-fab"));
   const rects = controls.map((el) => ({ el, r: el.getBoundingClientRect() }));
   for (let i = 0; i < rects.length; i += 1) for (let j = i + 1; j < rects.length; j += 1) {
     const a = rects[i], b = rects[j];

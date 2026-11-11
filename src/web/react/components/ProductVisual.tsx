@@ -78,7 +78,7 @@ export const ProductVisual: React.FC<{ product: string; category?: string; heigh
   if (src && !failed) {
     return (
       <div className="ws-product-visual ws-product-photo" style={{ height, borderRadius: rounded }}>
-        <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />
+        <img src={src} alt="" loading="lazy" data-art={src.endsWith(".svg") || undefined} onError={() => setFailed(true)} />
       </div>
     );
   }
