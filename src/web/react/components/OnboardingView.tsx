@@ -506,7 +506,16 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
     };
   }, [input, step]);
 
-  const completedCount = QUESTIONS.filter((q) => answers[q.id] && answers[q.id].trim().length > 0).length;
+  const answeredCount = QUESTIONS.filter((q) => answers[q.id] && answers[q.id].trim().length > 0).length;
+  // When several answers arrive at once (the documents fill six), the checklist ticks them off one at a time so each is seen.
+  const [shownStep, setShownStep] = useState(step);
+  useEffect(() => {
+    if (shownStep === step) return undefined;
+    if (step < shownStep) { setShownStep(step); return undefined; }
+    const timer = window.setTimeout(() => setShownStep((value) => Math.min(value + 1, step)), 420);
+    return () => window.clearTimeout(timer);
+  }, [step, shownStep]);
+  const completedCount = Math.min(answeredCount, shownStep);
   const progressPct = Math.round((completedCount / QUESTIONS.length) * 100);
   const currentQ = step < QUESTIONS.length ? questionFor(step) : null;
 
@@ -547,8 +556,8 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete, pref
       </div>
       <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 4 }}>
         {QUESTIONS.map((q, index) => {
-          const done = index < step;
-          const current = index === step;
+          const done = index < shownStep;
+          const current = index === shownStep;
           const value = answers[q.id];
           return (
             <li key={q.id} style={{ display: "grid", gridTemplateColumns: "20px 1fr", gap: 12, padding: "8px 8px", borderRadius: 8, background: current ? c.blueLight : "transparent" }}>

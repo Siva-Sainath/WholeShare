@@ -8,7 +8,7 @@ const CAP = `${process.env.HOME}/Movies/WholeShare-demo/cap`;
 const BADGES = `${process.env.HOME}/Movies/WholeShare-demo/raw`;
 const probe = (file, entry) => Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", `${entry}`, "-of", "default=nw=1:nk=1", file], { encoding: "utf8" }).trim().split("\n")[0]);
 
-export async function edit(name, { zoom = 1.22, noZoom = false, target = null, keep = null } = {}) {
+export async function edit(name, { zoom = 1.22, noZoom = false, target = null, reserve0 = null } = {}) {
   const raw = `${CAP}/${name}.cap/content/segments/segment-0/display.mp4`;
   const ev = JSON.parse(readFileSync(`${CAP}/${name}.events.json`, "utf8"));
   const rw = probe(raw, "stream=width"), rh = probe(raw, "stream=height");
@@ -30,14 +30,23 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, k
     if (e.k === "fast-start") open = e;
     if (e.k === "fast-end" && open) { const a = src(open.t), b = src(e.t); if (b - a > 1.2) ranges.push({ a, b, speed: open.speed }); open = null; }
   }
+  // Start the held stretch at the click that began it, so the viewer sees the action and what changes in response.
+  if (reserve0 && ranges[0]) {
+    const before = ev.log.filter((l) => l.k === "click" && src(l.t) < ranges[0].a && ranges[0].a - src(l.t) < 3).pop();
+    if (before) ranges[0].a = src(before.t);
+  }
   const pieces = [];
   let cur = 0;
-  for (const r of ranges) { if (r.a > cur) pieces.push({ a: cur, b: r.a, speed: 1 }); pieces.push({ a: r.a, b: r.b, speed: r.speed }); cur = r.b; }
+  ranges.forEach((r, index) => { if (r.a > cur) pieces.push({ a: cur, b: r.a, speed: 1 }); pieces.push({ a: r.a, b: r.b, speed: r.speed, fi: index }); cur = r.b; });
   if (cur < D - 0.05) pieces.push({ a: cur, b: D, speed: 1 });
   // To fit a time budget, everything is sped up evenly on top of the waiting stretches. The badge always shows the real speed.
-  const naturalTotal = pieces.reduce((sum, p) => sum + (p.b - p.a) / p.speed, 0);
-  const base = target && naturalTotal > target ? naturalTotal / target : 1;
-  for (const p of pieces) p.speed = p.speed * base;
+  // The first waiting stretch can be held to a minimum on-screen time (reserve0) so a viewer can follow what fills in during it.
+  let reserved = 0;
+  for (const p of pieces) if (reserve0 && p.fi === 0) { const len = p.b - p.a; p.speed = Math.max(1, len / reserve0); p.fixed = true; reserved += len / p.speed; }
+  const naturalTotal = pieces.filter((p) => !p.fixed).reduce((sum, p) => sum + (p.b - p.a) / p.speed, 0);
+  const room = target ? Math.max(1, target - reserved) : null;
+  const base = target && naturalTotal > room ? naturalTotal / room : 1;
+  for (const p of pieces) if (!p.fixed) p.speed = p.speed * base;
   const outT = (t) => { let out = 0; for (const p of pieces) { if (t >= p.b) out += (p.b - p.a) / p.speed; else { out += Math.max(0, t - p.a) / p.speed; break; } } return out; };
   const inFast = (t) => ranges.some((r) => t >= r.a - 0.2 && t <= r.b + 0.2);
   const total = pieces.reduce((s, p) => s + (p.b - p.a) / p.speed, 0);
@@ -51,7 +60,7 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, k
       let a = Math.max(0, o - 0.8), b = o + (e.k === "type" ? 3.0 : 1.6);
       const prev = zs[zs.length - 1];
       if (prev && a < prev.b + 0.9) { if (o - prev.b < -0.2) continue; a = prev.b + 0.9; if (b - a < 1.0) continue; }
-      zs.push({ a, b: Math.min(b, total - 0.2), amount: zoom, cx: Math.min(0.88, Math.max(0.12, e.x / ev.vp.w)), cy: Math.min(0.88, Math.max(0.12, (padTop + (e.y / ev.vp.h) * outH) / 1080)) });
+      zs.push({ a, b: Math.min(b, total - 0.2), amount: zoom, cx: Math.min(0.88, Math.max(0.12, e.x / ev.vp.w)), cy: Math.min(0.88, Math.max(0.12, e.y / ev.vp.h)) });
     }
   }
   const ease = 0.55;
@@ -61,13 +70,14 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, k
   const pick = (key) => zs.reduceRight((acc, z) => `if(between(t,${(z.a - 0.1).toFixed(3)},${(z.b + ease).toFixed(3)}),${z[key].toFixed(4)},${acc})`, "0.5");
 
   const lines = [];
-  lines.push(`[0:v]crop=${cw}:${cropH}:0:${titlePx},scale=1920:${outH}:flags=lanczos,pad=1920:1080:0:${padTop}:color=0xF7F5F0,fps=30,setsar=1,split=${pieces.length}${pieces.map((_, i) => `[s${i}]`).join("")}`);
+  lines.push(`[0:v]crop=${cw}:${cropH}:0:${titlePx},fps=60,setsar=1,split=${pieces.length}${pieces.map((_, i) => `[s${i}]`).join("")}`);
   pieces.forEach((p, i) => lines.push(`[s${i}]trim=${p.a.toFixed(3)}:${p.b.toFixed(3)},setpts=(PTS-STARTPTS)/${p.speed}[p${i}]`));
   lines.push(`${pieces.map((_, i) => `[p${i}]`).join("")}concat=n=${pieces.length}:v=1:a=0[base]`);
+  // The zoom works from the full-resolution capture, so a zoomed frame stays sharp instead of being a small picture blown up.
   if (zs.length) {
-    lines.push(`[base]scale=w='1920*(${zExpr})':h='1080*(${zExpr})':eval=frame:flags=bilinear[zz]`);
-    lines.push(`[zz]crop=1920:1080:x='clip((${pick("cx")})*iw-960,0,iw-1920)':y='clip((${pick("cy")})*ih-540,0,ih-1080)'[zoomed]`);
-  } else lines.push(`[base]null[zoomed]`);
+    lines.push(`[base]scale=w='1920*(${zExpr})':h='${outH}*(${zExpr})':eval=frame:flags=lanczos[zz]`);
+    lines.push(`[zz]crop=1920:${outH}:x='clip((${pick("cx")})*iw-960,0,iw-1920)':y='clip((${pick("cy")})*ih-${outH / 2},0,ih-${outH})',pad=1920:1080:0:${padTop}:color=0xF7F5F0[zoomed]`);
+  } else lines.push(`[base]scale=1920:${outH}:flags=lanczos,pad=1920:1080:0:${padTop}:color=0xF7F5F0[zoomed]`);
   let last = "zoomed";
   const labels = [];
   let acc = 0;
@@ -95,10 +105,10 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, k
   writeFileSync(script, lines.join(";\n"));
   const out = `${CAP}/${name}.final.mp4`;
   const inputs = ["-i", raw, ...labels.flatMap((l) => ["-i", `${BADGES}/badge-${l.label}x.png`])];
-  execFileSync("ffmpeg", ["-y", "-v", "error", ...inputs, "-filter_complex_script", script, "-map", `[${last}]`, "-c:v", "libx264", "-crf", "17", "-preset", "medium", "-pix_fmt", "yuv420p", "-r", "30", "-an", out], { stdio: "inherit" });
+  execFileSync("ffmpeg", ["-y", "-v", "error", ...inputs, "-filter_complex_script", script, "-map", `[${last}]`, "-c:v", "libx264", "-crf", "15", "-preset", "slow", "-pix_fmt", "yuv420p", "-r", "60", "-movflags", "+faststart", "-an", out], { stdio: "inherit" });
   const info = { name, out, seconds: Math.round(probe(out, "format=duration") * 10) / 10, rawSeconds: Math.round(D * 10) / 10, zooms: zs.length, sped: labels.map((l) => `${l.label}x ${l.a.toFixed(0)}-${l.b.toFixed(0)}s`), base: Math.round(base * 100) / 100 };
   writeFileSync(`${CAP}/${name}.edit.json`, JSON.stringify(info, null, 1));
   return info;
 }
 
-if (process.argv[1].endsWith("edit.js")) for (const arg of process.argv.slice(2)) { const [n, t, z] = arg.split(":"); console.log(JSON.stringify(await edit(n, { target: t ? Number(t) : null, noZoom: z === "nozoom" }))); }
+if (process.argv[1].endsWith("edit.js")) for (const arg of process.argv.slice(2)) { const [n, t, z, r] = arg.split(":"); console.log(JSON.stringify(await edit(n, { target: t ? Number(t) : null, noZoom: z === "nozoom", reserve0: r ? Number(r) : null }))); }
