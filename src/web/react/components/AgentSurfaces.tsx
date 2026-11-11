@@ -13,7 +13,7 @@ export const AgentSurfaces: React.FC = () => {
   }, []);
   const surfaces = [
     { icon: <Sparkles size={16} />, title: "Mosaic, the built-in assistant", count: harness, note: "Server tools, each with a permission you control", names: ["compare_groups", "join_group", "schedule_move_delivery", "file_damage_claim", "kernel_read_supplier_site"] },
-    { icon: <Globe size={16} />, title: "The page itself (WebMCP)", count: page, note: "Registered in the browser, so an agent can drive the screen you are on", names: ["grid_filter", "grid_chart", "grid_export_csv", "bryntum_scheduler_zoom", "bryntum_show_view"] },
+    { icon: <Globe size={16} />, title: "The page you are on", count: page, note: "Tools the page offers an agent in the browser, so it can filter, chart and schedule on screen", names: ["grid_filter", "grid_chart", "grid_export_csv", "bryntum_scheduler_zoom", "bryntum_show_view"] },
     { icon: <Plug size={16} />, title: "Your own agent (MCP)", count: mcp, note: "Over /mcp with a bearer token, inside the same permissions", names: ["query", "compare_groups", "join_group", "track_shipment", "ask_mosaic"] }
   ];
   return (
