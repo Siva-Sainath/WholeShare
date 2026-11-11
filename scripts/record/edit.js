@@ -8,7 +8,7 @@ const CAP = `${process.env.HOME}/Movies/WholeShare-demo/cap`;
 const BADGES = `${process.env.HOME}/Movies/WholeShare-demo/raw`;
 const probe = (file, entry) => Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", `${entry}`, "-of", "default=nw=1:nk=1", file], { encoding: "utf8" }).trim().split("\n")[0]);
 
-export async function edit(name, { zoom = 1.45, noZoom = false, target = null, keep = null } = {}) {
+export async function edit(name, { zoom = 1.22, noZoom = false, target = null, keep = null } = {}) {
   const raw = `${CAP}/${name}.cap/content/segments/segment-0/display.mp4`;
   const ev = JSON.parse(readFileSync(`${CAP}/${name}.events.json`, "utf8"));
   const rw = probe(raw, "stream=width"), rh = probe(raw, "stream=height");
@@ -51,7 +51,7 @@ export async function edit(name, { zoom = 1.45, noZoom = false, target = null, k
       let a = Math.max(0, o - 0.8), b = o + (e.k === "type" ? 3.0 : 1.6);
       const prev = zs[zs.length - 1];
       if (prev && a < prev.b + 0.9) { if (o - prev.b < -0.2) continue; a = prev.b + 0.9; if (b - a < 1.0) continue; }
-      zs.push({ a, b: Math.min(b, total - 0.2), amount: e.k === "type" ? zoom + 0.1 : zoom, cx: Math.min(0.88, Math.max(0.12, e.x / ev.vp.w)), cy: Math.min(0.88, Math.max(0.12, (padTop + (e.y / ev.vp.h) * outH) / 1080)) });
+      zs.push({ a, b: Math.min(b, total - 0.2), amount: zoom, cx: Math.min(0.88, Math.max(0.12, e.x / ev.vp.w)), cy: Math.min(0.88, Math.max(0.12, (padTop + (e.y / ev.vp.h) * outH) / 1080)) });
     }
   }
   const ease = 0.55;
@@ -101,4 +101,4 @@ export async function edit(name, { zoom = 1.45, noZoom = false, target = null, k
   return info;
 }
 
-if (process.argv[1].endsWith("edit.js")) for (const arg of process.argv.slice(2)) { const [n, t] = arg.split(":"); console.log(JSON.stringify(await edit(n, { target: t ? Number(t) : null }))); }
+if (process.argv[1].endsWith("edit.js")) for (const arg of process.argv.slice(2)) { const [n, t, z] = arg.split(":"); console.log(JSON.stringify(await edit(n, { target: t ? Number(t) : null, noZoom: z === "nozoom" }))); }

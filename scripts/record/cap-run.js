@@ -31,7 +31,7 @@ if (want.has("k1")) {
     await glide(ctx, 900, 380); await sleep(3000);
     await glide(ctx, 720, 560); await scrollBy(ctx, 860, 2400); await sleep(1200);
     const problem = await page.$("#problem");
-    if (problem) { await problem.evaluate((el) => el.scrollIntoView({ block: "start", behavior: "smooth" })); await sleep(1500); }
+    if (problem) { await problem.evaluate((el) => window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 96, behavior: "smooth" })); await sleep(1800); }
     await glide(ctx, 560, 420); await sleep(4500);
     await scrollBy(ctx, 360, 1800); await glide(ctx, 900, 480); await sleep(5000);
   });
@@ -170,6 +170,9 @@ if (want.has("k4")) {
 if (want.has("k5")) {
   const composer = () => page.waitForSelector('textarea, [contenteditable="true"]', { visible: true, timeout: 30000 });
   const askMosaic = async (prompt, { quiet = 7000, max = 90000 } = {}) => {
+    // A tool can move the page after it answers, so come back to the chat before typing the next prompt.
+    await sleep(1500);
+    if (!page.url().endsWith("#mosaic-chat")) { await go("mosaic-chat"); await sleep(2500); }
     await clickHandle(ctx, await composer(), 400);
     await typeHuman(ctx, prompt, 38); await sleep(700);
     await page.keyboard.press("Enter");
@@ -195,8 +198,14 @@ if (want.has("k5")) {
   await clip(ctx, "k5-mosaic", async () => {
     await glide(ctx, 720, 440); await sleep(4000);
     await askMosaic("Compare the two takeout container groups for 12 cases");
-    await askMosaic("Sort that by delivery time", { max: 60000, quiet: 6000 });
+    // Walk through the comparison panel: verdicts, the factor table, then the bars.
+    await glide(ctx, 1050, 420); await sleep(3500);
+    await scrollBy(ctx, 330, 2400); await sleep(3500);
+    await scrollBy(ctx, 330, 2400); await sleep(3500);
+    await scrollBy(ctx, -660, 1600); await sleep(1500);
     await askMosaic("Where is my shipment and when does my inspection window end?");
+    await askMosaic("Which deliveries are in transit and when will they arrive?", { max: 60000, quiet: 6000 });
+    await askMosaic("Which of my damage claims are still open?", { max: 60000, quiet: 6000 });
     await askMosaic("Move the Garden State container delivery up one day");
     await askMosaic("Find new suppliers for wide boba straws near New York", { max: 100000, quiet: 9000 });
     await askMosaic("Start a group buy for wide boba straws, 8 cases, delivered to our back door on Bedford Avenue and to Cloud Nine Boba on Court Street", { max: 120000, quiet: 9000 });
@@ -217,13 +226,13 @@ if (want.has("k6")) {
     await clickText(ctx, "Fill the form with Mosaic", 500);
     await fast(ctx, 3, async () => { await sleep(6000); await page.waitForFunction(() => !/Reading/.test(document.body.innerText), { timeout: 40000 }).catch(() => {}); });
     await sleep(2500);
-    // Pick the delivered shipment from the list, then add the unit price and a contact email.
+    // Pick the delivered Eastern shipment from the list, then add the unit price.
     const select = await page.evaluateHandle(() => [...document.querySelectorAll("button,[role=combobox],div")].filter((el) => /Choose the shipment that arrived damaged/.test(el.textContent || "") && el.getBoundingClientRect().height < 80 && el.getBoundingClientRect().width > 150).sort((a, b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height)[0]);
     if (select.asElement()) { await clickHandle(ctx, select.asElement(), 500); await sleep(1500);
-      const option = await page.evaluateHandle(() => { const items = [...document.querySelectorAll("[role=option],li")].filter((el) => el.getBoundingClientRect().height > 0); return items.find((el) => /eastern|delivered/i.test(el.textContent || "")) || items[0] || null; });
+      const option = await page.evaluateHandle(() => [...document.querySelectorAll("*")].filter((el) => /1ZV4R8A90365110931/.test(el.textContent || "") && el.getBoundingClientRect().height > 20 && el.getBoundingClientRect().height < 90).sort((a, b) => a.getBoundingClientRect().height * a.getBoundingClientRect().width - b.getBoundingClientRect().height * b.getBoundingClientRect().width)[0]);
       if (option.asElement()) { await clickHandle(ctx, option.asElement(), 500); await sleep(1500); } }
-    const price = await page.$('input[type="number"][aria-label*="Unit price"], input[aria-label*="Unit price"]');
-    if (price) { await clickHandle(ctx, price, 400); await typeHuman(ctx, "22.88", 50); await sleep(600); }
+    const price = await page.evaluateHandle(() => { const label = [...document.querySelectorAll("label,span,div")].filter((el) => /^Unit price \(USD\)/.test((el.textContent || "").trim()) && el.querySelector("input")).sort((a, b) => a.querySelectorAll("*").length - b.querySelectorAll("*").length)[0]; return label ? label.querySelector("input") : null; });
+    if (price.asElement()) { await clickHandle(ctx, price.asElement(), 400); await typeHuman(ctx, "22.88", 50); await sleep(600); }
     const email = await page.$('input[type="email"]');
     if (email) { await clickHandle(ctx, email, 400); await typeHuman(ctx, "accounts@neondumpling.example", 35); await sleep(800); }
     const file = await page.$('input[type="file"]');
@@ -233,12 +242,16 @@ if (want.has("k6")) {
     await clickText(ctx, "Submit damage claim", 600);
     await sleep(4500);
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })); await sleep(1500);
-    await clickText(ctx, "Claims board", 500); await sleep(3500);
-    const card = await page.evaluateHandle(() => { const cards = [...document.querySelectorAll(".b-taskboard-card, [class*='b-task-board-card'], .b-card")].filter((el) => el.getBoundingClientRect().width > 80); return cards.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)[0] || null; });
-    if (card.asElement()) await clickHandle(ctx, card.asElement(), 600);
-    await sleep(2500);
-    await clickText(ctx, "Approve and send to supplier", 600); await sleep(3500);
-    await clickText(ctx, "Supplier accepts", 600); await sleep(5000);
+    // Open the new claim from the claims table, approve it, and let the sample supplier accept it.
+    const tab = await page.evaluateHandle(() => [...document.querySelectorAll("button,[role=tab],label,span")].find((el) => (el.textContent || "").trim() === "Claims" && el.getBoundingClientRect().width > 0));
+    if (tab.asElement()) { await clickHandle(ctx, tab.asElement(), 500); await sleep(3500); }
+    const row = await page.waitForSelector(".ag-row[row-index=\"0\"] .ag-cell", { visible: true, timeout: 20000 });
+    await clickHandle(ctx, row, 600); await sleep(3000);
+    await clickText(ctx, "Approve and send to supplier", 600); await sleep(4000);
+    await clickText(ctx, "Supplier accepts", 600); await sleep(4500);
+    await page.keyboard.press("Escape"); await sleep(1200);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })); await sleep(1000);
+    await clickText(ctx, "Claims board", 500); await sleep(5000);
   });
 }
 await ctx.browser.close();
