@@ -38,7 +38,8 @@ import {
 } from "../lib/user-settings.js";
 import { ClaimsAdapter } from "../adapter/claims.adapter.ts";
 import { getModelUsage, getModelSpend, assertModelBudget, recordModelUsage } from "../lib/model-client.js";
-import { describeProvider, mosaicBaseUrl, mosaicChatCompletionsUrl, mosaicHeaders, mosaicRequestExtras } from "../lib/mosaic-config.js";
+import { describeProvider, mosaicBaseUrl, mosaicChatCompletionsUrl, mosaicHeaders, mosaicModelName, mosaicRequestExtras } from "../lib/mosaic-config.js";
+import { SERVING_TARGET } from "../lib/serving-target.js";
 import { getEvidence, saveEvidence } from "../lib/evidence-store.js";
 import { getGeneratedMembers } from "../lib/clan-members.js";
 import { isCarrierFormatTracking } from "../lib/tracking-format.js";
@@ -692,9 +693,8 @@ export function createWebServer() {
           messages.push({ role: "user", content: "Provide insights on the current wholesale buying groups." });
         }
 
-        const requestedModel = typeof body.model === "string" ? body.model : "";
-        const defaultModel = "mlx-community/Qwen3.5-4B-MLX-4bit";
-        const selectedModel = requestedModel && requestedModel.includes("Qwen") ? requestedModel : defaultModel;
+        // The model is the one the server is configured with. A visitor cannot pick another.
+        const selectedModel = mosaicModelName(SERVING_TARGET.mlxId);
         const maxTokens = Math.min(Math.max(Number(body.max_tokens) || 800, 256), 1500);
         // Size limits: a visitor cannot send a huge prompt through this route.
         let budgetChars = 60000;

@@ -64,16 +64,26 @@ export const ActionNoticeBanner: React.FC<{ notice: ActionNotice | null | undefi
     const timer = window.setTimeout(onClose, 7000);
     return () => window.clearTimeout(timer);
   }, [visible, notice?.timestamp, onClose]);
-  if (!notice || !visible) return null;
+  if (!notice) return null;
+  // A success is announced to screen readers and tests, but nothing is drawn on screen.
+  if (!visible) {
+    return (
+      <div className="ws-sr-only ws-action-notice" role="status" aria-live="polite">
+        <strong className="ws-notice-heading">{notice.title}</strong>
+        {notice.message && <span className="ws-notice-message">{notice.message}</span>}
+        {onClose && <button type="button" className="ws-notice-close" tabIndex={-1} aria-hidden="true" onClick={onClose}>Dismiss</button>}
+      </div>
+    );
+  }
   const failed = notice.status === "error";
   return (
-    <aside className={`ws-toast ${failed ? "ws-toast--error" : ""}`} role={failed ? "alert" : "status"} aria-live="polite">
+    <aside className={`ws-toast ws-action-notice ${failed ? "ws-toast--error ws-notice-error" : ""}`} role={failed ? "alert" : "status"} aria-live="polite">
       {failed ? <AlertTriangle size={16} aria-hidden="true" /> : <Info size={16} aria-hidden="true" />}
       <div className="ws-toast-text">
-        <strong>{notice.title}</strong>
-        {(notice.error || notice.message) && <span>{notice.error || notice.message}</span>}
+        <strong className="ws-notice-heading">{notice.title}</strong>
+        {(notice.error || notice.message) && <span className="ws-notice-message">{notice.error || notice.message}</span>}
       </div>
-      {onClose && <button type="button" className="ws-toast-close" onClick={onClose} aria-label="Dismiss"><X size={14} /></button>}
+      {onClose && <button type="button" className="ws-toast-close ws-notice-close" onClick={onClose} aria-label="Dismiss"><X size={14} /></button>}
     </aside>
   );
 };

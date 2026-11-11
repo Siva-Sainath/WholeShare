@@ -127,15 +127,17 @@ export function WholeShareHero() {
                             lead={<span className="wh-tile"><g.Icon size={18} strokeWidth={1.8} /></span>}
                             title={<Text>{g.name}</Text>}
                             subtitle={<Text>{g.meta}</Text>}
-                            meta={<Text className="wh-price">{g.price}</Text>}
                             selected={s.sheet && g.id === 'garden'}
                           >
-                            <span className="wh-trail">
-                              {g.id === 'garden' && s.filtered ? (
-                                <Button variant="secondary" size="small" data-target="join" data-cursor="pointer">Join</Button>
-                              ) : (
-                                <Badge tone="neutral">{g.off}</Badge>
-                              )}
+                            <span className="wh-trail wh-trail--priced">
+                              <Text className="wh-price">{g.price}</Text>
+                              <span className="wh-slot">
+                                {g.id === 'garden' && s.filtered ? (
+                                  <Button variant="secondary" size="small" data-target="join" data-cursor="pointer">Join</Button>
+                                ) : (
+                                  <Badge tone="neutral">{g.off}</Badge>
+                                )}
+                              </span>
                             </span>
                           </Row>
                         </Collapse>

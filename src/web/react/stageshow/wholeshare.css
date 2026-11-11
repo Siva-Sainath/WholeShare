@@ -43,3 +43,7 @@
 /* Every row ends in a control of the same width, so prices and rows line up whatever the control is. */
 .wh-trail { display: inline-flex; justify-content: flex-end; align-items: center; width: 88px; flex: none; }
 .wh-price { display: inline-block; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+/* Price and control share one centred line, so a row reads as one piece. */
+.wh-trail--priced { width: 168px; gap: 14px; }
+.wh-trail--priced .wh-price { min-width: 64px; text-align: right; }
+.wh-slot { display: inline-flex; justify-content: center; align-items: center; width: 84px; flex: none; }

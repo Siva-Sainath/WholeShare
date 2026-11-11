@@ -198,7 +198,8 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
               theme={wsStudioTheme}
               layout={{ widgetBorderEnabled: true }}
               mode={editMode ? "edit" : "view"}
-              panels={{ edit: { left: ["data", "filters"], right: ["edit", "ai"] }, view: { left: [], right: ["ai"] } }}
+              // The built-in assistant panel is left out: it does not finish reliably with the hosted model. Mosaic edits reports through its page tools.
+              panels={{ edit: { left: ["data", "filters"], right: ["edit"] }, view: { left: [], right: [] } }}
               initialState={initial as never}
               onApiReady={(event) => {
                 apiRef.current = event.api as never;
