@@ -110,9 +110,9 @@ Fireworks AI with MiniMax and DeepSeek is what powers the live app today. We als
 
 - **Finish the money steps live in the sandbox.** Run capture, refund and payouts with the same care as the hold.
 - **Let suppliers join.** Suppliers answer claims and confirm shipments themselves, so nothing on that side is a sample.
-- **Real supplier prices.** Ask suppliers for quotes with the buyer's approval, so a group starts from a real price.
-- **More places and products.** Open groups beyond takeout packaging and New York.
-- **Live PayPal after review.**
+- **Help neighbours find each other.** When one restaurant starts a group, WholeShare finds nearby businesses that buy the same thing and invites them, so groups fill faster.
+- **Orders that repeat.** A restaurant buys containers every month. A standing group would come back each cycle, with a fresh PayPal approval every time.
+- **Trust scores earned from real orders.** A supplier's score would come from real deliveries, damage claims and how fast they answer, so the best suppliers stand out.
 
 **Honest limits.** Everything runs in the PayPal sandbox, so no real money moves. The sample shipments and two past claims on the demo business are sample history. Capture, refund, payouts and shipment tracking are written and tested with stand-ins, but we have not run them live yet.
 
