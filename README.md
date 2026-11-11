@@ -8,6 +8,8 @@ WholeShare is a B2B group buying marketplace. Independent businesses that sit on
 
 ## Try it (2 minutes)
 
+Live: **https://wholeshare-app.onrender.com** (runs in the PayPal sandbox; the first load after a long idle can take a few seconds).
+
 1. Open the app and finish onboarding. Say what you run in one sentence, for example *We run Golden Lotus Kitchen, a Chinese restaurant in Flushing, Queens.* Mosaic fills the form.
 2. Open **Mosaic** and try, in this order:
    - `Which Flushing groups can we still join?`
