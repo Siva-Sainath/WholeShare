@@ -132,6 +132,7 @@ export const GroupView: React.FC<{ clanId: string }> = ({ clanId }) => {
 
           <div className="ws-group-meta">
             <span><Truck size={15} /> Delivery inspection window: {inspectionHours} hours</span>
+            {typeof (clan as { estimatedDeliveryDays?: number }).estimatedDeliveryDays === "number" && <span>Delivery in {(clan as { estimatedDeliveryDays?: number }).estimatedDeliveryDays} days</span>}
             <span>{clan.membersCount} {clan.membersCount === 1 ? "member" : "members"}</span>
           </div>
           {(clan as { fulfilment?: { mode: string; points: Array<{ label: string; address: string; city: string }> } }).fulfilment && (

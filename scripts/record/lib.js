@@ -91,3 +91,8 @@ export async function scrollBy(ctx, pixels, ms = 1800) {
   const steps = Math.max(8, Math.round(ms / 40));
   for (let i = 0; i < steps; i += 1) { await ctx.page.mouse.wheel({ deltaY: pixels / steps }); await sleep(ms / steps); }
 }
+
+export async function clickSel(ctx, selector, pause) {
+  const handle = await ctx.page.waitForSelector(selector, { visible: true, timeout: 30000 });
+  await clickHandle(ctx, handle, pause);
+}

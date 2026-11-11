@@ -19,6 +19,8 @@ export interface ClanDetail extends ClanRecord {
   members?: LedgerMember[];
   supplierName?: string;
   supplierTrustScore?: number;
+  estimatedDeliveryDays?: number;
+  fulfilment?: { mode: string; points: Array<{ label: string; address: string; city: string }> };
 }
 
 export interface LedgerMember {
@@ -247,7 +249,9 @@ export async function fetchClanById(clanId: string): Promise<ClanDetail> {
     membersCount: requireNumber(entry, "membersCount"),
     members: Array.isArray(entry.members) ? (entry.members as LedgerMember[]) : undefined,
     supplierName: typeof entry.supplierName === "string" ? entry.supplierName : undefined,
-    supplierTrustScore: typeof entry.supplierTrustScore === "number" ? entry.supplierTrustScore : undefined
+    supplierTrustScore: typeof entry.supplierTrustScore === "number" ? entry.supplierTrustScore : undefined,
+    estimatedDeliveryDays: typeof entry.estimatedDeliveryDays === "number" ? entry.estimatedDeliveryDays : undefined,
+    fulfilment: isRecord(entry.fulfilment) && Array.isArray(entry.fulfilment.points) ? (entry.fulfilment as unknown as ClanDetail["fulfilment"]) : undefined
   };
 }
 

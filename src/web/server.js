@@ -1250,6 +1250,8 @@ export function createWebServer() {
             tiers: seeded.discountTiers || [],
             supplierName: seeded.supplierName,
             supplierTrustScore: seeded.supplierTrustScore,
+            estimatedDeliveryDays: seeded.estimatedDeliveryDays,
+            fulfilment: seeded.fulfilment,
             createdAt: seeded.createdAt
           };
         }
