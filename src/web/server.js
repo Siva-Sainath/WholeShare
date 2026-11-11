@@ -13,6 +13,7 @@ import { actionDispatcher } from "../lib/web-actions.js";
 import { createOrderAuthorization, authorizeOrderHold } from "../lib/paypal-bridge.js";
 import { authorizePledgeOrder, createPledgeOrder, getPledgeQuote } from "../lib/paypal-checkout.js";
 import { durableHarness, describeHarness } from "../lib/durable-harness.js";
+import { handleMcpMessage } from "../lib/mcp-server.js";
 import { WHOLESHARE_TOOL_DECLARATIONS, executeTool } from "../lib/tool-registry.js";
 import { kernelResearchService } from "../lib/kernel-service.js";
 import { loadAllFeatures } from "../lib/feature-map.js";
@@ -120,6 +121,8 @@ const AGENT_SESSIONS_PATH = resolve(process.cwd(), ".scratch/agent-sessions.json
 const DURABLE_JOURNAL_PATH = resolve(process.cwd(), "data/durable_journal.json");
 
 const agentInviteCreateLimiter = new TokenBucketRateLimiter({ capacity: 10, refillRatePerSec: 10 / 3600 });
+// An outside agent works in bursts of tool calls, so this allows a quick burst and about one call a second after that.
+const mcpRateLimiter = new TokenBucketRateLimiter({ capacity: 40, refillRatePerSec: 1 });
 const agentOnboardLimiter = new TokenBucketRateLimiter({ capacity: 20, refillRatePerSec: 20 / 3600 });
 
 // Browser calls from this app send a matching Origin. External agents must present a live invite token.
@@ -166,7 +169,18 @@ function isSameOriginOrInvited(req) {
   const auth = String(req.headers.authorization || "");
   const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : String(req.headers["x-agent-token"] || "");
   if (!token) return !origin && process.env.NODE_ENV !== "production" && req.socket.remoteAddress?.endsWith("127.0.0.1");
-  return loadAgentInvites().some((invite) => invite && invite.token === token && !invite.revokedAt);
+  return Boolean(findLiveInvite(token));
+}
+
+// A token works while it has not been revoked and has not expired.
+function findLiveInvite(token) {
+  if (!token) return null;
+  return loadAgentInvites().find((invite) => invite && invite.token === token && !invite.revoked && !invite.revokedAt && (!invite.expiresAt || Date.parse(invite.expiresAt) > Date.now())) ?? null;
+}
+
+function bearerToken(req) {
+  const auth = String(req.headers.authorization || "");
+  return auth.startsWith("Bearer ") ? auth.slice(7).trim() : String(req.headers["x-agent-token"] || "");
 }
 
 function loadAgentInvites() {
@@ -465,6 +479,40 @@ export function createWebServer() {
         actionDispatcher.unsubscribeSse(res);
         qwenDispatcher.unsubscribeSse(res);
       });
+      return;
+    }
+
+    // MCP over HTTP (JSON-RPC 2.0). Outside agents connect here with an invite token as a Bearer token.
+    if (pathname === "/mcp") {
+      if (req.method !== "POST") {
+        res.writeHead(405, { Allow: "POST", "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Send MCP requests with POST." }));
+        return;
+      }
+      const invite = findLiveInvite(bearerToken(req));
+      if (!invite) {
+        res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": 'Bearer realm="wholeshare"' });
+        res.end(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "Present a WholeShare agent invite token as a Bearer token. Create one on the Agents page." } }));
+        return;
+      }
+      const rate = mcpRateLimiter.isAllowed(`mcp:${invite.token}`);
+      if (!rate.allowed) {
+        sendJson(res, 429, { jsonrpc: "2.0", id: null, error: { code: -32003, message: "Too many requests. Slow down." }, retryAfterSec: rate.retryAfterSec });
+        return;
+      }
+      try {
+        const body = await readJsonBody(req);
+        const batch = Array.isArray(body);
+        const replies = [];
+        for (const message of batch ? body.slice(0, 10) : [body]) {
+          const reply = await handleMcpMessage(message, { label: invite.createdBy || "agent" });
+          if (reply) replies.push(reply);
+        }
+        if (replies.length === 0) { res.writeHead(202); res.end(); return; }
+        sendJson(res, 200, batch ? replies : replies[0]);
+      } catch {
+        sendJson(res, 400, { jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error." } });
+      }
       return;
     }
 

@@ -799,6 +799,28 @@ const TOOL_EFFECT = {
   schedule_move_delivery: "write", schedule_extend_inspection: "write", schedule_book_slot: "write", schedule_resolve_conflicts: "write", schedule_undo: "write", file_damage_claim: "write"
 };
 
+// What a connected outside agent may use: the data, planning and preparation tools. Nothing that only drives this browser's screen,
+// and nothing that moves money. A pledge ends as a PayPal approval that a person gives on PayPal.
+const SCREEN_ONLY_TOOLS = new Set(["ui_navigate_view", "present", "page_tool", "ui_open_group", "ui_open_report", "ui_open_my_group"]);
+export const EXTERNAL_TOOL_NAMES = new Set([...FOCUSED_TOOL_NAMES].filter((name) => !SCREEN_ONLY_TOOLS.has(name)));
+
+export function describeExternalTools() {
+  return describeHarness().filter((tool) => EXTERNAL_TOOL_NAMES.has(tool.name));
+}
+
+// Runs one tool for an outside agent under the same permission switches the person set in Settings.
+export async function runExternalTool(name, args) {
+  if (!EXTERNAL_TOOL_NAMES.has(name)) return { error: `'${name}' is not a tool this connection can use.` };
+  const blocked = permissionBlock(name);
+  if (blocked) return blocked;
+  const clean = args && typeof args === "object" && !Array.isArray(args) ? { ...args } : {};
+  delete clean.stepUpApproved;
+  delete clean.sessionId;
+  const interception = interceptToolExecution(name, clean);
+  if (!interception.valid) return { error: interception.violations.join("; ") };
+  return JSON.parse(capToolMessage(await executeTool(name, clean)));
+}
+
 export function describeHarness() {
   return FOCUSED_TOOL_DECLARATIONS.map((tool) => {
     const name = tool.function.name;
