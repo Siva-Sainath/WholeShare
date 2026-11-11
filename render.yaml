@@ -9,7 +9,7 @@ services:
     region: oregon
     branch: main
     autoDeployTrigger: commit
-    buildCommand: npm ci --no-audit --no-fund && npm run build
+    buildCommand: npm ci --include=dev --no-audit --no-fund && npm run build
     startCommand: sh scripts/render-start.sh
     healthCheckPath: /api/v1/health
     disk:
