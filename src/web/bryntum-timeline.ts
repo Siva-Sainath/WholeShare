@@ -1,4 +1,5 @@
 import { Scheduler } from "@bryntum/scheduler-enterprise";
+import { claimRef, plainGroupName } from "./react/claimRef";
 import { Toast } from "@bryntum/core-enterprise";
 import { Grid } from "@bryntum/grid-enterprise";
 import { Calendar } from "@bryntum/calendar-enterprise";
@@ -165,7 +166,7 @@ export function buildClaimTasks(claims: ClaimTaskRecord[] = []): any[] {
       status: taskBoardColumnForStatus(c.status),
       eventColor: ({ draft: "orange", supplier: "blue", settled: "green", rejected: "red" } as Record<string, string>)[taskBoardColumnForStatus(c.status)],
       memberId: (c as ClaimTaskRecord & { memberId?: string }).memberId || "",
-      description: `${c.claimId} · ${units} · ${amountLabel} · Filed ${filedLabel}`
+      description: `${claimRef(c.claimId)} · ${units} · ${amountLabel} · Filed ${filedLabel}`
     };
   });
 }
@@ -460,7 +461,7 @@ export function initBryntumGrid(
     return {
       trackingNumber: s.trackingNumber || "Not recorded",
       carrierName: s.carrierName || "Not recorded",
-      clanId: s.clanId || "Not recorded",
+      clanId: plainGroupName((s as { groupName?: string }).groupName, s.clanId || "") || "Not recorded",
       supplierDeliveredAt: sup,
       buyerDeliveredAt: buy,
       deliveryStatus: buy ? "Delivered" : sup ? "In transit" : "Scheduled"

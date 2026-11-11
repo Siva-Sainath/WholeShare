@@ -986,7 +986,7 @@ export function createWebServer() {
         record.memberId === owner && record.source !== "simulated" && isCarrierFormatTracking(record.trackingNumber) &&
         Boolean(record.supplierDeliveredAt || record.buyerDeliveredAt)
       );
-      sendJson(res, 200, { count: shipments.length, shipments });
+      sendJson(res, 200, { count: shipments.length, shipments: shipments.map((record) => ({ ...record, groupName: getClanById(record.clanId)?.name ?? "" })) });
       return;
     }
 

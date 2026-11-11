@@ -313,6 +313,7 @@ export interface ShipmentRecord {
   createdAt?: string;
   status?: string;
   product?: string;
+  groupName?: string;
   quantity?: number;
   shipDate?: string;
   expectedDeliveryAt?: string;
@@ -340,6 +341,7 @@ export async function fetchShipments(): Promise<{ count: number; shipments: Ship
         createdAt: typeof entry.createdAt === "string" ? entry.createdAt : undefined,
         status: typeof entry.status === "string" ? entry.status : undefined,
         product: typeof entry.product === "string" ? entry.product : undefined,
+        groupName: typeof entry.groupName === "string" ? entry.groupName : undefined,
         quantity: typeof entry.quantity === "number" ? entry.quantity : undefined,
         shipDate: typeof entry.shipDate === "string" ? entry.shipDate : undefined,
         expectedDeliveryAt: typeof entry.expectedDeliveryAt === "string" ? entry.expectedDeliveryAt : undefined

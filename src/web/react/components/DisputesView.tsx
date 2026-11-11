@@ -1,4 +1,5 @@
 import { wsGridTheme } from "../theme/gridTheme";
+import { claimRef, plainGroupName, splitReason } from "../claimRef";
 import { Button } from "@astryxdesign/core/Button";
 import { StatStrip } from "./StatStrip";
 import { FileInput } from "@astryxdesign/core/FileInput";
@@ -107,7 +108,7 @@ const subtleButtonStyle: React.CSSProperties = {
 };
 
 const claimColumns: ColDef<ClaimRecord>[] = [
-  { field: "claimId", headerName: "Claim", flex: 1.4, minWidth: 210, cellStyle: { fontWeight: 500 } },
+  { field: "claimId", headerName: "Claim", flex: 0.8, minWidth: 110, cellStyle: { fontWeight: 500 }, valueFormatter: (params: ValueFormatterParams) => claimRef(String(params.value ?? "")) },
   { field: "product", headerName: "Product", flex: 2.2, minWidth: 270, filter: true, enableRowGroup: true },
   { field: "damagedUnits", headerName: "Damaged", flex: 0.8, minWidth: 100, cellClass: "ws-tabular-nums" },
   {
@@ -440,7 +441,7 @@ export const DisputesView: React.FC = () => {
                 const picked = shipments.find((shipment) => shipment.clanId === value);
                 if (picked) setTrackingNumber(picked.trackingNumber);
               }}
-              options={shipments.filter((shipment) => shipment.status === "DELIVERED").map((shipment) => ({ value: shipment.clanId, label: shipment.product ?? shipment.clanId, description: `Tracking ${shipment.trackingNumber}` }))}
+              options={shipments.filter((shipment) => shipment.status === "DELIVERED").map((shipment) => ({ value: shipment.clanId, label: shipment.product ?? plainGroupName(shipment.groupName, shipment.clanId), description: `${plainGroupName(shipment.groupName, shipment.clanId)} · Tracking ${shipment.trackingNumber}` }))}
             />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <NumberInput label="Damaged units" isRequired min={1} step={1} value={damagedUnits === "" ? null : damagedUnits} onChange={(value) => setDamagedUnits(value ?? "")} />
@@ -594,12 +595,12 @@ export const DisputesView: React.FC = () => {
       <Dialog isOpen={openClaim !== null} onOpenChange={(open) => { if (!open) setOpenClaim(null); }} width={560} padding={4}>
         {openClaim && (
           <>
-            <DialogHeader title={`Claim ${openClaim.claimId}`} subtitle={`${openClaim.damagedUnits} damaged units, ${formatUsdNumber(openClaim.claimedAmount)} claimed`} />
+            <DialogHeader title={`Damage claim ${claimRef(openClaim.claimId)}`} subtitle={`${openClaim.damagedUnits} damaged units, ${formatUsdNumber(openClaim.claimedAmount)} claimed`} />
             <div className="ws-claim-detail">
               <div className="ws-claim-row"><span>Status</span><Badge variant={openClaim.status === "SETTLED" ? "green" : openClaim.status === "REJECTED" ? "red" : "blue"} label={openClaim.status.replace(/_/g, " ").toLowerCase()} /></div>
-              <div className="ws-claim-row"><span>Group</span><b>{openClaim.clanId}</b></div>
+              <div className="ws-claim-row"><span>Group</span><b>{plainGroupName((openClaim as { product?: string }).product, openClaim.clanId)}</b></div>
               <div className="ws-claim-row"><span>Filed</span><b>{openClaim.createdAt ? new Date(openClaim.createdAt).toLocaleString() : "Not recorded"}</b></div>
-              {openClaim.evidence?.description && <p className="ws-claim-desc">{openClaim.evidence.description}</p>}
+              {openClaim.evidence?.description && (() => { const { reason, text } = splitReason(openClaim.evidence.description); return <>{reason && <div className="ws-claim-row"><span>Reason</span><b>{reason}</b></div>}<p className="ws-claim-desc">{text}</p></>; })()}
               {(openClaim.evidence?.photoUrls ?? []).filter((url) => /^(\/|https?:)/.test(url)).length > 0 && (
                 <div className="ws-claim-photos">
                   {(openClaim.evidence?.photoUrls ?? []).filter((url) => /^(\/|https?:)/.test(url)).map((url) => (
