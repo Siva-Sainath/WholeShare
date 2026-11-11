@@ -25,6 +25,7 @@ import { modelClient } from "./model-client.js";
 import { opsdEngine } from "./opsd-engine.js";
 import { SERVING_TARGET } from "./serving-target.js";
 
+const LAYA_ENABLED = process.env.LAYA_ENABLED === "1";
 const MAX_TURNS = 8;
 const MAX_REFLEXIVE_ATTEMPTS = 2;
 const AGENT_TIMEOUT_MS = 90000;
@@ -257,7 +258,7 @@ Follow this operational protocol for sourcing, verification, and escrow:
 
     const layaStart = Date.now();
     // Mosaic turns never use the classifier's answer, and it costs about half a second (four seconds on the first call).
-    const layaDecision = focusedSessions.has(sessionId) ? { intent: "mosaic", confidence: 1, requiresLlm: true, probabilities: {} } : await routeIntent(prompt);
+    const layaDecision = focusedSessions.has(sessionId) || !LAYA_ENABLED ? { intent: "mosaic", confidence: 1, requiresLlm: true, probabilities: {} } : await routeIntent(prompt);
     const layaDurationMs = Date.now() - layaStart;
 
     actionDispatcher.broadcast("AGENT_LAYA_INTENT_ROUTED", {
@@ -560,11 +561,17 @@ Follow this operational protocol for sourcing, verification, and escrow:
             args: toolArgs
           });
 
+          // The on-device risk model needs about 1.4 GB of memory, so it only runs when LAYA_ENABLED=1. Otherwise the tool's declared effect is used.
           let layaRisk = null;
-          try {
-            layaRisk = await gateToolRisk(toolName, toolArgs);
-          } catch {
-            layaRisk = { mutating: true, highValue: true, requiresStepUp: true };
+          if (LAYA_ENABLED && !focusedSessions.has(sessionId)) {
+            try {
+              layaRisk = await gateToolRisk(toolName, toolArgs);
+            } catch {
+              layaRisk = { mutating: true, highValue: true, requiresStepUp: true };
+            }
+          } else {
+            const mutating = (TOOL_EFFECT[toolName] ?? "read") !== "read";
+            layaRisk = { mutating, highValue: false, requiresStepUp: false };
           }
 
           actionDispatcher.broadcast("AGENT_LAYA_TOOL_GATED", {
