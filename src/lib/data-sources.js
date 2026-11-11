@@ -5,7 +5,7 @@ import { getDeliveryStorage } from "../storage/delivery.storage.ts";
 import { getGeneratedMembers } from "./clan-members.js";
 import { isCarrierFormatTracking } from "./tracking-format.js";
 import { executeTool } from "./tool-registry.js";
-import { loadUserSettings } from "./user-settings.js";
+import { currentOwnerId, loadUserSettings } from "./user-settings.js";
 import { supplierRows } from "./supplier-search.js";
 
 // One named place for every dataset the app can show. AG Grid artifacts, AG Studio and Mosaic's read tools
@@ -84,8 +84,7 @@ function memberRows() {
 
 // Once a business has finished onboarding, its shipments and claims are its own. Before that, the shared demo set shows.
 function ownerId() {
-  const profile = loadUserSettings().profile ?? {};
-  return profile.workspaceSeeded ? String(profile.smeId ?? "") : "";
+  return currentOwnerId();
 }
 
 function claimRows() {
