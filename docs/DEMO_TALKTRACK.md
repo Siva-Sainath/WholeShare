@@ -6,7 +6,7 @@ Your 20 second hook plays first, then this 2 minute 37 second screen recording. 
 |---|---|---|---|---|
 | 1. Landing and the problem | 0:00 to 0:20 | 20 | 54 | 2.7 words per second |
 | 2. Onboarding from documents | 0:20 to 0:36 | 16 | 37 | 2.3 words per second |
-| 3a. Find and open a group | 0:36 to 0:51 | 15 | 29 | 1.9 words per second |
+| 3a. Find and open a group | 0:36 to 0:51 | 15 | 38 | 2.5 words per second |
 | 3b. Approve on PayPal | 0:51 to 1:02 | 11 | 17 | 1.5 words per second |
 | 4. Every page, and an outside agent | 1:02 to 1:30 | 28 | 55 | 2.0 words per second |
 | 5. Mosaic | 1:30 to 2:16 | 46 | 78 | 1.7 words per second |
@@ -28,11 +28,11 @@ Your 20 second hook plays first, then this 2 minute 37 second screen recording. 
 - Point at the checklist ticking from 0 to 6, then at the PayPal login.
 - **Sponsor and tech to name:** Fireworks reads the fields. PDFs and photos are read on the server with no extra tools. Files go through the JuiceFS storage layer. Sign-in is PayPal.
 
-## 3a. Find and open a group (0:36 to 0:51, 15 seconds, 29 words)
+## 3a. Find and open a group (0:36 to 0:51, 15 seconds, 38 words)
 
-**Say:** I search takeout containers and open Garden State, the supplier I already use. Price tiers, a trust score, delivery in five days, and the exact receiving point. Twelve cases.
+**Say:** Discover already knows what I buy, so the matching groups are right there. I open Garden State, the supplier I already use. Price tiers, a trust score, delivery in five days, and the exact receiving point. Twelve cases.
 
-- Hover the receiving point and the tiers while you say it.
+- The search box is already filled from the profile, so do not mention searching. Point at the receiving point and the tiers while you say it.
 - **Sponsor and tech to name:** AG Grid sits behind the search results.
 
 ## 3b. Approve on PayPal (0:51 to 1:02, 11 seconds, 17 words)

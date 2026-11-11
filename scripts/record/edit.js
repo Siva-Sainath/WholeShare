@@ -8,7 +8,7 @@ const CAP = `${process.env.HOME}/Movies/WholeShare-demo/cap`;
 const BADGES = `${process.env.HOME}/Movies/WholeShare-demo/raw`;
 const probe = (file, entry) => Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", `${entry}`, "-of", "default=nw=1:nk=1", file], { encoding: "utf8" }).trim().split("\n")[0]);
 
-export async function edit(name, { zoom = 1.22, noZoom = false, target = null, reserve0 = null } = {}) {
+export async function edit(name, { zoom = 1.22, noZoom = false, target = null, reserve0 = null, cutClicks = null } = {}) {
   const raw = `${CAP}/${name}.cap/content/segments/segment-0/display.mp4`;
   const ev = JSON.parse(readFileSync(`${CAP}/${name}.events.json`, "utf8"));
   const rw = probe(raw, "stream=width"), rh = probe(raw, "stream=height");
@@ -36,10 +36,30 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, r
     if (before) ranges[0].a = src(before.t);
     ranges[0].b = Math.min(D, ranges[0].b + 3.2); // the checklist ticks items off right after the reading, keep that in real time
   }
+  // Parts of the recording to leave out: from one click to just before another, for example a search that is already filled in.
+  const drops = [];
+  if (cutClicks) {
+    const clicks = ev.log.filter((l) => l.k === "click");
+    const [from, to] = cutClicks;
+    if (clicks[from] && clicks[to]) drops.push({ a: Math.max(0, src(clicks[from].t) - 0.3), b: Math.max(0, src(clicks[to].t) - 1.4) });
+  }
   const pieces = [];
   let cur = 0;
   ranges.forEach((r, index) => { if (r.a > cur) pieces.push({ a: cur, b: r.a, speed: 1 }); pieces.push({ a: r.a, b: r.b, speed: r.speed, fi: index }); cur = r.b; });
   if (cur < D - 0.05) pieces.push({ a: cur, b: D, speed: 1 });
+  for (let i = 0; i < pieces.length; i += 1) {
+    for (const d of drops) {
+      const p = pieces[i];
+      if (d.b <= p.a || d.a >= p.b) continue;
+      const parts = [];
+      if (d.a > p.a) parts.push({ ...p, b: d.a });
+      if (d.b < p.b) parts.push({ ...p, a: d.b });
+      pieces.splice(i, 1, ...parts);
+      i += parts.length - 1;
+      break;
+    }
+  }
+  const inDrop = (t) => drops.some((d) => t >= d.a && t <= d.b);
   // To fit a time budget, everything is sped up evenly on top of the waiting stretches. The badge always shows the real speed.
   // The first waiting stretch can be held to a minimum on-screen time (reserve0) so a viewer can follow what fills in during it.
   let reserved = 0;
@@ -48,7 +68,7 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, r
   const room = target ? Math.max(1, target - reserved) : null;
   const base = target && naturalTotal > room ? naturalTotal / room : 1;
   for (const p of pieces) if (!p.fixed) p.speed = p.speed * base;
-  const outT = (t) => { let out = 0; for (const p of pieces) { if (t >= p.b) out += (p.b - p.a) / p.speed; else { out += Math.max(0, t - p.a) / p.speed; break; } } return out; };
+  const outT = (t) => { let out = 0; for (const p of pieces) { if (t >= p.b) out += (p.b - p.a) / p.speed; else { if (t > p.a) out += (t - p.a) / p.speed; break; } } return out; };
   const inFast = (t) => ranges.some((r) => t >= r.a - 0.2 && t <= r.b + 0.2);
   const total = pieces.reduce((s, p) => s + (p.b - p.a) / p.speed, 0);
 
@@ -56,7 +76,7 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, r
   if (!noZoom) {
     for (const e of ev.log.filter((l) => l.k === "click" || l.k === "type")) {
       const t = src(e.t);
-      if (inFast(t)) continue;
+      if (inFast(t) || inDrop(t)) continue;
       const o = outT(t);
       let a = Math.max(0, o - 0.8), b = o + (e.k === "type" ? 3.0 : 1.6);
       const prev = zs[zs.length - 1];
@@ -112,4 +132,4 @@ export async function edit(name, { zoom = 1.22, noZoom = false, target = null, r
   return info;
 }
 
-if (process.argv[1].endsWith("edit.js")) for (const arg of process.argv.slice(2)) { const [n, t, z, r] = arg.split(":"); console.log(JSON.stringify(await edit(n, { target: t ? Number(t) : null, noZoom: z === "nozoom", reserve0: r ? Number(r) : null }))); }
+if (process.argv[1].endsWith("edit.js")) for (const arg of process.argv.slice(2)) { const [n, t, z, r, c] = arg.split(":"); console.log(JSON.stringify(await edit(n, { target: t ? Number(t) : null, noZoom: z === "nozoom", reserve0: r && r !== "0" ? Number(r) : null, cutClicks: c ? c.split("-").map(Number) : null }))); }
