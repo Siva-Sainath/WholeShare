@@ -1,5 +1,11 @@
 // The canvas is the dock beside the page where Mosaic puts what it found.
-export type ArtifactKind = "grid" | "groups" | "invoices" | "research" | "timeline" | "board";
+export type ArtifactKind = "grid" | "groups" | "invoices" | "research" | "timeline" | "board" | "compare";
+
+export interface CompareGroup {
+  id: string; name: string; city: string; status: string; joinable: boolean; listUnitPrice: number; discountPctAtYourUnits: number;
+  unitPriceAtYourUnits: number; totalForYourUnits: number; nextTier: { atUnits: number; discountPct: number; unitsAway: number } | null;
+  fillPct: number; unitsRemaining: number; deliveryDays: number | null; supplier: string; supplierTrust: number | null; payPalCheckoutAvailable: boolean;
+}
 
 export interface Artifact {
   kind: ArtifactKind;
@@ -16,6 +22,8 @@ export interface Artifact {
   query?: string;
   snippets?: string[];
   fetchedAt?: string;
+  // compare artifacts
+  compare?: { units: number; groups: CompareGroup[]; verdict: Record<string, string | null> };
 }
 
 interface CanvasState {
@@ -52,5 +60,5 @@ export function subscribeCanvas(listener: () => void): () => void {
 export function isArtifact(value: unknown): value is Artifact {
   if (typeof value !== "object" || value === null) return false;
   const record = value as Record<string, unknown>;
-  return typeof record.kind === "string" && ["grid", "groups", "invoices", "research", "timeline", "board"].includes(record.kind) && typeof record.title === "string";
+  return typeof record.kind === "string" && ["grid", "groups", "invoices", "research", "timeline", "board", "compare"].includes(record.kind) && typeof record.title === "string";
 }

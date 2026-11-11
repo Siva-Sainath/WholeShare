@@ -5,6 +5,7 @@
 import { querySource, resolveSourceId, SOURCES } from "./data-sources.js";
 import { getClanById } from "./matchmaking/clanStore.ts";
 import { actionDispatcher } from "./web-actions.js";
+import { loadUserSettings } from "./user-settings.js";
 
 const MAX_ROWS = 25;
 const OPS = new Set(["sum", "avg", "count", "min", "max"]);
@@ -141,6 +142,8 @@ export async function compareGroups(args = {}) {
   }
   if (ids.length < 2 || ids.length > 4) return { error: "Give two to four group ids. Use resolve first to find them." };
   const units = Math.min(Math.max(Math.round(Number(args.units)) || 100, 1), 10000);
+  const saved = loadUserSettings().profile ?? {};
+  const payToday = Number(saved.currentUnitPriceUsd) > 0 ? Number(saved.currentUnitPriceUsd) : null;
   const groups = [];
   for (const id of ids) {
     const clan = getClanById(id);
@@ -159,7 +162,8 @@ export async function compareGroups(args = {}) {
       nextTier: next ? { atUnits: next.minUnits, discountPct: next.discountPct, unitsAway: next.minUnits - projected } : null,
       fillPct: clan.targetUnits ? Math.round((clan.currentUnits / clan.targetUnits) * 100) : 0, unitsRemaining: remaining,
       deliveryDays: clan.estimatedDeliveryDays ?? null, supplier: clan.supplierName ?? "", supplierTrust: clan.supplierTrustScore ?? null,
-      payPalCheckoutAvailable: clan.settlementCurrency === "USD"
+      payPalCheckoutAvailable: clan.settlementCurrency === "USD",
+      ...(payToday ? { youPayTodayUnitPrice: payToday, savingVersusTodayForYourUnits: round(payToday * units - unitPrice * units) } : {})
     });
   }
   const sameCurrency = new Set(groups.map((g) => g.currency)).size === 1;
@@ -171,7 +175,7 @@ export async function compareGroups(args = {}) {
     mostTrustedSupplier: best(groups.filter((g) => g.supplierTrust !== null), "supplierTrust", "max"),
     closestToFilling: best(joinable, "fillPct", "max")
   };
-  const artifact = { kind: "grid", title: `Comparing ${groups.length} groups`, source: "groups", filter: [{ field: "id", op: "in", value: groups.map((g) => g.id) }], limit: groups.length };
+  const artifact = { kind: "compare", title: `Comparing ${groups.length} groups for ${units} units`, note: "Prices and totals use the units you asked about. The best value in each row is marked.", compare: { units, groups, verdict } };
   actionDispatcher.broadcast("UI_ACTION", { type: "PRESENT", artifact, timestamp: new Date().toISOString() });
   return { status: "SUCCESS", action: "PRESENT", artifact, unitsCompared: units, groups, verdict, ...(chosen.length ? { resolvedFromWords: chosen } : {}), note: "Totals assume the user pledges the units shown. Say which factor decides it and what the user gives up." };
 }

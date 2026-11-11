@@ -1,3 +1,4 @@
+import { CompareArtifact } from "./CompareArtifact";
 import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
@@ -211,26 +212,28 @@ export const CanvasDock: React.FC = () => {
   useEffect(() => {
     setResult(null);
     setError(null);
-    if (!artifact || artifact.kind === "research" || artifact.kind === "timeline" || artifact.kind === "board") return;
+    if (!artifact || artifact.kind === "research" || artifact.kind === "timeline" || artifact.kind === "board" || artifact.kind === "compare") return;
     let cancelled = false;
     loadSource(artifact).then((value) => { if (!cancelled) setResult(value); }).catch((cause: unknown) => { if (!cancelled) setError(cause instanceof Error ? cause.message : "Could not load this data."); });
     return () => { cancelled = true; };
   }, [artifact, canvas.openedAt]);
 
   const open = Boolean(artifact);
+  const wide = artifact?.kind === "compare";
   useEffect(() => {
     document.body.classList.toggle("ws-canvas-open", open);
-    return () => document.body.classList.remove("ws-canvas-open");
-  }, [open]);
+    document.body.classList.toggle("ws-canvas-wide", open && wide);
+    return () => { document.body.classList.remove("ws-canvas-open"); document.body.classList.remove("ws-canvas-wide"); };
+  }, [open, wide]);
 
   if (!artifact) return null;
 
   return (
-    <aside className="ws-canvas" role="complementary" aria-label={artifact.title}>
+    <aside className={`ws-canvas${wide ? " ws-canvas--compare" : ""}`} role="complementary" aria-label={artifact.title}>
       <header className="ws-canvas-head">
         <div>
           <h2>{artifact.title}</h2>
-          <p>{artifact.kind === "research" ? "Supplier and web research" : artifact.kind === "timeline" ? "Deliveries and inspection windows, live" : artifact.kind === "board" ? "Damage claims by stage" : artifact.note || (result ? result.description : "Loading")}</p>
+          <p>{artifact.kind === "compare" ? artifact.note : artifact.kind === "research" ? "Supplier and web research" : artifact.kind === "timeline" ? "Deliveries and inspection windows, live" : artifact.kind === "board" ? "Damage claims by stage" : artifact.note || (result ? result.description : "Loading")}</p>
         </div>
         <div className="ws-canvas-head-actions">
           {result && <Badge variant="blue" label={`${result.rows.length} of ${result.total}`} />}
@@ -240,9 +243,10 @@ export const CanvasDock: React.FC = () => {
       </header>
       <div className="ws-canvas-body">
         {error && <EmptyState title="Could not show this" description={error} />}
-        {!error && artifact.kind !== "research" && artifact.kind !== "timeline" && artifact.kind !== "board" && !result && <Skeleton height={260} />}
+        {!error && artifact.kind !== "research" && artifact.kind !== "timeline" && artifact.kind !== "board" && artifact.kind !== "compare" && !result && <Skeleton height={260} />}
         {!error && result && result.rows.length === 0 && <EmptyState title="Nothing matches" description="No rows match that request." />}
         {!error && result && result.rows.length > 0 && (artifact.kind === "groups" ? <GroupsArtifact rows={result.rows} /> : <GridArtifact rows={result.rows} source={artifact.kind === "invoices" ? "paypal_invoices" : artifact.source} />)}
+        {artifact.kind === "compare" && <CompareArtifact artifact={artifact} />}
         {artifact.kind === "research" && <ResearchArtifact artifact={artifact} />}
         {artifact.kind === "timeline" && <TimelineArtifact revision={canvas.openedAt} />}
         {artifact.kind === "board" && <BoardArtifact revision={canvas.openedAt} />}

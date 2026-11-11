@@ -184,7 +184,14 @@ if (want.has("k5")) {
     });
     await sleep(4500);
   };
-  await go("mosaic-chat");
+  // An outside agent's request can move the page by itself, so make sure the chat is really open before recording.
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await go("mosaic-chat"); await sleep(2500);
+    if (await page.$('textarea, [contenteditable="true"]')) break;
+    await page.reload({ waitUntil: "networkidle2" });
+  }
+  const dockClose = await byText(page, "Close").catch(() => null);
+  if (dockClose) { await dockClose.click().catch(() => {}); await sleep(1000); }
   await clip(ctx, "k5-mosaic", async () => {
     await glide(ctx, 720, 440); await sleep(4000);
     await askMosaic("Compare the two takeout container groups for 12 cases");

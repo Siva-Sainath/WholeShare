@@ -5685,3 +5685,38 @@ body:has([data-ws-view="mosaic-chat"]) .ws-live { display: none; }
 .lp-blockers span { font: 400 14px/20px 'Geist', sans-serif; color: #5C6A79; }
 @media (max-width: 900px) { .lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lp-blockers { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .lp-stats { grid-template-columns: 1fr; } }
+
+/* Comparison panel: verdict cards, the factor table and quick bars fill the docked panel */
+.ws-canvas--compare { width: min(780px, 54vw); }
+@media (min-width: 1280px) { body.ws-canvas-open.ws-canvas-wide main { padding-right: calc(min(780px, 54vw) + 40px); } }
+.ws-canvas--compare .ws-canvas-head p { max-width: 560px; }
+.ws-cmp { display: grid; gap: 14px; }
+.ws-cmp-verdicts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ws-cmp-verdict { display: grid; gap: 2px; padding: 12px; border-radius: 14px; background: #F4F9FD; border: 1px solid #D6E7F5; min-width: 0; }
+.ws-cmp-verdict small { font: 500 11px/14px 'Geist Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase; color: #5C6A79; }
+.ws-cmp-verdict b { font: 600 15px/20px 'Geist', sans-serif; color: #0F1F2E; overflow-wrap: anywhere; }
+.ws-cmp-verdict em { font: 500 13px/18px 'Geist', sans-serif; font-style: normal; color: #0070BA; font-variant-numeric: tabular-nums; }
+.ws-cmp-icon { color: #0070BA; display: inline-flex; margin-bottom: 4px; }
+.ws-cmp-table-wrap { overflow-x: auto; border: 1px solid #E3DED3; border-radius: 14px; }
+.ws-cmp-table { width: 100%; border-collapse: collapse; font: 400 13.5px/19px 'Geist', sans-serif; font-variant-numeric: tabular-nums; }
+.ws-cmp-table th { text-align: left; padding: 10px 12px; background: #FAF8F3; color: #0F1F2E; font-weight: 600; border-bottom: 1px solid #EDE9DF; }
+.ws-cmp-table th small { display: block; font-weight: 400; color: #5C6A79; font-size: 12px; }
+.ws-cmp-table td { padding: 9px 12px; border-bottom: 1px solid #F0ECE3; color: #0F1F2E; vertical-align: top; }
+.ws-cmp-table td:first-child { color: #5C6A79; width: 34%; }
+.ws-cmp-table tr:last-child td { border-bottom: 0; }
+.ws-cmp-table td.is-best { background: #E8F5EC; color: #146B34; font-weight: 600; }
+.ws-cmp-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ws-cmp-bars { display: grid; gap: 8px; padding: 12px; border: 1px solid #E3DED3; border-radius: 14px; min-width: 0; }
+.ws-cmp-bars b { font: 600 13px/18px 'Geist', sans-serif; color: #0F1F2E; }
+.ws-cmp-bar-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 8px; align-items: center; font: 400 12.5px/16px 'Geist', sans-serif; color: #5C6A79; }
+.ws-cmp-bar-row em { font-style: normal; color: #0F1F2E; font-variant-numeric: tabular-nums; }
+.ws-cmp-bar-track { height: 10px; background: #EEF2F6; border-radius: 6px; overflow: hidden; }
+.ws-cmp-bar { height: 100%; background: #9DB8D2; border-radius: 6px; transition: width 500ms ease; }
+.ws-cmp-bar.is-best { background: #0070BA; }
+@media (max-width: 900px) { .ws-cmp-verdicts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ws-cmp-charts { grid-template-columns: 1fr; } }
+
+/* Mosaic chat fits the window: the conversation scrolls inside its own panel and the page itself does not scroll */
+body:has([data-ws-view="mosaic-chat"]) { overflow: hidden; }
+main:has([data-ws-view="mosaic-chat"]) > div.mt-8 { display: none; }
+main:has([data-ws-view="mosaic-chat"]) { padding-top: 16px; padding-bottom: 16px; }
+.ws-chat { height: calc(100dvh - 64px - 40px); min-height: 440px; }
