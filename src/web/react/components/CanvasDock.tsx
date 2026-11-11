@@ -72,6 +72,7 @@ function columnsFor(rows: Row[], source?: string): ColDef[] {
         pinned: index === 0 ? ("left" as const) : undefined,
         wrapText: index === 0,
         autoHeight: index === 0,
+        cellStyle: index === 0 ? { lineHeight: "20px", paddingTop: 10, paddingBottom: 10 } : undefined,
         cellClass: typeof sample === "number" ? "ws-tabular-nums" : undefined,
         enableRowGroup: typeof sample !== "number",
         enableValue: typeof sample === "number",
