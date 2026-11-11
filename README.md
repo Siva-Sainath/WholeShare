@@ -31,12 +31,31 @@ One rule sits under everything: **the assistant can prepare any step, but only a
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/group-page.png" alt="A group page with discount tiers, supplier trust and the receiving point"><br><sub><b>A group page.</b> Discount tiers, supplier trust, delivery time and the receiving point.</sub></td>
-    <td width="50%"><img src="docs/screenshots/mosaic-comparison.png" alt="Mosaic compares two groups"><br><sub><b>Mosaic compares two groups</b> and shows what you save against what you pay today.</sub></td>
+    <td width="50%"><img src="docs/screenshots/03-discover-groups-with-saving-banner.png" alt="Discover buying groups with savings banner"><br><sub><b>Discover buying groups.</b> Browse by product, see how much you save, and how close each group is to filling.</sub></td>
+    <td width="50%"><img src="docs/screenshots/04-group-page-tiers-and-receiving-point.png" alt="A group page with discount tiers, supplier trust and the receiving point"><br><sub><b>A group page.</b> Discount tiers, supplier trust, delivery time and the receiving point.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/delivery-timeline.png" alt="Delivery timeline"><br><sub><b>Delivery timeline</b> on a Bryntum scheduler, with the 48 hour inspection window.</sub></td>
-    <td width="50%"><img src="docs/screenshots/insights.png" alt="AG Studio report of money held on PayPal"><br><sub><b>AG Studio report</b> of the money PayPal is holding, by group and invoice.</sub></td>
+    <td width="50%"><img src="docs/screenshots/05-my-groups-and-escrow.png" alt="My groups and escrow commitments"><br><sub><b>My groups & escrow alerts.</b> All your commitments, pledged units, escrow value and status at a glance.</sub></td>
+    <td width="50%"><img src="docs/screenshots/13-mosaic-comparison-panel.png" alt="Mosaic compares two groups"><br><sub><b>Mosaic compares two groups</b> and shows what you save against what you pay today.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/06-bryntum-delivery-timeline.png" alt="Delivery timeline"><br><sub><b>Delivery timeline</b> on a Bryntum scheduler, with the 48 hour inspection window.</sub></td>
+    <td width="50%"><img src="docs/screenshots/07-bryntum-calendar-inspection-windows.png" alt="Bryntum calendar with inspection windows"><br><sub><b>Calendar view.</b> Delivery dates and inspection window deadlines on a Bryntum calendar.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/08-bryntum-claims-board.png" alt="Bryntum claims board"><br><sub><b>Claims board.</b> Drag a claim from Draft to With supplier on a Bryntum TaskBoard.</sub></td>
+    <td width="50%"><img src="docs/screenshots/09-claims-ag-grid.png" alt="Damage claims in AG Grid"><br><sub><b>Claims table.</b> Damage claims with product, unit price, status and filing date in AG Grid.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/10-ag-studio-insights-paypal-position.png" alt="AG Studio report of money held on PayPal"><br><sub><b>AG Studio report</b> of the money PayPal is holding, by group and invoice.</sub></td>
+    <td width="50%"><img src="docs/screenshots/11-ag-studio-delivery-and-claims.png" alt="AG Studio delivery and claims report"><br><sub><b>Delivery health.</b> On-time rate, delay rate, delivery status and claimed amounts in AG Studio.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/12-agents-outside-access-and-live-feed.png" alt="Agents page with outside access and live feed"><br><sub><b>Agents page.</b> Connected agents, permission categories, MCP server URL and live feed.</sub></td>
+    <td width="50%"><img src="docs/screenshots/14-mosaic-shipments-with-sources.png" alt="Mosaic tracks shipments with Kernel cloud browser sources"><br><sub><b>Mosaic tracks shipments</b> and cross-checks carrier pages with Kernel cloud browsers.</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/15-onboarding-reads-your-documents.png" alt="Onboarding reads your documents"><br><sub><b>Onboarding.</b> Upload an invoice and inventory sheet — Mosaic reads them and fills in your profile.</sub></td>
   </tr>
 </table>
 
@@ -144,6 +163,27 @@ AG Grid Enterprise, AG Studio and Bryntum are commercial products. The code in t
 ![System overview](docs/architecture/02-system-overview.png)
 
 The browser talks to one Node server. The server holds the harness, the ledger of pledges, shipments and claims, and the document reader. It calls PayPal, Fireworks and Kernel. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains each part.
+
+<details>
+<summary>Design diagrams (tldraw)</summary>
+
+<table>
+  <tr>
+    <td><img src="docs/diagrams/01_master_architecture_tldraw.jpg" alt="Master architecture diagram"><br><sub><b>Master architecture.</b> End-to-end flow from buyer clan through PayPal sandbox to supplier fulfillment.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/diagrams/03_fintech_security_pipeline_tldraw.jpg" alt="Fintech security pipeline"><br><sub><b>Security pipeline.</b> Five layers from network ingress and idempotency through webhook verification, escrow state guard, dispute mediation and audit.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/diagrams/04_clan_state_lifecycle_tldraw.jpg" alt="Clan state lifecycle"><br><sub><b>Clan state lifecycle.</b> From FORMING through quorum, escrow lock, fulfillment, delivery, dispute and settlement.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/diagrams/02_pstack_engineering_flywheel_tldraw.jpg" alt="Engineering flywheel"><br><sub><b>Engineering flywheel.</b> Schema and invariants, local verification harness, PayPal sandbox validation, and continuous governance.</sub></td>
+  </tr>
+</table>
+
+The `.tldraw` source files are in [`docs/diagrams/`](docs/diagrams/).
+</details>
 
 ## Run it yourself
 
