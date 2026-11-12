@@ -852,7 +852,9 @@ export function createWebServer() {
         const body = await readJsonBody(req);
         const clanId = String(body.clanId || "");
         if (!clanId) throw new Error("Say which group.");
-        sendJson(res, 200, { status: "DELIVERED", delivery: markDelivered({ clanId }) });
+        const delivery = markDelivered({ clanId });
+        actionDispatcher.broadcast("SHIPMENT_DELIVERED", { clanId, delivery });
+        sendJson(res, 200, { status: "DELIVERED", delivery });
       } catch (err) {
         sendJson(res, 400, { error: err.message });
       }
