@@ -181,7 +181,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
   const signOut = async () => {
     setSigningOut(true);
     try {
-      await saveUserSettingsApi({ profile: { businessName: "", industry: "", city: "", country: "", product: "", contactEmail: "", address: "", borough: "", state: "", currentSupplier: "", invoiceNumber: "", products: [], documentsRead: false } });
+      await saveUserSettingsApi({ profile: { businessName: "", industry: "", city: "", country: "", product: "", contactEmail: "", address: "", borough: "", state: "", currentSupplier: "", invoiceNumber: "", products: [], documentsRead: false }, agentPermissions: { allowAutonomousQuotePrep: false, allowAutonomousFilterSort: false, allowAutonomousDraftMessages: false, allowAutonomousResearch: false, allowAutonomousScheduleChanges: false }, policies: { perPledgeSpendLimitUsd: 1000 } });
       await disconnectPayPalApi().catch(() => undefined);
     } catch {
       // Even if the server is slow, the browser still forgets the sign in below.
