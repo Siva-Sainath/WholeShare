@@ -47,8 +47,11 @@ export async function buildSuggestions() {
   const matches = (group) => wanted.length === 0 || wanted.some((word) => new RegExp(`\\b${word}s?\\b`).test(`${group.product} ${group.name}`.toLowerCase()));
   const relevant = groups.filter(matches);
   const nearby = city ? relevant.filter((g) => String(g.city).toLowerCase() === city.toLowerCase()) : [];
-  const pool = nearby.length > 0 ? nearby : relevant;
-  const label = product || fromHistory || (pool[0] ? shortProduct(pool[0].product) : "");
+  // Groups the workspace already chose for this business are the best ones to talk about.
+  const chosen = new Set(Array.isArray(profile.workspaceGroups) ? profile.workspaceGroups : []);
+  const workspacePool = groups.filter((group) => chosen.has(group.id));
+  const pool = workspacePool.length > 0 ? workspacePool : nearby.length > 0 ? nearby : relevant;
+  const label = product || fromHistory || (workspacePool[0] ? shortProduct(workspacePool[0].product) : "");
 
   const out = [];
   if (pool.length > 0 && label) out.push({ text: `Which ${label} groups can we still join${nearby.length > 0 ? ` in ${city}` : ""}?`, reason: `${pool.length} open ${pool.length === 1 ? "group" : "groups"}${nearby.length > 0 ? " near you" : ""}` });
@@ -57,9 +60,9 @@ export async function buildSuggestions() {
   // Two groups buying the same product are worth weighing against each other.
   const byProduct = new Map();
   for (const group of pool) byProduct.set(group.product, [...(byProduct.get(group.product) ?? []), group]);
-  const pair = [...byProduct.values()].find((list) => list.length >= 2);
+  const pair = label ? [...byProduct.values()].find((list) => list.length >= 2) : null;
   if (pair) out.push({ text: `Compare the two ${shortProduct(pair[0].product)} groups for ${units} units`, reason: "Two suppliers to weigh" });
-  else if (pool.length >= 2) out.push({ text: `Compare the two closest ${label} groups for ${units} units`, reason: "Weigh price, delivery and trust" });
+  else if (label && pool.length >= 2) out.push({ text: `Compare the two closest ${label} groups for ${units} units`, reason: "Weigh price, delivery and trust" });
 
   // Shipments and claims only appear when they belong to this business.
   const mine = shipments.filter((s) => s.memberId === me);
