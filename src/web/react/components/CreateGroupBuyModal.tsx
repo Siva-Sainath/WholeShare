@@ -175,7 +175,7 @@ export const CreateGroupBuyModal: React.FC<CreateGroupBuyModalProps> = ({ isOpen
     setSubmitError(null);
     const votingWeight = template === "EQUAL_COOP" ? "ONE_MEMBER_ONE_VOTE" : template === "VOLUME_WEIGHTED" ? "VOLUME_WEIGHTED" : "FOUNDER_VETO";
     try {
-      await createClanWithGovernance({
+      const created = await createClanWithGovernance({
         clanName: name.trim(),
         commoditySku: product,
         targetUnits: Number(targetUnits),
@@ -200,6 +200,9 @@ export const CreateGroupBuyModal: React.FC<CreateGroupBuyModalProps> = ({ isOpen
       }
       onSuccess();
       onClose();
+      // The new group opens straight away, so its founder can pledge and join it.
+      const newId = (created as { coalition?: { id?: string } } | null)?.coalition?.id;
+      if (newId) window.location.hash = `group/${encodeURIComponent(newId)}`;
     } catch (cause) {
       setSubmitError(cause instanceof Error ? cause.message : "Could not publish the group buy. Check the values.");
     } finally {

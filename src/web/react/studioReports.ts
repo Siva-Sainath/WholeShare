@@ -47,13 +47,15 @@ const REGISTRY_ID: Record<string, string> = { invoices: "paypal_invoices" };
 
 // Reports can be limited to the groups that matter to this business: its product and its city. Null means everything.
 let scopedGroupIds: Set<string> | null = null;
-export interface BusinessScope { product: string; city: string; groupIds?: string[] }
+export interface BusinessScope { product: string; city: string; groupIds?: string[]; ownLedger?: boolean }
+let lastScope: BusinessScope | null = null;
 const STOP = new Set(["the", "and", "for", "with", "bulk", "pack", "case", "size", "grade", "premium", "organic"]);
 
-export function scopeGroups(groups: Row[], scope: BusinessScope | null): Row[] {
+export function scopeGroups(groups: Row[], scope: BusinessScope | null, pledgedIds: string[] = []): Row[] {
   scopedGroupIds = null;
   if (!scope || (!scope.product && !scope.city && !(scope.groupIds?.length))) return groups;
-  const own = new Set(scope.groupIds ?? []);
+  // Groups the business started or pledged into are its own too, so a new group enters the reports the moment it exists.
+  const own = new Set([...(scope.groupIds ?? []), ...pledgedIds]);
   const words = scope.product.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word));
   const city = scope.city.trim().toLowerCase();
   // A business with its own workspace sees its own groups, so the reports agree with My groups, the timeline and Mosaic.
@@ -85,7 +87,14 @@ function inScope(tableId: string, rows: Row[]): Row[] {
 }
 
 // Fresh rows for one Studio table, shaped exactly like the rows it was first loaded with.
+const ledgerGroupIds = (rows: Row[]): string[] => rows.flatMap((row) => [row.groupId, row.clanId]).filter((id): id is string => typeof id === "string" && id !== "");
+
 export async function fetchSourceRows(tableId: string): Promise<Row[]> {
+  // The set of groups in scope is worked out again from fresh rows, so groups created after the page loaded are included.
+  if (lastScope && (tableId === "groups" || tableId === "members")) {
+    const [freshGroups, freshLedger] = await Promise.all([loadRows("groups"), lastScope.ownLedger ? loadRows("ledger") : Promise.resolve([] as Row[])]);
+    scopeGroups(freshGroups, lastScope, lastScope.ownLedger ? ledgerGroupIds(freshLedger) : []);
+  }
   const rows = inScope(tableId, await loadRows(REGISTRY_ID[tableId] ?? tableId, tableId === "invoices" ? 200 : 20000));
   return pretty(derive(tableId, DATE_FIELDS[tableId] ? dates(rows, DATE_FIELDS[tableId]) : rows));
 }
@@ -109,7 +118,8 @@ export interface StudioLoad {
 
 export async function loadStudioData(scope: BusinessScope | null = null): Promise<StudioLoad> {
   const [allGroups, allMembers, ledger, allClaims, allShipments] = await Promise.all([loadRows("groups"), loadRows("members"), loadRows("ledger"), loadRows("claims"), loadRows("shipments")]);
-  const groups = scopeGroups(allGroups, scope);
+  lastScope = scope;
+  const groups = scopeGroups(allGroups, scope, scope?.ownLedger ? ledgerGroupIds(ledger) : []);
   const members = inScope("members", allMembers);
   const claims = inScope("claims", allClaims);
   const shipments = inScope("shipments", allShipments);

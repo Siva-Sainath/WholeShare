@@ -41,9 +41,9 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string; city?: string; workspaceGroups?: string[] } }) => {
+    fetch("/api/v1/user/settings").then((r) => r.json()).then((p: { profile?: { product?: string; city?: string; businessName?: string; workspaceGroups?: string[] } }) => {
       if (!live) return;
-      const own = { product: String(p.profile?.product ?? "").trim(), city: String(p.profile?.city ?? "").trim(), groupIds: Array.isArray(p.profile?.workspaceGroups) ? p.profile.workspaceGroups : [] };
+      const own = { product: String(p.profile?.product ?? "").trim(), city: String(p.profile?.city ?? "").trim(), groupIds: Array.isArray(p.profile?.workspaceGroups) ? p.profile.workspaceGroups : [], ownLedger: String(p.profile?.businessName ?? "").trim() !== "" && String(p.profile?.businessName).trim() !== "Neon Dumpling Co." };
       const known = Boolean(own.product || own.city || own.groupIds.length);
       setProfile(known ? own : null);
       setScope(known ? "mine" : "all");
@@ -108,6 +108,8 @@ export const InsightsView: React.FC<{ page?: string }> = ({ page }) => {
     try {
       await engine.applyTransaction(transactions.length === 1 ? transactions[0] : transactions);
       setLiveNote(`Updated ${transactions.map((tx) => String(tx.tableId)).join(", ")} at ${new Date().toLocaleTimeString()}`);
+      // The badge above the reports counts rows, so it follows the live data too.
+      setLoad((previous) => previous ? { ...previous, counts: { ...previous.counts, ...Object.fromEntries(["groups", "members", "claims", "shipments", "invoices"].filter((name) => known.current.has(name)).map((name) => [name, known.current.get(name)?.size ?? 0])) } } : previous);
     } catch {
       setLiveNote("Live updates paused");
     }
