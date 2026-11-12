@@ -245,7 +245,8 @@ export const App: React.FC = () => {
       CLAIM_APPROVED: ["claims"], CLAIM_RESPONDED: ["claims"], CLAIM_INTAKEN: ["claims"],
       SHIPMENT_DELIVERY_CONFIRMED: ["ledger", "groups", "shipments"], MEMBER_PLEDGED: ["ledger", "groups", "members"], PAYPAL_PLEDGE_AUTHORIZED: ["ledger", "groups", "members"],
       ESCROW_AUTHORIZED: ["ledger"], ESCROW_CAPTURED: ["ledger"], ESCROW_DISPUTED: ["ledger", "claims"], COALITION_LOCKED: ["ledger", "groups"], COALITION_SETTLED: ["ledger", "groups"],
-      COALITION_UPDATED: ["ledger", "groups"], COALITION_CREATED: ["groups"], DEBT_SETTLED: ["ledger"]
+      COALITION_UPDATED: ["ledger", "groups"], COALITION_CREATED: ["groups"], DEBT_SETTLED: ["ledger"],
+      WORKSPACE_SEEDED: ["ledger", "groups", "members", "shipments", "claims"]
     };
     for (const [name, sources] of Object.entries(DATA_EVENTS)) {
       events.addEventListener(name, () => {

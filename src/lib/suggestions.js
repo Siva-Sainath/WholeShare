@@ -35,13 +35,15 @@ export async function buildSuggestions() {
     safe("suppliers", { limit: 400 })
   ]);
 
-  // What the business buys decides what is relevant. With no product, the city does.
-  const wanted = wordsOf(product);
+  // What the business buys decides what is relevant. With no product on the profile, what it already has in transit or on order does, then the city.
+  const own = shipments.filter((entry) => entry.memberId === me && entry.product);
+  const fromHistory = product ? "" : shortProduct((own.find((entry) => entry.status === "IN_TRANSIT") ?? own[0])?.product);
+  const wanted = wordsOf(product || fromHistory);
   const matches = (group) => wanted.length === 0 || wanted.some((word) => new RegExp(`\\b${word}s?\\b`).test(`${group.product} ${group.name}`.toLowerCase()));
   const relevant = groups.filter(matches);
   const nearby = city ? relevant.filter((g) => String(g.city).toLowerCase() === city.toLowerCase()) : [];
   const pool = nearby.length > 0 ? nearby : relevant;
-  const label = product || (pool[0] ? shortProduct(pool[0].product) : "");
+  const label = product || fromHistory || (pool[0] ? shortProduct(pool[0].product) : "");
 
   const out = [];
   if (pool.length > 0 && label) out.push({ text: `Which ${label} groups can we still join${nearby.length > 0 ? ` in ${city}` : ""}?`, reason: `${pool.length} open ${pool.length === 1 ? "group" : "groups"}${nearby.length > 0 ? " near you" : ""}` });

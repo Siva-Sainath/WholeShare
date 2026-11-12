@@ -202,8 +202,8 @@ export const MyGroupsView: React.FC<MyGroupsViewProps> = ({ externalQuery, onDri
     type: "fitGridWidth" as const
   }), []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const [ledgerData, clansData] = await Promise.all([
@@ -221,6 +221,20 @@ export const MyGroupsView: React.FC<MyGroupsViewProps> = ({ externalQuery, onDri
 
   useEffect(() => {
     void loadData();
+  }, []);
+
+  // A pledge approved elsewhere, a delivery confirmed or a new workspace updates the table in place.
+  useEffect(() => {
+    let timer: number | undefined;
+    const onData = (event: Event) => {
+      const sources = (event as CustomEvent<{ sources?: string[] }>).detail?.sources ?? [];
+      if (!sources.some((name) => name === "ledger" || name === "groups" || name === "members")) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void loadData(true), 400);
+    };
+    window.addEventListener("ws:data-changed", onData);
+    return () => { window.clearTimeout(timer); window.removeEventListener("ws:data-changed", onData); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

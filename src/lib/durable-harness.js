@@ -16,7 +16,7 @@ import { mosaicProvider } from "./mosaic-config.js";
 import { generateInstinctProfileHeader } from "./instinct-profile.js";
 import { generateFeatureMapPromptContext } from "./feature-map.js";
 import { dreamingEngine } from "./dreaming-engine.js";
-import { modelClient } from "./model-client.js";
+import { modelClient, friendlyModelError } from "./model-client.js";
 import { opsdEngine } from "./opsd-engine.js";
 import { SERVING_TARGET } from "./serving-target.js";
 
@@ -703,14 +703,16 @@ Follow this operational protocol for sourcing, verification, and escrow:
       } catch (err) {
         actionDispatcher.broadcast("AGENT_FAILURE", {
           sessionId,
-          error: `REAL_LLM_FAILURE: ${err.message}`,
+          error: friendlyModelError(err),
           timestamp: new Date().toISOString()
         });
+        const friendly = friendlyModelError(err);
+        console.error(`[mosaic] model failure: ${String(err.message).slice(0, 300)}`);
         await updateAgentSessionStatus(sessionId, "FAILED", {
-          finalMessage: `Real model failure: ${err.message}`,
+          finalMessage: friendly,
           totalDurationMs: Date.now() - sessionStartTime
         });
-        throw new Error(`Durable agent execution failed at model level: ${err.message}`);
+        throw new Error(friendly);
       }
 
       turn++;

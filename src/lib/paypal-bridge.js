@@ -51,7 +51,7 @@ export async function executePayPalRequest(endpointPath, options = {}, timeoutMs
 
       if (res.status === 401) {
         throw new PayPalApiError(
-          `PayPal authentication failed (HTTP 401). Verify PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in .env. Debug ID: ${debugId}.`,
+          `PayPal rejected this app's sandbox credentials. They may have expired or been changed in the PayPal developer dashboard, so the site owner needs to update them. Debug ID: ${debugId}.`,
           { status: 401, debugId, code: "PAYPAL_AUTH_ERROR", details: errorBody }
         );
       }

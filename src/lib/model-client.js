@@ -42,6 +42,21 @@ export function getModelSpend() {
   };
 }
 
+// Turns a raw provider failure into one plain sentence a visitor can act on. A rejected key is called out as such,
+// and an ordinary slow reply is never reported as a key problem.
+export function friendlyModelError(error) {
+  const text = String(error?.message ?? error ?? "");
+  const provider = String(process.env.MOSAIC_PROVIDER || "fireworks");
+  const name = provider === "fireworks" ? "Fireworks" : provider === "openai" ? "OpenAI" : provider === "openrouter" ? "OpenRouter" : "the model provider";
+  if (/HTTP (401|403)/.test(text)) return `Mosaic's ${name} API key was rejected. It may have expired or been revoked, so the site owner needs to replace it.`;
+  if (/HTTP 402|insufficient|credit|quota exceeded|billing/i.test(text)) return `The ${name} account has no credit left, so Mosaic cannot answer until it is topped up.`;
+  if (/development budget/i.test(text)) return "Mosaic has reached its spending limit for this demo, so it is paused until the limit is raised.";
+  if (/HTTP 404/.test(text)) return `${name} does not know the configured model, so the site owner needs to check the model name.`;
+  if (/HTTP 429/.test(text)) return `${name} is rate limiting requests right now. Try again in a few seconds.`;
+  if (/abort|timed out|timeout/i.test(text)) return "Mosaic took too long to answer. Try again.";
+  return "Mosaic could not reach its model just now. Try again in a moment.";
+}
+
 function guardBudget() {
   const spend = getModelSpend();
   if (spend.remainingUsd <= 0) throw new Error(`The development budget of $${spend.budgetUsd} is used up (estimated $${spend.estimatedUsd}). Raise MOSAIC_DEV_BUDGET_USD to continue.`);

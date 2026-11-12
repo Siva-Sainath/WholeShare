@@ -1,5 +1,5 @@
 import { durableHarness } from "./durable-harness.js";
-import { getModelSpend } from "./model-client.js";
+import { getModelSpend, friendlyModelError } from "./model-client.js";
 import { mosaicProvider } from "./mosaic-config.js";
 
 // A real probe of the model, so the landing page can say how long Mosaic takes to wake and respond.
@@ -7,28 +7,39 @@ import { mosaicProvider } from "./mosaic-config.js";
 const FRESH_MS = 5 * 60 * 1000;
 const MIN_GAP_MS = 20 * 1000;
 
-const state = { phase: "idle", startedAt: 0, readyAt: 0, lastMs: null, coldMs: null, error: "", probes: 0, lastProbeAt: 0 };
+const state = { phase: "idle", startedAt: 0, readyAt: 0, lastMs: null, coldMs: null, error: "", errorKind: "", probes: 0, lastProbeAt: 0, refreshing: false };
 
-function probe(wake = true) {
-  if (state.phase === "warming") return;
+// A key the provider rejected will not fix itself. Anything else, such as a slow reply, is retried.
+const keyProblem = (error) => /HTTP (401|403|402)|insufficient|credit|billing/i.test(String(error?.message ?? error));
+
+function probe() {
+  if (state.phase === "warming" || state.refreshing) return;
   if (Date.now() - state.lastProbeAt < MIN_GAP_MS) return;
-  state.phase = "warming";
-  state.startedAt = Date.now();
-  state.lastProbeAt = state.startedAt;
-  state.error = "";
+  // A model that already answered stays "ready" while it is checked again, so the chip never claims it is waking when it is not.
+  const background = state.phase === "ready";
+  if (background) state.refreshing = true;
+  else { state.phase = "warming"; state.startedAt = Date.now(); }
+  const started = Date.now();
+  state.lastProbeAt = started;
   durableHarness.warmUp()
     .then(() => {
-      const ms = Date.now() - state.startedAt;
+      const ms = Date.now() - started;
       state.lastMs = ms;
-      // A probe after boot or after a quiet period shows the wake-up time. Others show the warm response time.
-      if (wake) state.coldMs = ms;
+      if (!background || state.coldMs === null) state.coldMs = ms;
       state.probes += 1;
       state.readyAt = Date.now();
+      state.error = "";
+      state.errorKind = "";
       state.phase = "ready";
+      state.refreshing = false;
     })
     .catch((error) => {
+      state.refreshing = false;
+      // One missed check after a good answer is not an outage. Keep showing ready and try again later.
+      if (background && !keyProblem(error)) return;
       state.phase = "error";
-      state.error = String(error?.message ?? "The model did not answer.").slice(0, 160);
+      state.errorKind = keyProblem(error) ? "key" : "slow";
+      state.error = friendlyModelError(error);
     });
 }
 
@@ -39,7 +50,7 @@ export function startInferenceProbe() {
 
 export function getInferenceStatus() {
   const stale = state.phase === "ready" && Date.now() - state.readyAt > FRESH_MS;
-  if (state.phase === "idle" || state.phase === "error" || stale) probe(true);
+  if (state.phase === "idle" || state.phase === "error" || stale) probe();
   const spend = getModelSpend();
   const provider = mosaicProvider();
   return {
@@ -52,6 +63,7 @@ export function getInferenceStatus() {
     coldMs: state.coldMs,
     readyAt: state.readyAt ? new Date(state.readyAt).toISOString() : null,
     calls: spend.calls,
-    error: state.phase === "error" ? state.error : ""
+    error: state.phase === "error" ? state.error : "",
+    errorKind: state.phase === "error" ? state.errorKind : ""
   };
 }

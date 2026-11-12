@@ -15,6 +15,7 @@ import { authorizePledgeOrder, createPledgeOrder, getPledgeQuote } from "../lib/
 import { durableHarness, describeHarness } from "../lib/durable-harness.js";
 import { handleMcpMessage, listMcpTools } from "../lib/mcp-server.js";
 import { getInferenceStatus, startInferenceProbe } from "../lib/inference-status.js";
+import { getIntegrationStatus, startIntegrationChecks } from "../lib/integration-status.js";
 import { migrateStoryNames } from "../lib/story-migrate.js";
 import { ensureStorySamples } from "../lib/story-seed.js";
 import { extractOnboardingProfile } from "../lib/onboarding-extract.js";
@@ -2111,6 +2112,11 @@ export function createWebServer() {
       return;
     }
 
+    if (pathname === "/api/v1/integrations/status" && req.method === "GET") {
+      sendJson(res, 200, await getIntegrationStatus());
+      return;
+    }
+
     if (pathname === "/api/v1/mosaic/status" && req.method === "GET") {
       sendJson(res, 200, getInferenceStatus());
       return;
@@ -3103,5 +3109,6 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
     void restoreWorkspace().finally(() => { try { applyPledgesToLedger(); } catch { /* the ledger still shows the story */ } });
     setInterval(() => { try { rebaseStoryShipments(); ensureStorySamples(); } catch { /* next hour */ } }, 3600 * 1000).unref();
     startInferenceProbe();
+    startIntegrationChecks();
   });
 }

@@ -244,8 +244,17 @@ export const DisputesView: React.FC = () => {
       if (actor === "person") return;
       void loadData();
     };
+    // Claims filed elsewhere (Mosaic, an outside agent) and a freshly built workspace show up without a reload.
+    let timer: number | undefined;
+    const onData = (event: Event) => {
+      const sources = (event as CustomEvent<{ sources?: string[] }>).detail?.sources ?? [];
+      if (!sources.includes("claims") && !sources.includes("ledger")) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void loadData(), 400);
+    };
     window.addEventListener("ws:schedule-changed", refresh);
-    return () => window.removeEventListener("ws:schedule-changed", refresh);
+    window.addEventListener("ws:data-changed", onData);
+    return () => { window.clearTimeout(timer); window.removeEventListener("ws:schedule-changed", refresh); window.removeEventListener("ws:data-changed", onData); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

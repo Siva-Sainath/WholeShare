@@ -252,6 +252,20 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({ externalQuery, exter
     setVisibleCount(6);
   }, [query, category, city]);
 
+  // Fill levels and prices change when someone pledges, so the cards follow without a reload.
+  useEffect(() => {
+    let timer: number | undefined;
+    const onData = (event: Event) => {
+      const sources = (event as CustomEvent<{ sources?: string[] }>).detail?.sources ?? [];
+      if (!sources.includes("groups")) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void loadClans().catch(() => undefined), 500);
+    };
+    window.addEventListener("ws:data-changed", onData);
+    return () => { window.clearTimeout(timer); window.removeEventListener("ws:data-changed", onData); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, category, city]);
+
   const loadClans = async () => {
     const page = await fetchClansPage({
       search: query,
