@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="docs/architecture/00-hero.png" alt="WholeShare: pool orders, hold the money, release it when the goods arrive right" width="100%">
+  <h1>WholeShare</h1>
+  <p><b>Small businesses buy together. PayPal holds the money until the goods arrive right.</b></p>
+  <img src="docs/screenshots/13-mosaic-comparison-panel.png" alt="Mosaic compares two buying groups and shows what you save" width="100%">
 </p>
 
 <p align="center">
@@ -22,8 +24,6 @@ A dumpling restaurant and a bubble tea shop on the same street both buy the same
 Ordering together is the obvious fix, and it almost never happens. Three questions get in the way. Whose door does the order go to? Who pays what? Who covers the loss if half the boxes arrive crushed? Nobody wants to pay a stranger first.
 
 WholeShare answers all three. A group of small businesses pools one order. PayPal holds each person's money. The money is released only when the goods arrive in good shape.
-
-![From paperwork to refund, in six steps](docs/architecture/01-journey.png)
 
 One rule sits under everything: **the assistant can prepare any step, but only a person can approve a payment.**
 
@@ -71,8 +71,6 @@ The full walkthrough, with the PayPal sandbox buyer login, is in [docs/TESTING.m
 
 PayPal is the trust layer. The product is built around PayPal's authorize-then-capture flow: money is held first and released only when the goods are right. We did not invent an escrow system. We used PayPal's.
 
-![How the money moves](docs/architecture/03-money-flow.png)
-
 **A pledge becomes a hold.** The app creates a PayPal order with the intent set to `AUTHORIZE`. The person approves it in PayPal's window, opened by the PayPal JavaScript SDK v6 button on the group page. Then the server authorizes the order. That authorization is the hold.
 
 **The hold is released, or reduced, when the goods arrive.** When the person accepts the goods, the server captures the hold. If some units are damaged, it captures only the intact units and releases the rest. If the money was already captured, it refunds the damaged units. A hold that is not used can be voided.
@@ -112,7 +110,7 @@ The rest of PayPal's platform is in the code too: Shipment Tracking, Payouts to 
 
 **The harness around the model.** We wrote our own harness, so the model never acts on its own.
 
-![Why the assistant cannot move money](docs/architecture/04-mosaic-harness.png)
+![The checks every request passes](docs/architecture/harness.png)
 
 - It decides which tools the model may use.
 - It checks every argument on the server before a tool runs.
@@ -128,8 +126,6 @@ The rest of PayPal's platform is in the code too: Shipment Tracking, Payouts to 
 - *Inside the app.* Mosaic is built in. An in-page tool set, declared through WebMCP, lets an agent in the browser filter, sort, chart and reschedule what is on screen.
 - *From any MCP client.* WholeShare runs an MCP server at `/mcp`. An outside agent connects with an invite token and follows the same permission switches.
 - *From a plain link.* An assistant that can only open links, such as Instinct on WhatsApp, uses two link routes: `/api/v1/agent/<token>/ask` and `/api/v1/agent/<token>/clans`.
-
-![Any assistant can plug in](docs/architecture/05-outside-agents.png)
 
 **Our own open model.** Fireworks AI with MiniMax and DeepSeek powers the live app today. We also trained our own model, so you can run WholeShare without depending on anyone's servers.
 - *What it is.* LoRA adapters for Qwen3.5 (4B and 9B), tuned to use WholeShare's tools correctly. Model: [model link].
@@ -160,30 +156,13 @@ AG Grid Enterprise, AG Studio and Bryntum are commercial products. The code in t
 
 ## How it fits together
 
-![System overview](docs/architecture/02-system-overview.png)
+![High level architecture](docs/architecture/architecture.png)
 
-The browser talks to one Node server. The server holds the harness, the ledger of pledges, shipments and claims, and the document reader. It calls PayPal, Fireworks and Kernel. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains each part.
+Owners use the web app. Outside assistants, such as Instinct on WhatsApp, reach the same Mosaic assistant through an MCP link. Mosaic prepares steps. The money engine holds and releases money through PayPal.
 
-<details>
-<summary>Design diagrams (tldraw)</summary>
+![Backend](docs/architecture/backend.png)
 
-<table>
-  <tr>
-    <td><img src="docs/diagrams/01_master_architecture_tldraw.jpg" alt="Master architecture diagram"><br><sub><b>Master architecture.</b> End-to-end flow from buyer clan through PayPal sandbox to supplier fulfillment.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/diagrams/03_fintech_security_pipeline_tldraw.jpg" alt="Fintech security pipeline"><br><sub><b>Security pipeline.</b> Five layers from network ingress and idempotency through webhook verification, escrow state guard, dispute mediation and audit.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/diagrams/04_clan_state_lifecycle_tldraw.jpg" alt="Clan state lifecycle"><br><sub><b>Clan state lifecycle.</b> From FORMING through quorum, escrow lock, fulfillment, delivery, dispute and settlement.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/diagrams/02_pstack_engineering_flywheel_tldraw.jpg" alt="Engineering flywheel"><br><sub><b>Engineering flywheel.</b> Schema and invariants, local verification harness, PayPal sandbox validation, and continuous governance.</sub></td>
-  </tr>
-</table>
-
-The `.tldraw` source files are in [`docs/diagrams/`](docs/diagrams/).
-</details>
+The server has three lanes. Requests go through the harness to the tools. Money changes go through the pledge ledger with whole cents and an idempotency key. PayPal events are verified, put in order, and re-checked by a worker. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains each part.
 
 ## Run it yourself
 
