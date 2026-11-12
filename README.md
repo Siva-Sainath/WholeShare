@@ -249,6 +249,14 @@ docs/             Architecture, testing guide, harness notes, diagrams, screensh
 - The demo shares one workspace. If two people use the live site at once, they see each other's changes.
 - A reply from Mosaic takes five to eight seconds. Supplier research from the web can take twenty seconds or more.
 - Mosaic can be wrong about a photo, and it tends to agree with what the person says about damage. Claims stay drafts for a person to review.
+- Everything a new business first sees is built for it from the sample market: pledges, neighbour members, shipments and tracking numbers are generated records, labelled "Local record", and cannot be tracked on a real carrier site. The PayPal invoices in Insights are the sandbox account's real invoices, the same for every business.
+- Prices are in US dollars for every country. A supplier in India or Japan shows its own currency as a note, and there are no exchange rates.
+- When a product has no match in the catalog, such as porcelain clay, the workspace starts empty or small. The model chooses nearby groups, so the choice can differ between runs. The business then starts its own group with Mosaic or the form.
+- A new group has no shipment until its sample supplier is marked delivered, with the button on the group dashboard. Nothing dispatches or tracks it on its own.
+- Groups a visitor starts are kept for 12 hours and then cleared, so each judge meets the same market. Saving a brand-new kind of business can take a few seconds, and supplier research on the web can take over a minute for an unusual product.
+- The Insights reports are fixed designs limited to the business's own groups. Mosaic can edit them, but new report types do not appear by themselves.
+- A deploy or restart takes the site down for about 20 seconds, and the catalog is reloaded from the repository each time.
+- Only five sample document kits are included. Any other business is set up by answering questions or dropping its own documents.
 - The in-page agent tools are checked by our own verifier. We have not tested them in a browser that ships native WebMCP.
 - The app is built for a laptop screen. Phone widths are not supported.
 
