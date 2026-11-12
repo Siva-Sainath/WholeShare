@@ -6,16 +6,21 @@
 
 <p align="center">
   <a href="https://wholeshare-app.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-wholeshare--app.onrender.com-0070BA?style=for-the-badge"></a>
+  <a href="https://youtu.be/XvGBZiUSqa8"><img alt="Watch the demo" src="https://img.shields.io/badge/demo%20video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"></a>
+  <a href="https://devpost.com/software/wholeshare"><img alt="Devpost submission" src="https://img.shields.io/badge/Devpost-submission-003E54?style=for-the-badge&logo=devpost&logoColor=white"></a>
   <img alt="PayPal sandbox" src="https://img.shields.io/badge/PayPal-sandbox-003087?style=for-the-badge">
   <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-1F9D6B?style=for-the-badge">
   <img alt="Node 24 or newer" src="https://img.shields.io/badge/node-%E2%89%A524-6D5BD0?style=for-the-badge">
 </p>
 
-<!-- Add the demo video link here. -->
+<p align="center">
+  <a href="https://youtu.be/XvGBZiUSqa8"><img src="https://img.youtube.com/vi/XvGBZiUSqa8/maxresdefault.jpg" alt="Watch the WholeShare demo video on YouTube" width="70%"></a><br>
+  <sub>Watch the 3 minute demo. Submitted to the <a href="https://paypalaihackathon.devpost.com/">PayPal AI Hackathon</a>.</sub>
+</p>
 
 > Everything runs in the **PayPal sandbox**. No real money moves. The groups, members and suppliers in the demo market are sample data, and the app says so.
 
-**Jump to:** [What it does](#what-wholeshare-does) · [Try it](#try-it-in-three-minutes) · [PayPal](#how-wholeshare-uses-paypal) · [AI](#how-wholeshare-uses-ai) · [Tools and sponsors](#tools-and-sponsors) · [Architecture](#how-it-fits-together) · [Run it yourself](#run-it-yourself) · [Limits](#limits-stated-plainly)
+**Jump to:** [Demo video](https://youtu.be/XvGBZiUSqa8) · [Devpost](https://devpost.com/software/wholeshare) · [What it does](#what-wholeshare-does) · [Try it](#try-it-in-three-minutes) · [PayPal](#how-wholeshare-uses-paypal) · [AI](#how-wholeshare-uses-ai) · [Tools and sponsors](#tools-and-sponsors) · [Architecture](#how-it-fits-together) · [Run it yourself](#run-it-yourself) · [Limits](#limits-stated-plainly)
 
 ## What WholeShare does
 
@@ -55,7 +60,7 @@ One rule sits under everything: **the assistant can prepare any step, but only a
     <td width="50%"><img src="docs/screenshots/14-mosaic-shipments-with-sources.png" alt="Mosaic tracks shipments with Kernel cloud browser sources"><br><sub><b>Mosaic tracks shipments</b> and cross-checks carrier pages with Kernel cloud browsers.</sub></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/screenshots/15-onboarding-reads-your-documents.png" alt="Onboarding reads your documents"><br><sub><b>Onboarding.</b> Upload an invoice and inventory sheet — Mosaic reads them and fills in your profile.</sub></td>
+    <td colspan="2"><img src="docs/screenshots/15-onboarding-reads-your-documents.png" alt="Onboarding reads your documents"><br><sub><b>Onboarding.</b> Upload an invoice and inventory sheet. Mosaic reads them and fills in your profile.</sub></td>
   </tr>
 </table>
 

@@ -1,6 +1,6 @@
 import { loadUserSettings as _loadSettings, updateUserSettings as _updateSettings } from "./user-settings.js";
 import { buildSnapshot } from "./snapshot.js";
-import { searchDirectory, buildLeadSearchUrl, recordLeads, loadLeads } from "./supplier-search.js";
+import { savedLeadsFor, searchDirectory, buildLeadSearchUrl, recordLeads, loadLeads } from "./supplier-search.js";
 import { actionDispatcher } from "./web-actions.js";
 import {
   createOrderAuthorization,
@@ -2051,14 +2051,25 @@ export async function executeTool(toolName, args = {}) {
         web = { ok: false, error: "Web research is switched off in Settings, so only the directory was searched." };
       } else if (args.webSearch === true) {
         progress("find_suppliers", `Checked the directory (${found.length} matches). Now searching the web in a cloud browser`);
-        const target = buildLeadSearchUrl(args.product, args.country);
-        const research = await researchWebFact({ intent: "SUPPLIER_CATALOG", targetUrl: target.url, query: target.query, captureProof: false });
+        let target = buildLeadSearchUrl(args.product, args.country);
+        let research = await researchWebFact({ intent: "SUPPLIER_CATALOG", targetUrl: target.url, query: target.query, captureProof: false });
+        if (!(research && research.success && research.data)) {
+          target = buildLeadSearchUrl(args.product, args.country, "bing");
+          research = await researchWebFact({ intent: "SUPPLIER_CATALOG", targetUrl: target.url, query: target.query, captureProof: false });
+        }
         if (research && research.success && research.data) {
           const snippets = (Array.isArray(research.data.snippets) ? research.data.snippets : []).map((t) => String(t).replace(/\s+/g, " ").trim()).filter(Boolean);
           leads = recordLeads({ query: args.product, sourceUrl: research.data.currentUrl || target.url, snippets, country: args.country });
           web = { ok: true, pageTitle: research.data.pageTitle, url: research.data.currentUrl || target.url, snippetsRead: snippets.length, leadsSaved: leads.length };
         } else {
           web = { ok: false, error: research?.error || "The browser session did not return a page." };
+        }
+        if (leads.length === 0) {
+          const earlier = savedLeadsFor(args.product);
+          if (earlier.length) {
+            leads = earlier;
+            web = { ...(web || {}), ok: true, fromEarlierRead: true, note: "The live search added nothing new, so these are leads saved from an earlier web read. They are still unverified." };
+          }
         }
       }
       actionDispatcher.broadcast("UI_ACTION", {

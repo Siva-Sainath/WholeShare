@@ -93,9 +93,20 @@ export function searchDirectory({ product, country, city, certification, accepts
   return rows.map(({ s, score }) => ({ ...s, matchScore: score }));
 }
 
-export function buildLeadSearchUrl(product, country) {
+export function buildLeadSearchUrl(product, country, engine = "duckduckgo") {
   const query = `${product} wholesale supplier manufacturer ${country ?? ""} contact`.trim();
-  return { url: `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, query };
+  const url = engine === "bing" ? `https://www.bing.com/search?q=${encodeURIComponent(query)}` : `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  return { url, query };
+}
+
+// Leads saved by earlier web reads that match the product. Used when the live search finds nothing new or cannot run.
+export function savedLeadsFor(product) {
+  const wanted = tokens(product);
+  if (!wanted.length) return [];
+  return loadLeads().filter((lead) => {
+    const haystack = `${lead.query} ${lead.snippet} ${lead.name}`.toLowerCase();
+    return wanted.filter((t) => haystack.includes(t)).length >= Math.max(1, Math.ceil(wanted.length / 2));
+  });
 }
 
 // Turns page snippets from the Kernel session into saved leads. Only keeps entries that name a website.
@@ -103,14 +114,19 @@ export function recordLeads({ query, sourceUrl, snippets, country }) {
   const existing = loadLeads();
   const known = new Set(existing.map((l) => l.id));
   const added = [];
+  const matched = [];
   for (const raw of snippets) {
     const text = String(raw).replace(/\s+/g, " ").trim();
     const domain = text.match(/\b([a-z0-9-]+\.)+(com|in|co\.in|net|org|cn|de|co|io)\b/i)?.[0];
     if (!domain) continue;
     const id = `lead-${domain.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    if (known.has(id)) continue;
+    if (known.has(id)) {
+      const again = existing.find((l) => l.id === id) || added.find((l) => l.id === id);
+      if (again && !matched.includes(again)) matched.push(again);
+      continue;
+    }
     known.add(id);
-    added.push({
+    const lead = {
       id,
       name: domain.toLowerCase(),
       website: `https://${domain.toLowerCase()}`,
@@ -120,8 +136,10 @@ export function recordLeads({ query, sourceUrl, snippets, country }) {
       sourceUrl,
       foundAt: new Date().toISOString(),
       verified: false
-    });
+    };
+    added.push(lead);
+    matched.push(lead);
   }
   if (added.length) saveLeads([...existing, ...added]);
-  return added;
+  return matched;
 }
