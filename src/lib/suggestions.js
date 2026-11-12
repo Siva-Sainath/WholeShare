@@ -44,7 +44,9 @@ export async function buildSuggestions() {
   const own = shipments.filter((entry) => entry.memberId === me && entry.product);
   const fromHistory = product ? "" : shortProduct((own.find((entry) => entry.status === "IN_TRANSIT") ?? own[0])?.product);
   const wanted = wordsOf(product || fromHistory);
-  const matches = (group) => wanted.length === 0 || wanted.some((word) => new RegExp(`\\b${word}s?\\b`).test(`${group.product} ${group.name}`.toLowerCase()));
+  // Several words in the product must match, not just one: "porcelain clay and glaze powder" is not a milk powder.
+  const needed = Math.max(1, Math.ceil(wanted.length / 2));
+  const matches = (group) => wanted.length === 0 || wanted.filter((word) => new RegExp(`\\b${word}s?\\b`).test(`${group.product} ${group.name}`.toLowerCase())).length >= needed;
   const relevant = groups.filter(matches);
   const nearby = city ? relevant.filter((g) => String(g.city).toLowerCase() === city.toLowerCase()) : [];
   // Groups the workspace already chose for this business are the best ones to talk about.
