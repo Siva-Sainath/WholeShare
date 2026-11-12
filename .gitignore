@@ -125,3 +125,4 @@ data/pledges.json
 data/procured/
 data/benchmark_corpus/
 docs/architecture/*.svg
+data/visitor-clans.json

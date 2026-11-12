@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { ClanCandidate, MatchVector } from "./types.ts";
 import { lookupCity, getCorridorEfficiency } from "../geo/gazetteer.ts";
@@ -36,6 +36,10 @@ function computeJaccardCosineSimilarity(tokensA: string[], tokensB: string[]): n
   return 0.4 * jaccard + 0.6 * cosine;
 }
 
+const isVisitorClan = (clan: { id: string }) => clan.id.startsWith("clan_");
+const visitorPath = () => resolve(process.cwd(), "data/visitor-clans.json");
+const persistClans = () => !process.env.NODE_TEST_CONTEXT && process.env.WHOLESHARE_PERSIST_CLANS !== "0";
+
 export function loadClans(): ClanCandidate[] {
   if (allClansCache) {
     return allClansCache;
@@ -43,7 +47,13 @@ export function loadClans(): ClanCandidate[] {
 
   const seededPath = resolve(process.cwd(), "data/seeded-clans.json");
   const rawData = readFileSync(seededPath, "utf-8");
-  allClansCache = JSON.parse(rawData) as ClanCandidate[];
+  // Groups a visitor started live in their own file, so a restart or a catalog refresh never loses them.
+  const seeded = (JSON.parse(rawData) as ClanCandidate[]).filter((clan) => !isVisitorClan(clan));
+  let visitor: ClanCandidate[] = [];
+  if (existsSync(visitorPath())) {
+    try { visitor = JSON.parse(readFileSync(visitorPath(), "utf-8")) as ClanCandidate[]; } catch { visitor = []; }
+  }
+  allClansCache = [...visitor, ...seeded];
 
   clanIndexById = new Map();
   for (const clan of allClansCache) {
@@ -74,10 +84,14 @@ export function saveClan(clan: ClanCandidate): void {
   }
 
   // Test runs keep new groups in memory so they never leak into the shipped catalog.
-  if (process.env.NODE_TEST_CONTEXT || process.env.WHOLESHARE_PERSIST_CLANS === "0") return;
-  const seededPath = resolve(process.cwd(), "data/seeded-clans.json");
-  writeFileSync(seededPath, JSON.stringify(allClansCache, null, 2), "utf-8");
+  if (!persistClans()) return;
+  if (isVisitorClan(clan)) {
+    writeFileSync(visitorPath(), JSON.stringify(allClansCache!.filter(isVisitorClan), null, 2), "utf-8");
+    return;
+  }
+  writeFileSync(resolve(process.cwd(), "data/seeded-clans.json"), JSON.stringify(allClansCache!.filter((entry) => !isVisitorClan(entry)), null, 2), "utf-8");
 }
+
 
 // Groups a visitor started (ids begin "clan_", the seeded catalog uses "clan-") are cleared after a while, so the next visitor finds the shipped market.
 export function purgeVisitorClans(maxAgeMs: number, now: number = Date.now()): string[] {
@@ -93,9 +107,7 @@ export function purgeVisitorClans(maxAgeMs: number, now: number = Date.now()): s
   if (removed.length === 0) return removed;
   allClansCache = keep;
   clanIndexById = new Map(keep.map((clan) => [clan.id, clan]));
-  if (!process.env.NODE_TEST_CONTEXT && process.env.WHOLESHARE_PERSIST_CLANS !== "0") {
-    writeFileSync(resolve(process.cwd(), "data/seeded-clans.json"), JSON.stringify(keep, null, 2), "utf-8");
-  }
+  if (persistClans()) writeFileSync(visitorPath(), JSON.stringify(keep.filter(isVisitorClan), null, 2), "utf-8");
   return removed;
 }
 
