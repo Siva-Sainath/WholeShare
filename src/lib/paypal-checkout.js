@@ -13,7 +13,7 @@ function calculateQuote(clanId, units) {
   if (clan.status !== "FORMING") throw new Error("This buying group is no longer accepting pledges.");
   if (!Number.isInteger(units) || units < 1 || units > 10000) throw new Error("Choose a whole number of units between 1 and 10,000.");
   if (clan.currentUnits + units > clan.targetUnits) throw new Error("That quantity exceeds the group's remaining order target.");
-  if (clan.settlementCurrency !== "USD") throw new Error("PayPal checkout is currently enabled for USD buying groups only.");
+  // Group prices are listed in US dollars, so PayPal holds US dollars. A supplier in another country settles in its own currency later.
 
   const projectedUnits = clan.currentUnits + units;
   const discountPct = clan.discountTiers.reduce((best, tier) => projectedUnits >= tier.minUnits ? Math.max(best, tier.discountPct) : best, 0);
@@ -22,7 +22,7 @@ function calculateQuote(clanId, units) {
   const interception = interceptToolExecution("create_order", { intent: "AUTHORIZE", amountCents });
   if (!interception.valid) throw new Error(interception.violations.join(" "));
 
-  return { clan, clanId, units, discountPct, unitPriceCents, amountCents, currency: clan.settlementCurrency };
+  return { clan, clanId, units, discountPct, unitPriceCents, amountCents, currency: "USD", supplierCurrency: clan.settlementCurrency };
 }
 
 async function withClanLock(clanId, action) {
@@ -47,6 +47,7 @@ export function getPledgeQuote(input) {
     unitPriceCents: quote.unitPriceCents,
     amountCents: quote.amountCents,
     currency: quote.currency,
+    supplierCurrency: quote.supplierCurrency,
     discountPct: quote.discountPct,
     status: "QUOTED"
   };

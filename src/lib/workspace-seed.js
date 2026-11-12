@@ -13,7 +13,8 @@ import { loadUserSettings, updateUserSettings } from "./user-settings.js";
 
 const DEMO_BUSINESS = "Neon Dumpling Co.";
 const STOP = new Set(["the", "and", "for", "with", "bulk", "pack", "case", "size", "grade", "premium", "organic", "from"]);
-const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word));
+const singular = (word) => (word.length > 3 && word.endsWith("s") && !word.endsWith("ss") ? word.slice(0, -1) : word);
+const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word)).map(singular);
 const slug = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "business";
 const hash = (text) => crypto.createHash("sha256").update(String(text)).digest("hex");
 

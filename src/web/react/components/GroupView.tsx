@@ -106,6 +106,9 @@ export const GroupView: React.FC<{ clanId: string }> = ({ clanId }) => {
             <span className="ws-group-price-main">{usd(Math.round(clan.unitPriceCents * (100 - reachedPct) / 100))}</span>
             <span className="ws-group-price-note">per unit{reachedPct > 0 ? `, ${reachedPct}% off the ${usd(clan.unitPriceCents)} list price` : " at list price"}</span>
           </div>
+          {clan.currency && clan.currency !== "USD" && (
+            <p className="ws-group-sku">Prices and the PayPal hold are in US dollars. This supplier settles in {clan.currency}.</p>
+          )}
 
           <div className="ws-group-progress">
             <ProgressBar label="Group progress" isLabelHidden value={Math.min(clan.currentUnits, clan.targetUnits)} max={clan.targetUnits} variant={clan.progressPct >= 100 ? "success" : "accent"} />
@@ -151,7 +154,7 @@ export const GroupView: React.FC<{ clanId: string }> = ({ clanId }) => {
                   onChange={setRulesConfirmed}
                 />
                 {rulesConfirmed ? (
-                  <PayPalPledgeButton clanId={clan.id} clanName={clan.name} currency={clan.currency} />
+                  <PayPalPledgeButton clanId={clan.id} clanName={clan.name} currency="USD" />
                 ) : (
                   <Banner status="info" title="Review the rules to pledge" description="Tick the box above to unlock the PayPal pledge." collapsible={false} />
                 )}

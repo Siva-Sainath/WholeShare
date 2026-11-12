@@ -33,10 +33,14 @@ test("PayPal pledge quote rejects authorization amounts above the platform ceili
   );
 });
 
-test("PayPal pledge quote rejects unknown and non-USD groups", () => {
+test("PayPal pledge quote rejects unknown groups and prices a non-US group in US dollars", () => {
   assert.throws(() => getPledgeQuote({ clanId: "missing-clan", units: 1 }), /no longer available/);
 
-  const nonUsdClan = getAllClans().find((clan) => clan.status === "FORMING" && clan.currentUnits < clan.targetUnits && clan.settlementCurrency !== "USD" && !clan.id.startsWith("clan-test-"));
-  assert.ok(nonUsdClan);
-  assert.throws(() => getPledgeQuote({ clanId: nonUsdClan.id, units: 1 }), /USD buying groups only/);
+  const foreign = getAllClans().find((clan) => clan.status === "FORMING" && clan.currentUnits < clan.targetUnits && clan.settlementCurrency !== "USD" && !clan.id.startsWith("clan-test-"));
+  assert.ok(foreign);
+  const quote = getPledgeQuote({ clanId: foreign.id, units: 1 });
+  assert.equal(quote.currency, "USD");
+  assert.equal(quote.supplierCurrency, foreign.settlementCurrency);
+  assert.ok(quote.amountCents > 0);
 });
+

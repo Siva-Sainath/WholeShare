@@ -157,12 +157,12 @@ export async function compareGroups(args = {}) {
     const remaining = Math.max(clan.targetUnits - clan.currentUnits, 0);
     groups.push({
       id: clan.id, name: clan.name, city: clan.city, status: clan.status, joinable: clan.status === "FORMING" && remaining >= units,
-      currency: clan.settlementCurrency, listUnitPrice: round(clan.baseUnitPriceCents / 100),
+      currency: "USD", supplierSettlesIn: clan.settlementCurrency, listUnitPrice: round(clan.baseUnitPriceCents / 100),
       discountPctAtYourUnits: discount, unitPriceAtYourUnits: round(unitPrice), totalForYourUnits: round(unitPrice * units),
       nextTier: next ? { atUnits: next.minUnits, discountPct: next.discountPct, unitsAway: next.minUnits - projected } : null,
       fillPct: clan.targetUnits ? Math.round((clan.currentUnits / clan.targetUnits) * 100) : 0, unitsRemaining: remaining,
       deliveryDays: clan.estimatedDeliveryDays ?? null, supplier: clan.supplierName ?? "", supplierTrust: clan.supplierTrustScore ?? null,
-      payPalCheckoutAvailable: clan.settlementCurrency === "USD",
+      payPalCheckoutAvailable: true,
       ...(payToday ? { youPayTodayUnitPrice: payToday, savingVersusTodayForYourUnits: round(payToday * units - unitPrice * units) } : {})
     });
   }

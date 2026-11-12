@@ -238,7 +238,7 @@ export const WHOLESHARE_TOOL_DECLARATIONS = [
     type: "function",
     function: {
       name: "join_group",
-      description: "Price a pledge and open the PayPal approval step. Use it for join, pledge, sign me up, quote, and how much would N units cost. It never pledges or moves money: the user approves on PayPal. Pass group (the user's words) or clanId, and a whole number of units. PayPal checkout works for USD groups only, and the group must still be forming.",
+      description: "Price a pledge and open the PayPal approval step. Use it for join, pledge, sign me up, quote, and how much would N units cost. It never pledges or moves money: the user approves on PayPal. Pass group (the user's words) or clanId, and a whole number of units. Prices and the PayPal hold are in US dollars, even when the supplier settles in another currency, and the group must still be forming.",
       parameters: { type: "object", properties: { group: { type: "string" }, clanId: { type: "string" }, units: { type: "number" } }, required: ["units"] }
     }
   },
