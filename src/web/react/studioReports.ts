@@ -56,6 +56,14 @@ export function scopeGroups(groups: Row[], scope: BusinessScope | null): Row[] {
   const own = new Set(scope.groupIds ?? []);
   const words = scope.product.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !STOP.has(word));
   const city = scope.city.trim().toLowerCase();
+  // A business with its own workspace sees its own groups, so the reports agree with My groups, the timeline and Mosaic.
+  if (own.size > 0) {
+    const mine = groups.filter((group) => own.has(String(group.id)));
+    if (mine.length > 0) {
+      scopedGroupIds = new Set(mine.map((group) => String(group.id)));
+      return mine;
+    }
+  }
   const picked = groups.filter((group) => {
     const text = `${group.product ?? ""} ${group.name ?? ""}`.toLowerCase();
     const byProduct = words.length > 0 && words.some((word) => new RegExp(`\\b${word}s?\\b`).test(text));
