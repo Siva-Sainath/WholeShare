@@ -58,10 +58,10 @@ export const SHIPPED_STUDIO_STATE: any = {
           id: "widget-chart-escrow",
           type: "column-chart-grouped",
           format: {
-            title: { text: "Escrow Volume by Group", enabled: true }
+            title: { text: "Money held on PayPal, by group (USD)", enabled: true }
           },
           dataMapping: {
-            categoryKey: [{ id: "coalitions.sku" }],
+            categoryKey: [{ id: "coalitions.label" }],
             valueKey: [{ id: "coalitions.totalEscrowUsd", aggregation: "sum" }]
           }
         },
@@ -127,6 +127,8 @@ export function getStudioInitialState(): any {
       if (saved) {
         if (
           saved.includes("paypalOrderId") ||
+          saved.includes("coalitions.sku\"") ||
+          saved.includes("Escrow Volume by Group") ||
           saved.includes('"xSpan":4') ||
           saved.includes('"xSpan": 4') ||
           saved.includes("Total Escrow Co...")

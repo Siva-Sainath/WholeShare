@@ -66,6 +66,21 @@ export const App: React.FC = () => {
     }
   });
 
+  // A browser that remembers "onboarding done" is not enough: if the site has no business set up (after a sign out, or on a fresh
+  // deploy), a visitor must still be able to start. The server's profile is the source of truth.
+  useEffect(() => {
+    let live = true;
+    fetch("/api/v1/user/settings")
+      .then((response) => response.json())
+      .then((settings: { profile?: { businessName?: string } }) => {
+        if (!live || String(settings?.profile?.businessName ?? "").trim() !== "") return;
+        try { localStorage.removeItem("wholeshare_onboarding_confirmed"); } catch { /* storage can be blocked */ }
+        setOnboardingConfirmed(false);
+      })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
+
   useEffect(() => {
     const handleHash = () => {
       const match = window.location.hash.match(/^#agent\/([a-zA-Z0-9_-]+)$/);

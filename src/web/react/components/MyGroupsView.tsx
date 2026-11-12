@@ -285,6 +285,8 @@ export const MyGroupsView: React.FC<MyGroupsViewProps> = ({ externalQuery, onDri
       coalitionId: clan.coalitionId,
       sku: clan.sku,
       skuName: clan.skuName,
+      // A short, readable name for chart labels instead of the raw product code.
+      label: String(clan.skuName ?? clan.sku ?? "").replace(/\s*\([^)]*\)/g, "").trim().replace(/^(.{26}).+$/, "$1...") || String(clan.sku ?? ""),
       targetUnits: clan.targetUnits,
       currentUnits: clan.currentUnits,
       unitPriceUsd: (clan.unitPriceCents || 0) / 100,
@@ -310,6 +312,7 @@ export const MyGroupsView: React.FC<MyGroupsViewProps> = ({ externalQuery, onDri
             { id: "id", name: "Group ID", format: "textFormat" as const },
             { id: "sku", name: "SKU", format: "textFormat" as const },
             { id: "skuName", name: "Buying group", format: "textFormat" as const },
+            { id: "label", name: "Group", format: "textFormat" as const },
             { id: "status", name: "Status", format: "textFormat" as const },
             { id: "targetUnits", name: "Units target", format: "integerFormat" as const },
             { id: "currentUnits", name: "Units pledged", format: "integerFormat" as const },
