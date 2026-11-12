@@ -3101,7 +3101,7 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
     try { const added = ensureStorySamples(); if (added) console.log(`[story] added ${added} sample shipment and claim record(s) for the demo business`); } catch (error) { console.warn(`[story] sample records not added: ${error.message}`); }
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
     void restoreWorkspace().finally(() => { try { applyPledgesToLedger(); } catch { /* the ledger still shows the story */ } });
-    setInterval(() => { try { rebaseStoryShipments(); } catch { /* next hour */ } }, 3600 * 1000).unref();
+    setInterval(() => { try { rebaseStoryShipments(); ensureStorySamples(); } catch { /* next hour */ } }, 3600 * 1000).unref();
     startInferenceProbe();
   });
 }

@@ -8,9 +8,6 @@
   <a href="https://wholeshare-app.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-wholeshare--app.onrender.com-0070BA?style=for-the-badge"></a>
   <a href="https://youtu.be/XvGBZiUSqa8"><img alt="Watch the demo" src="https://img.shields.io/badge/demo%20video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"></a>
   <a href="https://devpost.com/software/wholeshare"><img alt="Devpost submission" src="https://img.shields.io/badge/Devpost-submission-003E54?style=for-the-badge&logo=devpost&logoColor=white"></a>
-  <img alt="PayPal sandbox" src="https://img.shields.io/badge/PayPal-sandbox-003087?style=for-the-badge">
-  <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-1F9D6B?style=for-the-badge">
-  <img alt="Node 24 or newer" src="https://img.shields.io/badge/node-%E2%89%A524-6D5BD0?style=for-the-badge">
 </p>
 
 <p align="center">
