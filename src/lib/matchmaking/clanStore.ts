@@ -79,6 +79,26 @@ export function saveClan(clan: ClanCandidate): void {
   writeFileSync(seededPath, JSON.stringify(allClansCache, null, 2), "utf-8");
 }
 
+// Groups a visitor started (ids begin "clan_", the seeded catalog uses "clan-") are cleared after a while, so the next visitor finds the shipped market.
+export function purgeVisitorClans(maxAgeMs: number, now: number = Date.now()): string[] {
+  loadClans();
+  const removed: string[] = [];
+  const keep = allClansCache!.filter((clan) => {
+    if (!clan.id.startsWith("clan_")) return true;
+    const stamp = Date.parse(String((clan as unknown as { createdAt?: string }).createdAt ?? "")) || Number(clan.id.match(/_(\d{12,})$/)?.[1]) || 0;
+    if (stamp && now - stamp < maxAgeMs) return true;
+    removed.push(clan.id);
+    return false;
+  });
+  if (removed.length === 0) return removed;
+  allClansCache = keep;
+  clanIndexById = new Map(keep.map((clan) => [clan.id, clan]));
+  if (!process.env.NODE_TEST_CONTEXT && process.env.WHOLESHARE_PERSIST_CLANS !== "0") {
+    writeFileSync(resolve(process.cwd(), "data/seeded-clans.json"), JSON.stringify(keep, null, 2), "utf-8");
+  }
+  return removed;
+}
+
 export function retrieveCandidateClans(
   matchVector: MatchVector,
   limit: number = 20

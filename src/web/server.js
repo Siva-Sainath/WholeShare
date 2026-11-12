@@ -67,7 +67,7 @@ import {
   getEscrowRecord
 } from "../lib/matchmaking/clanEscrowFsm.ts";
 import { loadGazetteer, lookupCity, getCorridorEfficiency } from "../lib/geo/gazetteer.ts";
-import { getAllClans, getClanById } from "../lib/matchmaking/clanStore.ts";
+import { getAllClans, getClanById, purgeVisitorClans } from "../lib/matchmaking/clanStore.ts";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
@@ -3109,7 +3109,13 @@ if (process.argv[1] && process.argv[1].endsWith("server.js")) {
     try { const added = ensureStorySamples(); if (added) console.log(`[story] added ${added} sample shipment and claim record(s) for the demo business`); } catch (error) { console.warn(`[story] sample records not added: ${error.message}`); }
     try { rebaseStoryShipments(); } catch (error) { console.warn(`[story] shipment dates not refreshed: ${error.message}`); }
     void restoreWorkspace().finally(() => { try { applyPledgesToLedger(); } catch { /* the ledger still shows the story */ } });
-    setInterval(() => { try { rebaseStoryShipments(); ensureStorySamples(); } catch { /* next hour */ } }, 3600 * 1000).unref();
+    const clearVisitorGroups = () => {
+      const gone = purgeVisitorClans(12 * 3600 * 1000);
+      for (const [key, coalition] of [...actionDispatcher.coalitions]) if (gone.includes(String(coalition.clanId)) || gone.includes(String(key))) actionDispatcher.coalitions.delete(key);
+      if (gone.length) actionDispatcher.broadcast("WORKSPACE_SEEDED", { smeId: currentOwnerId(), groups: [] });
+    };
+    try { clearVisitorGroups(); } catch (error) { console.warn(`[groups] visitor groups not cleared: ${error.message}`); }
+    setInterval(() => { try { rebaseStoryShipments(); ensureStorySamples(); clearVisitorGroups(); } catch { /* next hour */ } }, 3600 * 1000).unref();
     startInferenceProbe();
     startIntegrationChecks();
   });
