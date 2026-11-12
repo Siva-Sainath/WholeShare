@@ -12,7 +12,7 @@ Everything runs in the **PayPal sandbox**. No real money moves.
 - **PayPal sandbox buyer.** When PayPal asks you to log in, use this sandbox account.
   - Email: [sandbox buyer email]
   - Password: [sandbox buyer password]
-- **One shared workspace.** The live demo shares one workspace. If another person is testing at the same moment, you will see their changes. Choose **Sign out** (top right) to start fresh.
+- **Test one at a time.** The live demo has one shared business profile and workspace. If two people test at the same moment they see each other's changes. Choose **Sign out** (top right) when you finish, which also switches Mosaic's permissions off. If the site opens straight into the app without onboarding, refresh once.
 - **Wait for the first answer.** If Mosaic is slow to start, wait a few seconds. After a quiet spell the model needs a moment to wake.
 
 ## 1. Start from your documents
@@ -77,7 +77,7 @@ For a full MCP client, point it at `https://wholeshare-app.onrender.com/mcp` wit
 
 ## What to expect
 
-- Mosaic replies in five to eight seconds. Supplier research can take twenty seconds or more.
+- Mosaic replies in two to eight seconds. Supplier research with a cloud browser can take 30 to 60 seconds for an unusual product.
 - Mosaic only changes the screen or opens a PayPal step. It cannot approve a payment.
 - Some records, such as the shipments and two past claims on the Neon Dumpling sample business, are sample history.
 
