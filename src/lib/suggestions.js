@@ -12,8 +12,10 @@ async function safe(source, options) {
   }
 }
 
+let knownCities = new Set();
 const shortProduct = (product) => {
-  const words = String(product ?? "").replace(/\s*\([^)]*\)\s*/g, " ").trim().split(/\s+/);
+  // Catalog names start with the city they are listed in. The city is said separately, so it is dropped here.
+  const words = String(product ?? "").replace(/\s*\([^)]*\)\s*/g, " ").trim().split(/\s+/).filter((word, index) => !(index === 0 && knownCities.has(word.toLowerCase())));
   const end = words.findIndex((word) => /\d/.test(word));
   return words.slice(0, end > 0 ? Math.min(end, 4) : 4).join(" ").toLowerCase();
 };
@@ -34,6 +36,8 @@ export async function buildSuggestions() {
     safe("ledger", { limit: 100 }),
     safe("suppliers", { limit: 400 })
   ]);
+
+  knownCities = new Set(groups.map((group) => String(group.city ?? "").toLowerCase()).filter(Boolean));
 
   // What the business buys decides what is relevant. With no product on the profile, what it already has in transit or on order does, then the city.
   const own = shipments.filter((entry) => entry.memberId === me && entry.product);
